@@ -100,28 +100,28 @@ static int PushCValue(lua_State* L, MemoryType memoryType, uintptr_t address) {
     case FIELD_FLOAT: hksi_lua_pushnumber(L, *(float*)address); break;
     case FIELD_DOUBLE: hksi_lua_pushnumber(L, *(double*)address); break;
     case FIELD_LONG_DOUBLE: hksi_lua_pushnumber(L, *(long double*)address); break;
-    case FIELD_C_STRING: hksi_lua_pushfstring(L, (char*)address); break;
+    case FIELD_C_STRING: hksi_lua_pushfstring(L, *(char**)address); break;
     default: hksi_luaL_error(L, "Invalid MemoryType parameter was passed!"); return 0;
     }
     return 1;
 }
 
-static void SetCValue(lua_State* L, MemoryType memoryType, uintptr_t address) {
+static void SetCValue(lua_State* L, MemoryType memoryType, uintptr_t address, int index) {
     switch (memoryType) {
-    case FIELD_BYTE: *(byte*)address = static_cast<byte>(luaL_checkinteger(L, 4)); break;
-    case FIELD_SHORT: *(short*)address = static_cast<short>(luaL_checkinteger(L, 4)); break;
-    case FIELD_INT: *(int*)address = static_cast<int>(luaL_checkinteger(L, 4)); break;
-    case FIELD_LONG_INT: *(long int*)address = static_cast<long int>(luaL_checkinteger(L, 4)); break;
-    case FIELD_UNSIGNED_LONG_INT: *(unsigned long int*)address = static_cast<unsigned long int>(luaL_checkinteger(L, 4)); break;
-    case FIELD_LONG_LONG_INT: *(long long int*)address = static_cast<long long int>(luaL_checkinteger(L, 4)); break;
-    case FIELD_UNSIGNED_LONG_LONG_INT: *(unsigned long long int*)address = static_cast<unsigned long long int>(luaL_checkinteger(L, 3)); break;
-    case FIELD_CHAR: *(char*)address = static_cast<char>(luaL_checkinteger(L, 4)); break;
-    case FIELD_FLOAT: *(float*)address = static_cast<float>(luaL_checkinteger(L, 4)); break;
-    case FIELD_DOUBLE: *(double*)address = static_cast<double>(luaL_checkinteger(L, 4)); break;
-    case FIELD_LONG_DOUBLE: *(long double*)address = static_cast<long double>(luaL_checkinteger(L, 4)); break;
+    case FIELD_BYTE: *(byte*)address = static_cast<byte>(luaL_checkinteger(L, index)); break;
+    case FIELD_SHORT: *(short*)address = static_cast<short>(luaL_checkinteger(L, index)); break;
+    case FIELD_INT: *(int*)address = static_cast<int>(luaL_checkinteger(L, index)); break;
+    case FIELD_LONG_INT: *(long int*)address = static_cast<long int>(luaL_checkinteger(L, index)); break;
+    case FIELD_UNSIGNED_LONG_INT: *(unsigned long int*)address = static_cast<unsigned long int>(luaL_checkinteger(L, index)); break;
+    case FIELD_LONG_LONG_INT: *(long long int*)address = static_cast<long long int>(luaL_checkinteger(L, index)); break;
+    case FIELD_UNSIGNED_LONG_LONG_INT: *(unsigned long long int*)address = static_cast<unsigned long long int>(luaL_checkinteger(L, index)); break;
+    case FIELD_CHAR: *(char*)address = static_cast<char>(luaL_checkinteger(L, index)); break;
+    case FIELD_FLOAT: *(float*)address = static_cast<float>(luaL_checkinteger(L, index)); break;
+    case FIELD_DOUBLE: *(double*)address = static_cast<double>(luaL_checkinteger(L, index)); break;
+    case FIELD_LONG_DOUBLE: *(long double*)address = static_cast<long double>(luaL_checkinteger(L, index)); break;
     case FIELD_C_STRING: {
         size_t length;
-        const char* inputString = CheckLString(L, 4, &length);
+        const char* inputString = CheckLString(L, index, &length);
         char* newString = (char*)malloc(length + 1);
         if (!newString) {
             hksi_luaL_error(L, "String memory allocation failed");
@@ -146,7 +146,7 @@ static int __cdecl lMem(lua_State* __ptr64 L) {
     uintptr_t address = static_cast<uintptr_t>(luaL_checknumber(L, 1)); // Check for number because int too small to store x64 pointer
     auto memoryType = static_cast<MemoryType>(luaL_checkinteger(L, 2));
     if (GetTop(L) == 3) {
-        SetCValue(L, memoryType, baseAddress + address);
+        SetCValue(L, memoryType, baseAddress + address, 3);
         return 0;
     }
     return PushCValue(L, memoryType, baseAddress + address);
@@ -163,7 +163,7 @@ static int __cdecl lObjMem(lua_State* __ptr64 L) {
     uintptr_t offsetAddress = static_cast<uintptr_t>(luaL_checkinteger(L, 2));
     auto memoryType = static_cast<MemoryType>(luaL_checkinteger(L, 3));
     if (GetTop(L) == 4) {
-        SetCValue(L, memoryType, objectAddress + offsetAddress);
+        SetCValue(L, memoryType, objectAddress + offsetAddress, 4);
         return 0;
     }
     return PushCValue(L, memoryType, objectAddress + offsetAddress);
