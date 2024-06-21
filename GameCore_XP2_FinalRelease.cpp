@@ -75,16 +75,16 @@ std::set<short*> lockedAppeals;
 enum MemoryType {
     FIELD_BYTE,
     FIELD_SHORT,
+    FIELD_UNSIGNED_SHORT,
     FIELD_INT,
-    FIELD_LONG_INT,
-    FIELD_UNSIGNED_LONG_INT,
+    FIELD_UNSIGNED_INT,
     FIELD_LONG_LONG_INT,
     FIELD_UNSIGNED_LONG_LONG_INT,
     FIELD_CHAR,
     FIELD_FLOAT,
     FIELD_DOUBLE,
-    FIELD_LONG_DOUBLE,
-    FIELD_C_STRING
+    FIELD_C_STRING,
+    FIELD_BOOL
 };
 
 static int PushCValue(lua_State* L, MemoryType memoryType, uintptr_t address) {
@@ -92,14 +92,11 @@ static int PushCValue(lua_State* L, MemoryType memoryType, uintptr_t address) {
     case FIELD_BYTE: hksi_lua_pushinteger(L, *(byte*)address); break;
     case FIELD_SHORT: hksi_lua_pushinteger(L, *(short*)address); break;
     case FIELD_INT: hksi_lua_pushinteger(L, *(int*)address); break;
-    case FIELD_LONG_INT: hksi_lua_pushinteger(L, *(long int*)address); break;
-    case FIELD_UNSIGNED_LONG_INT: hksi_lua_pushinteger(L, *(unsigned long int*)address); break;
     case FIELD_LONG_LONG_INT: hksi_lua_pushinteger(L, *(long long int*)address); break;
     case FIELD_UNSIGNED_LONG_LONG_INT: hksi_lua_pushinteger(L, *(unsigned long long int*)address); break;
     case FIELD_CHAR: hksi_lua_pushinteger(L, *(char*)address); break;
     case FIELD_FLOAT: hksi_lua_pushnumber(L, *(float*)address); break;
     case FIELD_DOUBLE: hksi_lua_pushnumber(L, *(double*)address); break;
-    case FIELD_LONG_DOUBLE: hksi_lua_pushnumber(L, *(long double*)address); break;
     case FIELD_C_STRING: hksi_lua_pushfstring(L, *(char**)address); break;
     default: hksi_luaL_error(L, "Invalid MemoryType parameter was passed!"); return 0;
     }
@@ -111,14 +108,11 @@ static void SetCValue(lua_State* L, MemoryType memoryType, uintptr_t address, in
     case FIELD_BYTE: *(byte*)address = static_cast<byte>(luaL_checkinteger(L, index)); break;
     case FIELD_SHORT: *(short*)address = static_cast<short>(luaL_checkinteger(L, index)); break;
     case FIELD_INT: *(int*)address = static_cast<int>(luaL_checkinteger(L, index)); break;
-    case FIELD_LONG_INT: *(long int*)address = static_cast<long int>(luaL_checkinteger(L, index)); break;
-    case FIELD_UNSIGNED_LONG_INT: *(unsigned long int*)address = static_cast<unsigned long int>(luaL_checkinteger(L, index)); break;
     case FIELD_LONG_LONG_INT: *(long long int*)address = static_cast<long long int>(luaL_checkinteger(L, index)); break;
     case FIELD_UNSIGNED_LONG_LONG_INT: *(unsigned long long int*)address = static_cast<unsigned long long int>(luaL_checkinteger(L, index)); break;
     case FIELD_CHAR: *(char*)address = static_cast<char>(luaL_checkinteger(L, index)); break;
     case FIELD_FLOAT: *(float*)address = static_cast<float>(luaL_checkinteger(L, index)); break;
     case FIELD_DOUBLE: *(double*)address = static_cast<double>(luaL_checkinteger(L, index)); break;
-    case FIELD_LONG_DOUBLE: *(long double*)address = static_cast<long double>(luaL_checkinteger(L, index)); break;
     case FIELD_C_STRING: {
         size_t length;
         const char* inputString = CheckLString(L, index, &length);
@@ -137,7 +131,7 @@ static void SetCValue(lua_State* L, MemoryType memoryType, uintptr_t address, in
 
 void __cdecl Hook_SetAppeal(void* __ptr64 plot, int appeal) {
     std::cout << "Hooked SetAppeal!\n";
-    if (lockedAppeals.find((short*)((uintptr_t)plot + 0x4a)) != lockedAppeals.end()) {
+    if (lockedAppeals.find((short*)((uintptr_t)plot + 0x4a)) == lockedAppeals.end()) {
         Base_SetAppeal(plot, appeal);
     }
 }
