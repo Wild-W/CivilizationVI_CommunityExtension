@@ -218,7 +218,6 @@
     <ClCompile Include="HavokScript.cpp" />
     <ClCompile Include="MemoryManipulation.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="ProxyTypes.cpp" />
     <ClCompile Include="Runtime.cpp" />
   </ItemGroup>
   <ItemGroup>

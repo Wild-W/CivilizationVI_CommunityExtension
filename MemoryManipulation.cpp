@@ -23,13 +23,16 @@ namespace MemoryManipulation {
             switch (fieldType) {
             case FIELD_BYTE: hks::hksi_lua_pushinteger(L, *(byte*)address); break;
             case FIELD_SHORT: hks::hksi_lua_pushinteger(L, *(short*)address); break;
+            case FIELD_UNSIGNED_SHORT: hks::hksi_lua_pushinteger(L, *(unsigned short*)address); break;
             case FIELD_INT: hks::hksi_lua_pushinteger(L, *(int*)address); break;
+            case FIELD_UNSIGNED_INT: hks::hksi_lua_pushinteger(L, *(unsigned int*)address); break;
             case FIELD_LONG_LONG_INT: hks::hksi_lua_pushinteger(L, *(long long int*)address); break;
             case FIELD_UNSIGNED_LONG_LONG_INT: hks::hksi_lua_pushinteger(L, *(unsigned long long int*)address); break;
             case FIELD_CHAR: hks::hksi_lua_pushinteger(L, *(char*)address); break;
             case FIELD_FLOAT: hks::hksi_lua_pushnumber(L, *(float*)address); break;
             case FIELD_DOUBLE: hks::hksi_lua_pushnumber(L, *(double*)address); break;
             case FIELD_C_STRING: hks::hksi_lua_pushfstring(L, *(char**)address); break;
+            case FIELD_BOOL: hks::hksi_lua_pushinteger(L, *(bool*)address); break;
             default: hks::hksi_luaL_error(L, "Invalid FieldType parameter was passed!"); return 0;
             }
             return 1;
@@ -39,13 +42,15 @@ namespace MemoryManipulation {
             switch (memoryType) {
             case FIELD_BYTE: *(byte*)address = static_cast<byte>(hks::checkinteger(L, index)); break;
             case FIELD_SHORT: *(short*)address = static_cast<short>(hks::checkinteger(L, index)); break;
-            case FIELD_INT: *(int*)address = static_cast<int>(hks::checkinteger(L, index)); break;
+            case FIELD_UNSIGNED_SHORT: *(unsigned short*)address = static_cast<unsigned short>(hks::checkinteger(L, index)); break;
+            case FIELD_INT: *(int*)address = hks::checkinteger(L, index); break;
+            case FIELD_UNSIGNED_INT: *(unsigned int*)address = static_cast<unsigned int>(hks::checkinteger(L, index)); break;
             case FIELD_LONG_LONG_INT: *(long long int*)address = static_cast<long long int>(hks::checkinteger(L, index)); break;
             case FIELD_UNSIGNED_LONG_LONG_INT: *(unsigned long long int*)address =
                 static_cast<unsigned long long int>(hks::checkinteger(L, index)); break;
             case FIELD_CHAR: *(char*)address = static_cast<char>(hks::checkinteger(L, index)); break;
             case FIELD_FLOAT: *(float*)address = static_cast<float>(hks::checknumber(L, index)); break;
-            case FIELD_DOUBLE: *(double*)address = static_cast<double>(hks::checknumber(L, index)); break;
+            case FIELD_DOUBLE: *(double*)address = hks::checknumber(L, index); break;
             case FIELD_C_STRING: {
                 size_t length;
                 const char* inputString = hks::CheckLString(L, index, &length);
@@ -58,6 +63,7 @@ namespace MemoryManipulation {
                 *(char**)address = newString;
                 break;
             }
+            case FIELD_BOOL: *(bool*)address = hks::hksi_lua_toboolean(L, index);
             default: hks::hksi_luaL_error(L, "Invalid MemoryType parameter was passed!");
             }
         }
