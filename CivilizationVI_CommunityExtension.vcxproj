@@ -215,7 +215,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="GameCore_XP2_FinalRelease.cpp" />
+    <ClCompile Include="HavokScript.cpp" />
+    <ClCompile Include="MemoryManipulation.cpp" />
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="ProxyTypes.cpp" />
+    <ClCompile Include="Runtime.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="HavokScript.h" />
+    <ClInclude Include="MemoryManipulation.h" />
+    <ClInclude Include="ProxyTypes.h" />
+    <ClInclude Include="Runtime.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

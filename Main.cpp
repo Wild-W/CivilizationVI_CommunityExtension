@@ -1,179 +1,48 @@
 #include <windows.h>
 #include <iostream>
-#include <MinHook.h>
+#include "HavokScript.h"
 #include <set>
 #include <cstring>
-#pragma comment(lib, "libMinHook.x64.lib")
+#include "Runtime.h"
+#include "MemoryManipulation.h"
+#include "ProxyTypes.h"
 
-constexpr int LUA_GLOBAL = -10002;
-
-HMODULE legitDll;
-uintptr_t baseAddress;
-HMODULE hksDll;
 HANDLE mainThread;
 
-typedef struct lua_State lua_State;
-typedef class Instance Instance;
+ProxyTypes::DllCreateGameContext base_DllCreateGameContext;
 
-typedef void* (__cdecl* DllCreateGameContextType)(void);
-DllCreateGameContextType base_DllCreateGameContext;
-typedef void (__cdecl* DllDestroyGameContextType)(void*);
-DllDestroyGameContextType base_DllDestroyGameContext;
-typedef void* (__cdecl* EXP_GetTelementarySessionHashType)(void);
-EXP_GetTelementarySessionHashType base_EXP_GetTelementarySessionHash;
+ProxyTypes::PushMethods Base_Plot_PushMethods;
+ProxyTypes::PushMethods orig_Plot_PushMethods;
 
-typedef void (__cdecl* PushMethodsType)(lua_State* __ptr64, int);
-PushMethodsType Base_Plot_PushMethods;
-PushMethodsType orig_Plot_PushMethods;
+ProxyTypes::IMapPlot_GetInstance IMapPlot_GetInstance;
+ProxyTypes::DiplomaticRelations_ChangeGrievanceScore DiplomaticRelations_ChangeGrievanceScore;
 
-typedef void (__cdecl* hks_pushnamedcclosureType)(lua_State* __ptr64, int(__cdecl*)(lua_State* __ptr64), int, const char* __ptr64, int);
-hks_pushnamedcclosureType hks_pushnamedcclosure;
-typedef int (__cdecl* luaL_checkintegerType)(lua_State* __ptr64, int);
-luaL_checkintegerType luaL_checkinteger;
-typedef double (__cdecl* luaL_checknumberType)(struct lua_State* __ptr64, int);
-luaL_checknumberType luaL_checknumber;
-typedef void (__cdecl* hksi_lua_setfieldType)(lua_State* __ptr64, int, const char* __ptr64);
-hksi_lua_setfieldType hksi_lua_setfield;
-typedef int (__thiscall* GetTopType)(lua_State* __ptr64);
-GetTopType GetTop;
-typedef int (__thiscall* DoStringType)(lua_State* __ptr64, const char* __ptr64);
-DoStringType DoString;
-typedef int (__cdecl* hksi_lua_tobooleanType)(struct lua_State* __ptr64, int);
-hksi_lua_tobooleanType hksi_lua_toboolean;
-typedef void (__cdecl* hksi_lua_pushnumberType)(struct lua_State* __ptr64, double);
-hksi_lua_pushnumberType hksi_lua_pushnumber;
-typedef void (__cdecl* hksi_lua_pushintegerType)(struct lua_State* __ptr64, int);
-hksi_lua_pushintegerType hksi_lua_pushinteger;
-typedef void (__cdecl* hksi_luaL_errorType)(struct lua_State* __ptr64, char const* __ptr64, ...);
-hksi_luaL_errorType hksi_luaL_error;
-typedef char const* __ptr64 (__cdecl* hksi_lua_pushfstringType)(struct lua_State* __ptr64, char const* __ptr64, ...);
-hksi_lua_pushfstringType hksi_lua_pushfstring;
-typedef char const* __ptr64 (__cdecl* CheckLStringType)(struct lua_State*, int, unsigned __int64* __ptr64);
-CheckLStringType CheckLString;
-typedef void* __ptr64 (__cdecl* hksi_lua_touserdataType)(struct lua_State* __ptr64, int);
-hksi_lua_touserdataType hksi_lua_touserdata;
-typedef void (__cdecl* hksi_lua_getfieldType)(struct lua_State* __ptr64, int, char const* __ptr64);
-hksi_lua_getfieldType hksi_lua_getfield;
-typedef void(__thiscall* PopType)(lua_State*, int);
-PopType Pop;
+ProxyTypes::SetAppeal Base_SetAppeal;
+ProxyTypes::SetAppeal orig_SetAppeal;
 
-typedef void* (__cdecl* IMapPlot_GetInstanceType)(lua_State* __ptr64, int, bool);
-IMapPlot_GetInstanceType IMapPlot_GetInstance;
-typedef void(__cdecl* DiplomaticRelations_ChangeGrievanceScoreType)(void* __ptr64 diplomaticRelations, int player1Id, int player2Id, int amount);
-DiplomaticRelations_ChangeGrievanceScoreType DiplomaticRelations_ChangeGrievanceScore;
-
-typedef void (__thiscall* SetAppealType)(void* __ptr64 plot, int appeal);
-SetAppealType Base_SetAppeal;
-SetAppealType orig_SetAppeal;
-
-typedef void (__cdecl* RegisterScriptDataType)(struct lua_State* __ptr64);
-RegisterScriptDataType base_RegisterScriptData;
-RegisterScriptDataType orig_RegisterScriptData;
+ProxyTypes::RegisterScriptData base_RegisterScriptData;
+ProxyTypes::RegisterScriptData orig_RegisterScriptData;
 
 std::set<short*> lockedAppeals;
 
-enum MemoryType {
-    FIELD_BYTE,
-    FIELD_SHORT,
-    FIELD_UNSIGNED_SHORT,
-    FIELD_INT,
-    FIELD_UNSIGNED_INT,
-    FIELD_LONG_LONG_INT,
-    FIELD_UNSIGNED_LONG_LONG_INT,
-    FIELD_CHAR,
-    FIELD_FLOAT,
-    FIELD_DOUBLE,
-    FIELD_C_STRING,
-    FIELD_BOOL
-};
-
-static int PushCValue(lua_State* L, MemoryType memoryType, uintptr_t address) {
-    switch (memoryType) {
-    case FIELD_BYTE: hksi_lua_pushinteger(L, *(byte*)address); break;
-    case FIELD_SHORT: hksi_lua_pushinteger(L, *(short*)address); break;
-    case FIELD_INT: hksi_lua_pushinteger(L, *(int*)address); break;
-    case FIELD_LONG_LONG_INT: hksi_lua_pushinteger(L, *(long long int*)address); break;
-    case FIELD_UNSIGNED_LONG_LONG_INT: hksi_lua_pushinteger(L, *(unsigned long long int*)address); break;
-    case FIELD_CHAR: hksi_lua_pushinteger(L, *(char*)address); break;
-    case FIELD_FLOAT: hksi_lua_pushnumber(L, *(float*)address); break;
-    case FIELD_DOUBLE: hksi_lua_pushnumber(L, *(double*)address); break;
-    case FIELD_C_STRING: hksi_lua_pushfstring(L, *(char**)address); break;
-    default: hksi_luaL_error(L, "Invalid MemoryType parameter was passed!"); return 0;
-    }
-    return 1;
-}
-
-static void SetCValue(lua_State* L, MemoryType memoryType, uintptr_t address, int index) {
-    switch (memoryType) {
-    case FIELD_BYTE: *(byte*)address = static_cast<byte>(luaL_checkinteger(L, index)); break;
-    case FIELD_SHORT: *(short*)address = static_cast<short>(luaL_checkinteger(L, index)); break;
-    case FIELD_INT: *(int*)address = static_cast<int>(luaL_checkinteger(L, index)); break;
-    case FIELD_LONG_LONG_INT: *(long long int*)address = static_cast<long long int>(luaL_checkinteger(L, index)); break;
-    case FIELD_UNSIGNED_LONG_LONG_INT: *(unsigned long long int*)address = static_cast<unsigned long long int>(luaL_checkinteger(L, index)); break;
-    case FIELD_CHAR: *(char*)address = static_cast<char>(luaL_checkinteger(L, index)); break;
-    case FIELD_FLOAT: *(float*)address = static_cast<float>(luaL_checkinteger(L, index)); break;
-    case FIELD_DOUBLE: *(double*)address = static_cast<double>(luaL_checkinteger(L, index)); break;
-    case FIELD_C_STRING: {
-        size_t length;
-        const char* inputString = CheckLString(L, index, &length);
-        char* newString = (char*)malloc(length + 1);
-        if (!newString) {
-            hksi_luaL_error(L, "String memory allocation failed");
-            return;
-        }
-        strcpy_s(newString, length, inputString);
-        *(char**)address = newString;
-        break;
-    }
-    default: hksi_luaL_error(L, "Invalid MemoryType parameter was passed!");
-    }
-}
-
-void __cdecl Hook_SetAppeal(void* __ptr64 plot, int appeal) {
+void __cdecl Hook_SetAppeal(void* plot, int appeal) {
     std::cout << "Hooked SetAppeal!\n";
     if (lockedAppeals.find((short*)((uintptr_t)plot + 0x4a)) == lockedAppeals.end()) {
         Base_SetAppeal(plot, appeal);
     }
 }
 
-static int __cdecl lMem(lua_State* __ptr64 L) {
-    uintptr_t address = static_cast<uintptr_t>(luaL_checknumber(L, 1)); // Check for number because int too small to store x64 pointer
-    auto memoryType = static_cast<MemoryType>(luaL_checkinteger(L, 2));
-    if (GetTop(L) == 3) {
-        SetCValue(L, memoryType, baseAddress + address, 3);
-        return 0;
-    }
-    return PushCValue(L, memoryType, baseAddress + address);
-}
-
-static int __cdecl lObjMem(lua_State* __ptr64 L) {
-    hksi_lua_getfield(L, 1, "__instance");
-    auto objectAddress = reinterpret_cast<uintptr_t>(hksi_lua_touserdata(L, -1));
-    if (objectAddress == NULL) {
-        hksi_luaL_error(L, "Failed to retrieve __instance field as userdata. Is your object NULL?");
-        return 0;
-    }
-    Pop(L, 1);
-    uintptr_t offsetAddress = static_cast<uintptr_t>(luaL_checkinteger(L, 2));
-    auto memoryType = static_cast<MemoryType>(luaL_checkinteger(L, 3));
-    if (GetTop(L) == 4) {
-        SetCValue(L, memoryType, objectAddress + offsetAddress, 4);
-        return 0;
-    }
-    return PushCValue(L, memoryType, objectAddress + offsetAddress);
-}
-
-static int __cdecl lSetAppeal(lua_State* __ptr64 L) {
+static int lSetAppeal(hks::lua_State* L) {
     void* plot = IMapPlot_GetInstance(L, 1, true);
-    int appeal = luaL_checkinteger(L, 2);
+    int appeal = hks::checkinteger(L, 2);
     std::cout << plot << ' ' << appeal << '\n';
     Hook_SetAppeal(plot, appeal);
     return 0;
 }
 
-static int __cdecl lLockAppeal(lua_State* __ptr64 L) {
+static int lLockAppeal(hks::lua_State* L) {
     void* plot = IMapPlot_GetInstance(L, 1, true);
-    bool setToLock = hksi_lua_toboolean(L, 2);
+    bool setToLock = hks::hksi_lua_toboolean(L, 2);
     short* appealAddress = (short*)((uintptr_t)plot + 0x4a);
     std::cout << "Plot adr: " << plot << "\nAppeal adr: " << appealAddress << "\nAppeal: " << *appealAddress << "\nsetToLock: " << setToLock << '\n';
     if (setToLock) {
@@ -185,82 +54,48 @@ static int __cdecl lLockAppeal(lua_State* __ptr64 L) {
     return 0;
 }
 
-static void __cdecl Hook_Plot_PushMethods(lua_State* __ptr64 L, int stackOffset) {
+static void __cdecl Hook_Plot_PushMethods(hks::lua_State* L, int stackOffset) {
     std::cout << "Hooked pushmethods!!\n";
 
-    hks_pushnamedcclosure(L, lSetAppeal, 0, "lSetAppeal", 0);
-    hksi_lua_setfield(L, stackOffset, "SetAppeal");
-    hks_pushnamedcclosure(L, lLockAppeal, 0, "lLockAppeal", 0);
-    hksi_lua_setfield(L, stackOffset, "LockAppeal");
+    hks::pushnamedcclosure(L, lSetAppeal, 0, "lSetAppeal", 0);
+    hks::hksi_lua_setfield(L, stackOffset, "SetAppeal");
+    hks::pushnamedcclosure(L, lLockAppeal, 0, "lLockAppeal", 0);
+    hks::hksi_lua_setfield(L, stackOffset, "LockAppeal");
 
-    DoString(L, "print(StateName)");
+    hks::DoString(L, "print(StateName)");
 
     Base_Plot_PushMethods(L, stackOffset);
 }
 
-void __cdecl Hook_RegisterScriptData(lua_State* L) {
+void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     std::cout << "Registering Memory Functions\n";
-    hks_pushnamedcclosure(L, lMem, 0, "lMem", 0);
-    hksi_lua_setfield(L, LUA_GLOBAL, "Mem");
-    hks_pushnamedcclosure(L, lObjMem, 0, "lObjMem", 0);
-    hksi_lua_setfield(L, LUA_GLOBAL, "ObjMem");
+    hks::pushnamedcclosure(L, MemoryManipulation::LuaExport::lMem, 0, "lMem", 0);
+    hks::hksi_lua_setfield(L, hks::LUA_GLOBAL, "Mem");
+    hks::pushnamedcclosure(L, MemoryManipulation::LuaExport::lObjMem, 0, "lObjMem", 0);
+    hks::hksi_lua_setfield(L, hks::LUA_GLOBAL, "ObjMem");
     base_RegisterScriptData(L);
 }
 
-template <typename T>
-inline MH_STATUS MH_CreateHookEx(LPVOID pTarget, LPVOID pDetour, T** ppOriginal) {
-    return MH_CreateHook(pTarget, pDetour, reinterpret_cast<LPVOID*>(ppOriginal));
-}
+constexpr uintptr_t SET_APPEAL_OFFSET = 0x61270;
+constexpr uintptr_t PLOT_PUSH_METHODS_OFFSET = 0x1b2e0;
+constexpr uintptr_t REGISTER_SCRIPT_DATA_OFFSET = 0x5bdac0;
+constexpr uintptr_t DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET = 0x1cea40;
+constexpr uintptr_t IMAP_PLOT_GET_INSTANCE_OFFSET = 0x15d60;
 
-static void InitHavokScript() {
-    if (MH_Initialize() != MH_OK) {
-        std::cout << "MH failed to init\n";
-    }
+static void InitHooks() {
+    IMapPlot_GetInstance = Runtime::GetGameCoreFunctionAt<ProxyTypes::IMapPlot_GetInstance>(IMAP_PLOT_GET_INSTANCE_OFFSET);
+    DiplomaticRelations_ChangeGrievanceScore = Runtime
+        ::GetGameCoreFunctionAt<ProxyTypes::DiplomaticRelations_ChangeGrievanceScore>(DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET);
 
-    hksDll = GetModuleHandle(TEXT("HavokScript_FinalRelease.dll"));
-    if (hksDll == NULL) {
-        std::cout << "Failed to load HavokScript! " << GetLastError() << '\n';
-        return;
-    }
-
-    hks_pushnamedcclosure = (hks_pushnamedcclosureType)GetProcAddress(hksDll, "?hks_pushnamedcclosure@@YAXPEAUlua_State@@P6AH0@ZHPEBDH@Z");
-    hksi_lua_setfield = (hksi_lua_setfieldType)GetProcAddress(hksDll, "?hksi_lua_setfield@@YAXPEAUlua_State@@HPEBD@Z");
-    luaL_checkinteger = (luaL_checkintegerType)GetProcAddress(hksDll, "?luaL_checkinteger@@YAHPEAUlua_State@@H@Z");
-    GetTop = (GetTopType)GetProcAddress(hksDll, "?GetTop@LuaState@LuaPlus@@QEBAHXZ");
-    DoString = (DoStringType)GetProcAddress(hksDll, "?DoString@LuaState@LuaPlus@@QEAAHPEBD@Z");
-    hksi_lua_toboolean = (hksi_lua_tobooleanType)GetProcAddress(hksDll, "?hksi_lua_toboolean@@YAHPEAUlua_State@@H@Z");
-    hksi_lua_pushinteger = (hksi_lua_pushintegerType)GetProcAddress(hksDll, "?hksi_lua_pushinteger@@YAXPEAUlua_State@@H@Z");
-    hksi_lua_pushnumber = (hksi_lua_pushnumberType)GetProcAddress(hksDll, "?hksi_lua_pushnumber@@YAXPEAUlua_State@@N@Z");
-    hksi_luaL_error = (hksi_luaL_errorType)GetProcAddress(hksDll, "?hksi_luaL_error@@YAHPEAUlua_State@@PEBDZZ");
-    luaL_checknumber = (luaL_checknumberType)GetProcAddress(hksDll, "?luaL_checknumber@@YANPEAUlua_State@@H@Z");
-    hksi_lua_pushfstring = (hksi_lua_pushfstringType)GetProcAddress(hksDll, "?hksi_lua_pushfstring@@YAPEBDPEAUlua_State@@PEBDZZ");
-    CheckLString = (CheckLStringType)GetProcAddress(hksDll, "");
-    Pop = (PopType)GetProcAddress(hksDll, "?Pop@LuaState@LuaPlus@@QEAAXH@Z");
-    hksi_lua_touserdata = (hksi_lua_touserdataType)GetProcAddress(hksDll, "?hksi_lua_touserdata@@YAPEAXPEAUlua_State@@H@Z");
-    hksi_lua_getfield = (hksi_lua_getfieldType)GetProcAddress(hksDll, "?hksi_lua_getfield@@YAXPEAUlua_State@@HPEBD@Z");
-
-    IMapPlot_GetInstance = reinterpret_cast<IMapPlot_GetInstanceType>(baseAddress + 0x15d60);
-    DiplomaticRelations_ChangeGrievanceScore = reinterpret_cast<DiplomaticRelations_ChangeGrievanceScoreType>(baseAddress + 0x1cea40);
-
-    orig_RegisterScriptData = reinterpret_cast<RegisterScriptDataType>(baseAddress + 0x5bdac0);
-    if (MH_CreateHookEx(orig_RegisterScriptData, &Hook_RegisterScriptData, &base_RegisterScriptData)) {
-        std::cout << "Failed to hook RegisterScriptData\n";
-    }
+    orig_RegisterScriptData = Runtime::GetGameCoreFunctionAt<ProxyTypes::RegisterScriptData>(REGISTER_SCRIPT_DATA_OFFSET);
+    Runtime::CreateHook(orig_RegisterScriptData, &Hook_RegisterScriptData, &base_RegisterScriptData);
 
     lockedAppeals = {};
-    orig_SetAppeal = reinterpret_cast<SetAppealType>(baseAddress + 0x61270);
-    if (MH_CreateHook(reinterpret_cast<void**>(orig_SetAppeal), &Hook_SetAppeal, reinterpret_cast<void**>(&Base_SetAppeal)) != MH_OK) {
-        std::cout << "Failed to hook Plot::SetAppeal\n";
-    }
+    orig_SetAppeal = Runtime::GetGameCoreFunctionAt<ProxyTypes::SetAppeal>(SET_APPEAL_OFFSET);
+    Runtime::CreateHook(orig_SetAppeal, &Hook_SetAppeal, &Base_SetAppeal);
 
-    orig_Plot_PushMethods = reinterpret_cast<PushMethodsType>(baseAddress + 0x1b2e0);
-    if (MH_CreateHook(reinterpret_cast<void**>(orig_Plot_PushMethods), &Hook_Plot_PushMethods, reinterpret_cast<void**>(&Base_Plot_PushMethods)) != MH_OK) {
-        std::cout << "Failed to hook Plot::PushMethods\n";
-    }
-
-    if (MH_EnableHook(MH_ALL_HOOKS) != MH_OK) {
-        std::cout << "Failed to enable hooks\n";
-    }
+    orig_Plot_PushMethods = Runtime::GetGameCoreFunctionAt<ProxyTypes::PushMethods>(PLOT_PUSH_METHODS_OFFSET);
+    Runtime::CreateHook(orig_Plot_PushMethods, &Hook_Plot_PushMethods, &Base_Plot_PushMethods);
 }
 
 static void InitConsole() {
@@ -278,24 +113,10 @@ static void InitConsole() {
     std::cout << "Console initialized successfully." << std::endl;
 }
 
-static void Uninitialize(void) {
-    if (legitDll) {
-        MH_DisableHook(MH_ALL_HOOKS);
-        MH_Uninitialize();
-        FreeLibrary(legitDll);
-        legitDll = NULL;
-    }
-}
-
 DWORD WINAPI MainThread(LPVOID lpParam) {
-    std::cout << "Hello world\n";
-    legitDll = LoadLibraryW(L"proxy.dll");
-    if (!legitDll) {
-        std::cout << "Legitimate DLL failed to load!\n";
-        return FALSE;
-    }
-    base_DllCreateGameContext = (DllCreateGameContextType)GetProcAddress(legitDll, "DllCreateGameContext");
-    baseAddress = reinterpret_cast<uintptr_t>(legitDll);
+    Runtime::Create();
+    base_DllCreateGameContext = (ProxyTypes::DllCreateGameContext)GetProcAddress(Runtime::GameCore, "DllCreateGameContext");
+    return TRUE;
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
@@ -307,7 +128,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
     case DLL_THREAD_ATTACH:
     case DLL_THREAD_DETACH:
     case DLL_PROCESS_DETACH:
-        Uninitialize();
+        Runtime::Destroy();
         break;
     }
     return TRUE;
@@ -315,7 +136,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 
 extern "C" {
     __declspec(dllexport) void* __cdecl DllCreateGameContext(void) {
-        std::cout << "Waiting for main thread " << base_DllCreateGameContext << '\n';
+        std::cout << "Waiting for main thread\n";
         DWORD result = WaitForSingleObject(mainThread, INFINITE);
         if (result == WAIT_OBJECT_0) {
             std::cout << "Main thread completed successfully.\n";
@@ -323,20 +144,11 @@ extern "C" {
         else {
             std::cerr << "WaitForSingleObject failed: " << GetLastError() << '\n';
         }
-        InitHavokScript();
-        // CloseHandle(mainThread);
+        Runtime::InitHooks();
+        hks::InitHavokScript();
+        InitHooks();
         return base_DllCreateGameContext();
     }
-
-    // __declspec(dllexport) void DllDestroyGameContext(void* unknown) {
-    //     std::cout << "2 " << unknown << ' ' << base_DllDestroyGameContext << '\n';
-    //     base_DllDestroyGameContext(unknown);
-    // }
-
-    // __declspec(dllexport) void* EXP_GetTelementarySessionHash(void) {
-    //     std::cout << "3 " << base_EXP_GetTelementarySessionHash << '\n';
-    //     return base_EXP_GetTelementarySessionHash();
-    // }
 }
 
 #pragma region ExportRedirectors
