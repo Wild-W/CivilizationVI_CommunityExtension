@@ -6,6 +6,7 @@
 #include "Runtime.h"
 #include "MemoryManipulation.h"
 #include "ProxyTypes.h"
+#include <cmath>
 
 HANDLE mainThread;
 
@@ -17,12 +18,17 @@ ProxyTypes::PushMethods orig_Plot_PushMethods;
 ProxyTypes::PushMethods base_Cities_PushMethods;
 ProxyTypes::PushMethods orig_Cities_PushMethods;
 
+ProxyTypes::PushMethods base_Influence_PushMethods;
+ProxyTypes::PushMethods orig_Influence_PushMethods;
+
 ProxyTypes::IMapPlot_GetInstance IMapPlot_GetInstance;
 ProxyTypes::IPlayerCities_GetInstance IPlayerCities_GetInstance;
+ProxyTypes::IPlayerInfluence_GetInstance IPlayerInfluence_GetInstance;
 ProxyTypes::DiplomaticRelations_Edit DiplomaticRelations_Edit;
 
 ProxyTypes::DiplomaticRelations_ChangeGrievanceScore DiplomaticRelations_ChangeGrievanceScore;
 ProxyTypes::Cities_AddGreatWork Cities_AddGreatWork;
+ProxyTypes::Influence_SetTokensToGive Influence_SetTokensToGive;
 
 ProxyTypes::CCallWithErrorHandling CCallWithErrorHandling;
 
@@ -51,7 +57,7 @@ static int lSetAppeal(hks::lua_State* L) {
 
 static int lLockAppeal(hks::lua_State* L) {
     void* plot = IMapPlot_GetInstance(L, 1, true);
-    bool setToLock = hks::hksi_lua_toboolean(L, 2);
+    bool setToLock = hks::toboolean(L, 2);
     short* appealAddress = (short*)((uintptr_t)plot + 0x4a);
     std::cout << "Plot adr: " << plot << "\nAppeal adr: " << appealAddress << "\nAppeal: " << *appealAddress << "\nsetToLock: " << setToLock << '\n';
     if (setToLock) {
@@ -128,6 +134,44 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     base_RegisterScriptData(L);
 }
 
+static int lSetTokensToGive(hks::lua_State* L) {
+    void* influence = IPlayerInfluence_GetInstance(L, 1, true);
+    int tokens = hks::checkinteger(L, 2);
+
+    Influence_SetTokensToGive(influence, tokens);
+    return 0;
+}
+
+static int lSetPoints(hks::lua_State* L) {
+    void* influence = IPlayerInfluence_GetInstance(L, 1, true);
+    double points = hks::checknumber(L, 2);
+
+    *(unsigned int*)((uintptr_t)influence + 0xb8) = static_cast<unsigned int>(std::round(points * 256.0));
+    return 0;
+}
+
+static int lAdjustPoints(hks::lua_State* L) {
+    void* influence = IPlayerInfluence_GetInstance(L, 1, true);
+    double amountPoints = hks::checknumber(L, 2);
+
+    *(unsigned int*)((uintptr_t)influence + 0xb8) += static_cast<unsigned int>(std::round(amountPoints * 256.0));
+    return 0;
+}
+
+static void __cdecl Hook_Influence_PushMethods(hks::lua_State* L, int stackOffset) {
+    std::cout << "Hooked Influence::PushMethods!\n";
+
+    hks::pushnamedcclosure(L, lSetTokensToGive, 0, "lSetTokensToGive", 0);
+    hks::setfield(L, stackOffset, "SetTokensToGive");
+    hks::pushnamedcclosure(L, lSetPoints, 0, "lSetPoints", 0);
+    hks::setfield(L, stackOffset, "SetPoints");
+    hks::pushnamedcclosure(L, lAdjustPoints, 0, "lAdjustPoints", 0);
+    hks::setfield(L, stackOffset, "AdjustPoints");
+
+    base_Influence_PushMethods(L, stackOffset);
+}
+
+#pragma region Offsets
 constexpr uintptr_t SET_APPEAL_OFFSET = 0x61270;
 constexpr uintptr_t PLOT_PUSH_METHODS_OFFSET = 0x1b2e0;
 constexpr uintptr_t REGISTER_SCRIPT_DATA_OFFSET = 0x5bdac0;
@@ -138,32 +182,42 @@ constexpr uintptr_t DIPLOMATIC_RELATIONS_EDIT = 0x1d0220;
 constexpr uintptr_t C_CALL_WITH_ERROR_HANDLING_OFFSET = 0x9ad880;
 constexpr uintptr_t CITIES_ADD_GREAT_WORK_OFFSET = 0x2643b0;
 constexpr uintptr_t CITIES_PUSH_METHODS_OFFSET = 0x6eeb10;
+constexpr uintptr_t IPLAYER_INFLUENCE_GET_INSTANCE_OFFSET = 0x6f34f0;
+constexpr uintptr_t SET_TOKENS_TO_GIVE_OFFSET = 0x2edaf0;
+constexpr uintptr_t INFLUENCE_PUSH_METHODS_OFFSET = 0x6f3650;
+#pragma endregion
 
 static void InitHooks() {
     std::cout << "Initializing hooks!\n";
+    using namespace Runtime;
 
-    CCallWithErrorHandling = Runtime::GetGameCoreFunctionAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
+    CCallWithErrorHandling = GetGameCoreFunctionAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
 
-    IPlayerCities_GetInstance = Runtime::GetGameCoreFunctionAt<ProxyTypes::IPlayerCities_GetInstance>(IPLAYER_CITIES_GET_INSTANCE_OFFSET);
-    IMapPlot_GetInstance = Runtime::GetGameCoreFunctionAt<ProxyTypes::IMapPlot_GetInstance>(IMAP_PLOT_GET_INSTANCE_OFFSET);
-    DiplomaticRelations_Edit = Runtime::GetGameCoreFunctionAt<ProxyTypes::DiplomaticRelations_Edit>(DIPLOMATIC_RELATIONS_EDIT);
+    IPlayerCities_GetInstance = GetGameCoreFunctionAt<ProxyTypes::IPlayerCities_GetInstance>(IPLAYER_CITIES_GET_INSTANCE_OFFSET);
+    IMapPlot_GetInstance = GetGameCoreFunctionAt<ProxyTypes::IMapPlot_GetInstance>(IMAP_PLOT_GET_INSTANCE_OFFSET);
+    IPlayerInfluence_GetInstance = GetGameCoreFunctionAt<ProxyTypes::IPlayerInfluence_GetInstance>(IPLAYER_INFLUENCE_GET_INSTANCE_OFFSET);
+    DiplomaticRelations_Edit = GetGameCoreFunctionAt<ProxyTypes::DiplomaticRelations_Edit>(DIPLOMATIC_RELATIONS_EDIT);
 
-    Cities_AddGreatWork = Runtime::GetGameCoreFunctionAt<ProxyTypes::Cities_AddGreatWork>(CITIES_ADD_GREAT_WORK_OFFSET);
-    DiplomaticRelations_ChangeGrievanceScore = Runtime
-        ::GetGameCoreFunctionAt<ProxyTypes::DiplomaticRelations_ChangeGrievanceScore>(DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET);
+    Influence_SetTokensToGive = GetGameCoreFunctionAt<ProxyTypes::Influence_SetTokensToGive>(SET_TOKENS_TO_GIVE_OFFSET);
+    Cities_AddGreatWork = GetGameCoreFunctionAt<ProxyTypes::Cities_AddGreatWork>(CITIES_ADD_GREAT_WORK_OFFSET);
+    DiplomaticRelations_ChangeGrievanceScore = GetGameCoreFunctionAt
+        <ProxyTypes::DiplomaticRelations_ChangeGrievanceScore>(DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET);
 
-    orig_RegisterScriptData = Runtime::GetGameCoreFunctionAt<ProxyTypes::RegisterScriptData>(REGISTER_SCRIPT_DATA_OFFSET);
-    Runtime::CreateHook(orig_RegisterScriptData, &Hook_RegisterScriptData, &base_RegisterScriptData);
+    orig_RegisterScriptData = GetGameCoreFunctionAt<ProxyTypes::RegisterScriptData>(REGISTER_SCRIPT_DATA_OFFSET);
+    CreateHook(orig_RegisterScriptData, &Hook_RegisterScriptData, &base_RegisterScriptData);
 
     lockedAppeals = {};
-    orig_SetAppeal = Runtime::GetGameCoreFunctionAt<ProxyTypes::SetAppeal>(SET_APPEAL_OFFSET);
-    Runtime::CreateHook(orig_SetAppeal, &Hook_SetAppeal, &base_SetAppeal);
+    orig_SetAppeal = GetGameCoreFunctionAt<ProxyTypes::SetAppeal>(SET_APPEAL_OFFSET);
+    CreateHook(orig_SetAppeal, &Hook_SetAppeal, &base_SetAppeal);
 
-    orig_Plot_PushMethods = Runtime::GetGameCoreFunctionAt<ProxyTypes::PushMethods>(PLOT_PUSH_METHODS_OFFSET);
-    Runtime::CreateHook(orig_Plot_PushMethods, &Hook_Plot_PushMethods, &base_Plot_PushMethods);
+    orig_Plot_PushMethods = GetGameCoreFunctionAt<ProxyTypes::PushMethods>(PLOT_PUSH_METHODS_OFFSET);
+    CreateHook(orig_Plot_PushMethods, &Hook_Plot_PushMethods, &base_Plot_PushMethods);
 
-    orig_Cities_PushMethods = Runtime::GetGameCoreFunctionAt<ProxyTypes::PushMethods>(CITIES_PUSH_METHODS_OFFSET);
-    Runtime::CreateHook(orig_Cities_PushMethods, &Hook_Cities_PushMethods, &base_Cities_PushMethods);
+    orig_Cities_PushMethods = GetGameCoreFunctionAt<ProxyTypes::PushMethods>(CITIES_PUSH_METHODS_OFFSET);
+    CreateHook(orig_Cities_PushMethods, &Hook_Cities_PushMethods, &base_Cities_PushMethods);
+
+    orig_Influence_PushMethods = GetGameCoreFunctionAt<ProxyTypes::PushMethods>(INFLUENCE_PUSH_METHODS_OFFSET);
+    CreateHook(orig_Influence_PushMethods, &Hook_Influence_PushMethods, &base_Influence_PushMethods);
 }
 
 static void InitConsole() {
@@ -204,10 +258,10 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 
 extern "C" {
     __declspec(dllexport) void* __cdecl DllCreateGameContext(void) {
-        std::cout << "Waiting for main thread\n";
+        std::cout << "Waiting for main thread ...\n";
         DWORD result = WaitForSingleObject(mainThread, INFINITE);
         if (result == WAIT_OBJECT_0) {
-            std::cout << "Main thread completed successfully.\n";
+            std::cout << "Main thread completed successfully!\n";
         }
         else {
             std::cerr << "WaitForSingleObject failed: " << GetLastError() << '\n';

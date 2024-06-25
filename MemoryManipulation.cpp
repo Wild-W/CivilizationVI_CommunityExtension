@@ -21,19 +21,19 @@ namespace MemoryManipulation {
     namespace {
         static int PushCValue(hks::lua_State* L, FieldType fieldType, uintptr_t address) {
             switch (fieldType) {
-            case FIELD_BYTE: hks::hksi_lua_pushinteger(L, *(byte*)address); break;
-            case FIELD_SHORT: hks::hksi_lua_pushinteger(L, *(short*)address); break;
-            case FIELD_UNSIGNED_SHORT: hks::hksi_lua_pushinteger(L, *(unsigned short*)address); break;
-            case FIELD_INT: hks::hksi_lua_pushinteger(L, *(int*)address); break;
-            case FIELD_UNSIGNED_INT: hks::hksi_lua_pushinteger(L, *(unsigned int*)address); break;
-            case FIELD_LONG_LONG_INT: hks::hksi_lua_pushinteger(L, *(long long int*)address); break;
-            case FIELD_UNSIGNED_LONG_LONG_INT: hks::hksi_lua_pushinteger(L, *(unsigned long long int*)address); break;
-            case FIELD_CHAR: hks::hksi_lua_pushinteger(L, *(char*)address); break;
-            case FIELD_FLOAT: hks::hksi_lua_pushnumber(L, *(float*)address); break;
-            case FIELD_DOUBLE: hks::hksi_lua_pushnumber(L, *(double*)address); break;
-            case FIELD_C_STRING: hks::hksi_lua_pushfstring(L, *(char**)address); break;
-            case FIELD_BOOL: hks::hksi_lua_pushinteger(L, *(bool*)address); break;
-            default: hks::hksi_luaL_error(L, "Invalid FieldType parameter was passed!"); return 0;
+            case FIELD_BYTE: hks::pushinteger(L, *(byte*)address); break;
+            case FIELD_SHORT: hks::pushinteger(L, *(short*)address); break;
+            case FIELD_UNSIGNED_SHORT: hks::pushinteger(L, *(unsigned short*)address); break;
+            case FIELD_INT: hks::pushinteger(L, *(int*)address); break;
+            case FIELD_UNSIGNED_INT: hks::pushinteger(L, *(unsigned int*)address); break;
+            case FIELD_LONG_LONG_INT: hks::pushinteger(L, *(long long int*)address); break;
+            case FIELD_UNSIGNED_LONG_LONG_INT: hks::pushinteger(L, *(unsigned long long int*)address); break;
+            case FIELD_CHAR: hks::pushinteger(L, *(char*)address); break;
+            case FIELD_FLOAT: hks::pushnumber(L, *(float*)address); break;
+            case FIELD_DOUBLE: hks::pushnumber(L, *(double*)address); break;
+            case FIELD_C_STRING: hks::pushfstring(L, *(char**)address); break;
+            case FIELD_BOOL: hks::pushinteger(L, *(bool*)address); break;
+            default: hks::error(L, "Invalid FieldType parameter was passed!"); return 0;
             }
             return 1;
         }
@@ -53,18 +53,18 @@ namespace MemoryManipulation {
             case FIELD_DOUBLE: *(double*)address = hks::checknumber(L, index); break;
             case FIELD_C_STRING: {
                 size_t length;
-                const char* inputString = hks::CheckLString(L, index, &length);
+                const char* inputString = hks::checklstring(L, index, &length);
                 char* newString = (char*)malloc(length + 1);
                 if (!newString) {
-                    hks::hksi_luaL_error(L, "String memory allocation failed");
+                    hks::error(L, "String memory allocation failed");
                     return;
                 }
                 strcpy_s(newString, length, inputString);
                 *(char**)address = newString;
                 break;
             }
-            case FIELD_BOOL: *(bool*)address = hks::hksi_lua_toboolean(L, index);
-            default: hks::hksi_luaL_error(L, "Invalid MemoryType parameter was passed!");
+            case FIELD_BOOL: *(bool*)address = hks::toboolean(L, index);
+            default: hks::error(L, "Invalid MemoryType parameter was passed!");
             }
         }
     }
@@ -74,7 +74,7 @@ namespace MemoryManipulation {
             // Check for number because int too small to store x64 pointer
             uintptr_t address = static_cast<uintptr_t>(hks::checknumber(L, 1));
             auto fieldType = static_cast<FieldType>(hks::checkinteger(L, 2));
-            if (hks::GetTop(L) == 3) {
+            if (hks::gettop(L) == 3) {
                 SetCValue(L, fieldType, Runtime::GameCoreAddress + address, 3);
                 return 0;
             }
@@ -82,16 +82,16 @@ namespace MemoryManipulation {
         }
 
         int lObjMem(hks::lua_State* L) {
-            hks::hksi_lua_getfield(L, 1, "__instance");
-            auto objectAddress = reinterpret_cast<uintptr_t>(hks::hksi_lua_touserdata(L, -1));
+            hks::getfield(L, 1, "__instance");
+            auto objectAddress = reinterpret_cast<uintptr_t>(hks::touserdata(L, -1));
             if (objectAddress == NULL) {
-                hks::hksi_luaL_error(L, "Failed to retrieve __instance field as userdata. Is your object NULL?");
+                hks::error(L, "Failed to retrieve __instance field as userdata. Is your object NULL?");
                 return 0;
             }
-            hks::Pop(L, 1);
+            hks::pop(L, 1);
             uintptr_t offsetAddress = static_cast<uintptr_t>(hks::checkinteger(L, 2));
             auto memoryType = static_cast<FieldType>(hks::checkinteger(L, 3));
-            if (hks::GetTop(L) == 4) {
+            if (hks::gettop(L) == 4) {
                 SetCValue(L, memoryType, objectAddress + offsetAddress, 4);
                 return 0;
             }
