@@ -130,6 +130,7 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     hks::setfield(L, hks::LUA_GLOBAL, "ObjMem");
 
     CCallWithErrorHandling(L, RegisterDiplomaticRelations, NULL);
+    MemoryManipulation::LuaExport::PushFieldTypes(L);
 
     base_RegisterScriptData(L);
 }

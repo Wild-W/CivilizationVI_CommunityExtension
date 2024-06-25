@@ -97,5 +97,45 @@ namespace MemoryManipulation {
             }
             return PushCValue(L, memoryType, objectAddress + offsetAddress);
         }
+
+        void PushFieldTypes(hks::lua_State* L) {
+            std::cout << "Pushing Field Types!\n";
+
+            hks::pushinteger(L, FIELD_BYTE);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_BYTE");
+
+            hks::pushinteger(L, FIELD_SHORT);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_SHORT");
+
+            hks::pushinteger(L, FIELD_UNSIGNED_SHORT);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_UNSIGNED_SHORT");
+
+            hks::pushinteger(L, FIELD_INT);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_INT");
+
+            hks::pushinteger(L, FIELD_UNSIGNED_INT);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_UNSIGNED_INT");
+
+            hks::pushinteger(L, FIELD_LONG_LONG_INT);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_LONG_LONG_INT");
+
+            hks::pushinteger(L, FIELD_UNSIGNED_LONG_LONG_INT);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_UNSIGNED_LONG_LONG_INT");
+
+            hks::pushinteger(L, FIELD_CHAR);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_CHAR");
+
+            hks::pushinteger(L, FIELD_FLOAT);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_FLOAT");
+
+            hks::pushinteger(L, FIELD_DOUBLE);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_DOUBLE");
+
+            hks::pushinteger(L, FIELD_C_STRING);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_C_STRING");
+
+            hks::pushinteger(L, FIELD_BOOL);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_BOOL");
+        }
     }
 }
