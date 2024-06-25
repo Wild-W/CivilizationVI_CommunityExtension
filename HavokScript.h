@@ -7,14 +7,16 @@ namespace hks {
 
 	typedef struct lua_State lua_State;
 
-	typedef void(__cdecl* hks_pushnamedcclosureType)(lua_State*, int(__cdecl*)(lua_State*), int, const char*, int);
+	typedef int(__cdecl* luaFunc)(lua_State*);
+
+	typedef void(__cdecl* hks_pushnamedcclosureType)(lua_State*, luaFunc, int, const char*, int);
 	extern hks_pushnamedcclosureType pushnamedcclosure;
 	typedef int(__cdecl* luaL_checkintegerType)(lua_State*, int);
 	extern luaL_checkintegerType checkinteger;
 	typedef double(__cdecl* luaL_checknumberType)(lua_State*, int);
 	extern luaL_checknumberType checknumber;
 	typedef void(__cdecl* hksi_lua_setfieldType)(lua_State*, int, const char*);
-	extern hksi_lua_setfieldType hksi_lua_setfield;
+	extern hksi_lua_setfieldType setfield;
 	typedef int(__thiscall* GetTopType)(lua_State*);
 	extern GetTopType GetTop;
 	typedef int(__thiscall* DoStringType)(lua_State*, const char*);
@@ -37,6 +39,8 @@ namespace hks {
 	extern hksi_lua_getfieldType hksi_lua_getfield;
 	typedef void(__thiscall* PopType)(lua_State*, int);
 	extern PopType Pop;
+	typedef void(__cdecl* hksi_lua_createtableType)(lua_State*, int, int);
+	extern hksi_lua_createtableType createtable;
 
 	// Should only ever be called once
 	extern void InitHavokScript();

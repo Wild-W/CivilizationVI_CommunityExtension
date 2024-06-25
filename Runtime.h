@@ -13,7 +13,7 @@ namespace Runtime {
 	// Call on dll exit
 	extern void Destroy();
 
-	void InitHooks();
+	void InitMinHook();
 
 	template <typename T>
 	T GetGameCoreFunctionAt(uintptr_t address) {

@@ -15,7 +15,7 @@ namespace Runtime {
 		GameCoreAddress = reinterpret_cast<uintptr_t>(GameCore);
 	}
 
-	void InitHooks() {
+	void InitMinHook() {
 		if (MH_Initialize() != MH_OK) {
 			std::cout << "MH failed to init\n";
 		}

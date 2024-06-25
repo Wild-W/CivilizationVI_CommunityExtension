@@ -6,14 +6,16 @@ namespace hks {
 	
 	typedef struct lua_State lua_State;
 
-	typedef void(__cdecl* hks_pushnamedcclosureType)(lua_State*, int(__cdecl*)(lua_State*), int, const char*, int);
+	typedef int(__cdecl* luaFunc)(lua_State*);
+
+	typedef void(__cdecl* hks_pushnamedcclosureType)(lua_State*, luaFunc, int, const char*, int);
 	hks_pushnamedcclosureType pushnamedcclosure;
 	typedef int(__cdecl* luaL_checkintegerType)(lua_State*, int);
 	luaL_checkintegerType checkinteger;
 	typedef double(__cdecl* luaL_checknumberType)(lua_State*, int);
 	luaL_checknumberType checknumber;
 	typedef void(__cdecl* hksi_lua_setfieldType)(lua_State*, int, const char*);
-	hksi_lua_setfieldType hksi_lua_setfield;
+	hksi_lua_setfieldType setfield;
 	typedef int(__thiscall* GetTopType)(lua_State*);
 	GetTopType GetTop;
 	typedef int(__thiscall* DoStringType)(lua_State*, const char*);
@@ -36,11 +38,13 @@ namespace hks {
 	hksi_lua_getfieldType hksi_lua_getfield;
 	typedef void(__thiscall* PopType)(lua_State*, int);
 	PopType Pop;
+	typedef void(__cdecl* hksi_lua_createtableType)(lua_State*, int, int);
+	hksi_lua_createtableType createtable;
 
 	namespace {
 		static void InitHavokScriptImports(HMODULE hksDll) {
 			pushnamedcclosure = (hks_pushnamedcclosureType)GetProcAddress(hksDll, "?hks_pushnamedcclosure@@YAXPEAUlua_State@@P6AH0@ZHPEBDH@Z");
-			hksi_lua_setfield = (hksi_lua_setfieldType)GetProcAddress(hksDll, "?hksi_lua_setfield@@YAXPEAUlua_State@@HPEBD@Z");
+			setfield = (hksi_lua_setfieldType)GetProcAddress(hksDll, "?hksi_lua_setfield@@YAXPEAUlua_State@@HPEBD@Z");
 			checkinteger = (luaL_checkintegerType)GetProcAddress(hksDll, "?luaL_checkinteger@@YAHPEAUlua_State@@H@Z");
 			GetTop = (GetTopType)GetProcAddress(hksDll, "?GetTop@LuaState@LuaPlus@@QEBAHXZ");
 			DoString = (DoStringType)GetProcAddress(hksDll, "?DoString@LuaState@LuaPlus@@QEAAHPEBD@Z");
@@ -54,6 +58,7 @@ namespace hks {
 			Pop = (PopType)GetProcAddress(hksDll, "?Pop@LuaState@LuaPlus@@QEAAXH@Z");
 			hksi_lua_touserdata = (hksi_lua_touserdataType)GetProcAddress(hksDll, "?hksi_lua_touserdata@@YAPEAXPEAUlua_State@@H@Z");
 			hksi_lua_getfield = (hksi_lua_getfieldType)GetProcAddress(hksDll, "?hksi_lua_getfield@@YAXPEAUlua_State@@HPEBD@Z");
+			createtable = (hksi_lua_createtableType)GetProcAddress(hksDll, "?lua_createtable@@YAXPEAUlua_State@@HH@Z");
 		}
 	}
 

@@ -11,13 +11,22 @@ HANDLE mainThread;
 
 ProxyTypes::DllCreateGameContext base_DllCreateGameContext;
 
-ProxyTypes::PushMethods Base_Plot_PushMethods;
+ProxyTypes::PushMethods base_Plot_PushMethods;
 ProxyTypes::PushMethods orig_Plot_PushMethods;
 
-ProxyTypes::IMapPlot_GetInstance IMapPlot_GetInstance;
-ProxyTypes::DiplomaticRelations_ChangeGrievanceScore DiplomaticRelations_ChangeGrievanceScore;
+ProxyTypes::PushMethods base_Cities_PushMethods;
+ProxyTypes::PushMethods orig_Cities_PushMethods;
 
-ProxyTypes::SetAppeal Base_SetAppeal;
+ProxyTypes::IMapPlot_GetInstance IMapPlot_GetInstance;
+ProxyTypes::IPlayerCities_GetInstance IPlayerCities_GetInstance;
+ProxyTypes::DiplomaticRelations_Edit DiplomaticRelations_Edit;
+
+ProxyTypes::DiplomaticRelations_ChangeGrievanceScore DiplomaticRelations_ChangeGrievanceScore;
+ProxyTypes::Cities_AddGreatWork Cities_AddGreatWork;
+
+ProxyTypes::CCallWithErrorHandling CCallWithErrorHandling;
+
+ProxyTypes::SetAppeal base_SetAppeal;
 ProxyTypes::SetAppeal orig_SetAppeal;
 
 ProxyTypes::RegisterScriptData base_RegisterScriptData;
@@ -28,7 +37,7 @@ std::set<short*> lockedAppeals;
 void __cdecl Hook_SetAppeal(void* plot, int appeal) {
     std::cout << "Hooked SetAppeal!\n";
     if (lockedAppeals.find((short*)((uintptr_t)plot + 0x4a)) == lockedAppeals.end()) {
-        Base_SetAppeal(plot, appeal);
+        base_SetAppeal(plot, appeal);
     }
 }
 
@@ -54,25 +63,68 @@ static int lLockAppeal(hks::lua_State* L) {
     return 0;
 }
 
+static int lChangeGrievanceScore(hks::lua_State* L) {
+    int player1Id = hks::checkinteger(L, 1);
+    int player2Id = hks::checkinteger(L, 2);
+    int amount = hks::checkinteger(L, 3);
+
+    void* diplomaticRelations = DiplomaticRelations_Edit();
+    DiplomaticRelations_ChangeGrievanceScore(diplomaticRelations, player1Id, player2Id, amount);
+    return 0;
+}
+
 static void __cdecl Hook_Plot_PushMethods(hks::lua_State* L, int stackOffset) {
-    std::cout << "Hooked pushmethods!!\n";
+    std::cout << "Hooked Plot::PushMethods!\n";
 
     hks::pushnamedcclosure(L, lSetAppeal, 0, "lSetAppeal", 0);
-    hks::hksi_lua_setfield(L, stackOffset, "SetAppeal");
+    hks::setfield(L, stackOffset, "SetAppeal");
     hks::pushnamedcclosure(L, lLockAppeal, 0, "lLockAppeal", 0);
-    hks::hksi_lua_setfield(L, stackOffset, "LockAppeal");
+    hks::setfield(L, stackOffset, "LockAppeal");
 
-    hks::DoString(L, "print(StateName)");
+    base_Plot_PushMethods(L, stackOffset);
+}
 
-    Base_Plot_PushMethods(L, stackOffset);
+static int __cdecl lCities_AddGreatWork(hks::lua_State* L) {
+    void* cities = IPlayerCities_GetInstance(L, 1, true);
+    int greatWorkIndex = hks::checkinteger(L, 2);
+    std::cout << cities << ' ' << greatWorkIndex << '\n';
+
+    Cities_AddGreatWork(cities, greatWorkIndex);
+    std::cout << "After\n";
+    return 0;
+}
+
+static void __cdecl Hook_Cities_PushMethods(hks::lua_State* L, int stackOffset) {
+    std::cout << "Hooked Cities::PushMethods!\n";
+
+    hks::pushnamedcclosure(L, lCities_AddGreatWork, 0, "lAddGreatWork", 0);
+    hks::setfield(L, stackOffset, "AddGreatWork");
+
+    base_Cities_PushMethods(L, stackOffset);
+}
+
+static int RegisterDiplomaticRelations(hks::lua_State* L) {
+    std::cout << "Registering DiplomaticRelations\n";
+
+    hks::createtable(L, 0, 1);
+
+    hks::pushnamedcclosure(L, lChangeGrievanceScore, 0, "lChangeGrievanceScore", 0);
+    hks::setfield(L, -2, "ChangeGrievanceScore");
+
+    hks::setfield(L, hks::LUA_GLOBAL, "DiplomaticRelations");
+    return 0;
 }
 
 void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
-    std::cout << "Registering Memory Functions\n";
+    std::cout << "Registering lua globals\n";
+
     hks::pushnamedcclosure(L, MemoryManipulation::LuaExport::lMem, 0, "lMem", 0);
-    hks::hksi_lua_setfield(L, hks::LUA_GLOBAL, "Mem");
+    hks::setfield(L, hks::LUA_GLOBAL, "Mem");
     hks::pushnamedcclosure(L, MemoryManipulation::LuaExport::lObjMem, 0, "lObjMem", 0);
-    hks::hksi_lua_setfield(L, hks::LUA_GLOBAL, "ObjMem");
+    hks::setfield(L, hks::LUA_GLOBAL, "ObjMem");
+
+    CCallWithErrorHandling(L, RegisterDiplomaticRelations, NULL);
+
     base_RegisterScriptData(L);
 }
 
@@ -81,9 +133,22 @@ constexpr uintptr_t PLOT_PUSH_METHODS_OFFSET = 0x1b2e0;
 constexpr uintptr_t REGISTER_SCRIPT_DATA_OFFSET = 0x5bdac0;
 constexpr uintptr_t DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET = 0x1cea40;
 constexpr uintptr_t IMAP_PLOT_GET_INSTANCE_OFFSET = 0x15d60;
+constexpr uintptr_t IPLAYER_CITIES_GET_INSTANCE_OFFSET = 0x6ee9b0;
+constexpr uintptr_t DIPLOMATIC_RELATIONS_EDIT = 0x1d0220;
+constexpr uintptr_t C_CALL_WITH_ERROR_HANDLING_OFFSET = 0x9ad880;
+constexpr uintptr_t CITIES_ADD_GREAT_WORK_OFFSET = 0x2643b0;
+constexpr uintptr_t CITIES_PUSH_METHODS_OFFSET = 0x6eeb10;
 
 static void InitHooks() {
+    std::cout << "Initializing hooks!\n";
+
+    CCallWithErrorHandling = Runtime::GetGameCoreFunctionAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
+
+    IPlayerCities_GetInstance = Runtime::GetGameCoreFunctionAt<ProxyTypes::IPlayerCities_GetInstance>(IPLAYER_CITIES_GET_INSTANCE_OFFSET);
     IMapPlot_GetInstance = Runtime::GetGameCoreFunctionAt<ProxyTypes::IMapPlot_GetInstance>(IMAP_PLOT_GET_INSTANCE_OFFSET);
+    DiplomaticRelations_Edit = Runtime::GetGameCoreFunctionAt<ProxyTypes::DiplomaticRelations_Edit>(DIPLOMATIC_RELATIONS_EDIT);
+
+    Cities_AddGreatWork = Runtime::GetGameCoreFunctionAt<ProxyTypes::Cities_AddGreatWork>(CITIES_ADD_GREAT_WORK_OFFSET);
     DiplomaticRelations_ChangeGrievanceScore = Runtime
         ::GetGameCoreFunctionAt<ProxyTypes::DiplomaticRelations_ChangeGrievanceScore>(DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET);
 
@@ -92,10 +157,13 @@ static void InitHooks() {
 
     lockedAppeals = {};
     orig_SetAppeal = Runtime::GetGameCoreFunctionAt<ProxyTypes::SetAppeal>(SET_APPEAL_OFFSET);
-    Runtime::CreateHook(orig_SetAppeal, &Hook_SetAppeal, &Base_SetAppeal);
+    Runtime::CreateHook(orig_SetAppeal, &Hook_SetAppeal, &base_SetAppeal);
 
     orig_Plot_PushMethods = Runtime::GetGameCoreFunctionAt<ProxyTypes::PushMethods>(PLOT_PUSH_METHODS_OFFSET);
-    Runtime::CreateHook(orig_Plot_PushMethods, &Hook_Plot_PushMethods, &Base_Plot_PushMethods);
+    Runtime::CreateHook(orig_Plot_PushMethods, &Hook_Plot_PushMethods, &base_Plot_PushMethods);
+
+    orig_Cities_PushMethods = Runtime::GetGameCoreFunctionAt<ProxyTypes::PushMethods>(CITIES_PUSH_METHODS_OFFSET);
+    Runtime::CreateHook(orig_Cities_PushMethods, &Hook_Cities_PushMethods, &base_Cities_PushMethods);
 }
 
 static void InitConsole() {
@@ -144,7 +212,7 @@ extern "C" {
         else {
             std::cerr << "WaitForSingleObject failed: " << GetLastError() << '\n';
         }
-        Runtime::InitHooks();
+        Runtime::InitMinHook();
         hks::InitHavokScript();
         InitHooks();
         return base_DllCreateGameContext();
