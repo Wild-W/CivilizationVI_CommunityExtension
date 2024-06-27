@@ -15,7 +15,8 @@ namespace MemoryManipulation {
         FIELD_FLOAT,
         FIELD_DOUBLE,
         FIELD_C_STRING,
-        FIELD_BOOL
+        FIELD_BOOL,
+        FIELD_VOID
     };
 
     namespace {

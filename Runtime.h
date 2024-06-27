@@ -16,7 +16,7 @@ namespace Runtime {
 	void InitMinHook();
 
 	template <typename T>
-	T GetGameCoreFunctionAt(uintptr_t address) {
+	T GetGameCoreGlobalAt(uintptr_t address) {
 		return reinterpret_cast<T>(GameCoreAddress + address);
 	}
 

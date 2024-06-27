@@ -10,6 +10,8 @@
 
 HANDLE mainThread;
 
+void* CurrentGame;
+
 ProxyTypes::DllCreateGameContext base_DllCreateGameContext;
 
 ProxyTypes::PushMethods base_Plot_PushMethods;
@@ -21,11 +23,17 @@ ProxyTypes::PushMethods orig_Cities_PushMethods;
 ProxyTypes::PushMethods base_Influence_PushMethods;
 ProxyTypes::PushMethods orig_Influence_PushMethods;
 
+ProxyTypes::CachePushMethods base_CityTrade_PushMethods;
+ProxyTypes::CachePushMethods orig_CityTrade_PushMethods;
+
 ProxyTypes::IMapPlot_GetInstance IMapPlot_GetInstance;
 ProxyTypes::IPlayerCities_GetInstance IPlayerCities_GetInstance;
 ProxyTypes::IPlayerInfluence_GetInstance IPlayerInfluence_GetInstance;
+ProxyTypes::ICityTrade_GetInstance ICityTrade_GetInstance;
 ProxyTypes::DiplomaticRelations_Edit DiplomaticRelations_Edit;
 
+ProxyTypes::SetMaxTurns SetMaxTurns;
+ProxyTypes::SetHasConstructedTradingPost SetHasConstructedTradingPost;
 ProxyTypes::DiplomaticRelations_ChangeGrievanceScore DiplomaticRelations_ChangeGrievanceScore;
 ProxyTypes::Cities_AddGreatWork Cities_AddGreatWork;
 ProxyTypes::Influence_SetTokensToGive Influence_SetTokensToGive;
@@ -37,6 +45,9 @@ ProxyTypes::SetAppeal orig_SetAppeal;
 
 ProxyTypes::RegisterScriptData base_RegisterScriptData;
 ProxyTypes::RegisterScriptData orig_RegisterScriptData;
+
+ProxyTypes::RegisterScriptDataForUI base_RegisterScriptDataForUI;
+ProxyTypes::RegisterScriptDataForUI orig_RegisterScriptDataForUI;
 
 std::set<short*> lockedAppeals;
 
@@ -109,8 +120,28 @@ static void __cdecl Hook_Cities_PushMethods(hks::lua_State* L, int stackOffset) 
     base_Cities_PushMethods(L, stackOffset);
 }
 
+static int __cdecl lSetHasConstructedTradingPost(hks::lua_State* L) {
+    void* cityTrade = ICityTrade_GetInstance(L, 1, true);
+    int playerId = hks::checkinteger(L, 2);
+    bool didConstruct = hks::toboolean(L, 3);
+    std::cout << cityTrade << ' ' << playerId << ' ' << didConstruct << '\n';
+
+    SetHasConstructedTradingPost(cityTrade, playerId, didConstruct);
+    return 0;
+}
+
+static void __cdecl Hook_CityTrade_PushMethods(void* cityTrade, hks::lua_State* L, int stackOffset) {
+    std::cout << "Hooked CityTrade::PushMethods!\n";
+
+    // Type mismatch! This is not cache but we are treating it like it is!
+    hks::pushnamedcclosure(L, lSetHasConstructedTradingPost, 0, "lSetHasConstructedTradingPost", 0);
+    hks::setfield(L, stackOffset, "SetHasConstructedTradingPost");
+
+    base_CityTrade_PushMethods(cityTrade, L, stackOffset);
+}
+
 static int RegisterDiplomaticRelations(hks::lua_State* L) {
-    std::cout << "Registering DiplomaticRelations\n";
+    std::cout << "Registering DiplomaticRelations!\n";
 
     hks::createtable(L, 0, 1);
 
@@ -121,9 +152,7 @@ static int RegisterDiplomaticRelations(hks::lua_State* L) {
     return 0;
 }
 
-void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
-    std::cout << "Registering lua globals\n";
-
+void PushSharedGlobals(hks::lua_State* L) {
     hks::pushnamedcclosure(L, MemoryManipulation::LuaExport::lMem, 0, "lMem", 0);
     hks::setfield(L, hks::LUA_GLOBAL, "Mem");
     hks::pushnamedcclosure(L, MemoryManipulation::LuaExport::lObjMem, 0, "lObjMem", 0);
@@ -131,8 +160,22 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
 
     CCallWithErrorHandling(L, RegisterDiplomaticRelations, NULL);
     MemoryManipulation::LuaExport::PushFieldTypes(L);
+}
+
+void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
+    std::cout << "Registering lua globals!\n";
+
+    PushSharedGlobals(L);
 
     base_RegisterScriptData(L);
+}
+
+void __cdecl Hook_RegisterScriptDataForUI(hks::lua_State* _, hks::lua_State* L) {
+    std::cout << "Registering cache lua globals!\n";
+
+    PushSharedGlobals(L);
+
+    base_RegisterScriptDataForUI(_, L);
 }
 
 static int lSetTokensToGive(hks::lua_State* L) {
@@ -172,7 +215,16 @@ static void __cdecl Hook_Influence_PushMethods(hks::lua_State* L, int stackOffse
     base_Influence_PushMethods(L, stackOffset);
 }
 
+static int __cdecl lSetMaxTurns(hks::lua_State* L) {
+    void* game = CurrentGame;
+    int turnCount = hks::checkinteger(L, 1);
+
+    return 0;
+}
+
 #pragma region Offsets
+constexpr uintptr_t CURRENT_GAME_OFFSET = 0xb8aa60;
+
 constexpr uintptr_t SET_APPEAL_OFFSET = 0x61270;
 constexpr uintptr_t PLOT_PUSH_METHODS_OFFSET = 0x1b2e0;
 constexpr uintptr_t REGISTER_SCRIPT_DATA_OFFSET = 0x5bdac0;
@@ -186,39 +238,56 @@ constexpr uintptr_t CITIES_PUSH_METHODS_OFFSET = 0x6eeb10;
 constexpr uintptr_t IPLAYER_INFLUENCE_GET_INSTANCE_OFFSET = 0x6f34f0;
 constexpr uintptr_t SET_TOKENS_TO_GIVE_OFFSET = 0x2edaf0;
 constexpr uintptr_t INFLUENCE_PUSH_METHODS_OFFSET = 0x6f3650;
+constexpr uintptr_t SET_HAS_CONSTRUCTED_TRADING_POST_OFFSET = 0x14e720;
+constexpr uintptr_t ICITY_TRADE_PUSH_METHODS_OFFSET = 0x692c30;
+constexpr uintptr_t ICITY_TRADE_GET_INSTANCE_OFFSET = 0x692ad0;
+constexpr uintptr_t REGISTER_SCRIPT_DATA_FOR_UI_OFFSET = 0x5bdd80;
+constexpr uintptr_t SET_MAX_TURNS_OFFSET = 0x597960;
 #pragma endregion
 
 static void InitHooks() {
     std::cout << "Initializing hooks!\n";
     using namespace Runtime;
 
-    CCallWithErrorHandling = GetGameCoreFunctionAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
+    CurrentGame = GetGameCoreGlobalAt<void*>(CURRENT_GAME_OFFSET);
 
-    IPlayerCities_GetInstance = GetGameCoreFunctionAt<ProxyTypes::IPlayerCities_GetInstance>(IPLAYER_CITIES_GET_INSTANCE_OFFSET);
-    IMapPlot_GetInstance = GetGameCoreFunctionAt<ProxyTypes::IMapPlot_GetInstance>(IMAP_PLOT_GET_INSTANCE_OFFSET);
-    IPlayerInfluence_GetInstance = GetGameCoreFunctionAt<ProxyTypes::IPlayerInfluence_GetInstance>(IPLAYER_INFLUENCE_GET_INSTANCE_OFFSET);
-    DiplomaticRelations_Edit = GetGameCoreFunctionAt<ProxyTypes::DiplomaticRelations_Edit>(DIPLOMATIC_RELATIONS_EDIT);
+    CCallWithErrorHandling = GetGameCoreGlobalAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
 
-    Influence_SetTokensToGive = GetGameCoreFunctionAt<ProxyTypes::Influence_SetTokensToGive>(SET_TOKENS_TO_GIVE_OFFSET);
-    Cities_AddGreatWork = GetGameCoreFunctionAt<ProxyTypes::Cities_AddGreatWork>(CITIES_ADD_GREAT_WORK_OFFSET);
-    DiplomaticRelations_ChangeGrievanceScore = GetGameCoreFunctionAt
+    IPlayerCities_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IPlayerCities_GetInstance>(IPLAYER_CITIES_GET_INSTANCE_OFFSET);
+    IMapPlot_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IMapPlot_GetInstance>(IMAP_PLOT_GET_INSTANCE_OFFSET);
+    IPlayerInfluence_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IPlayerInfluence_GetInstance>(IPLAYER_INFLUENCE_GET_INSTANCE_OFFSET);
+    ICityTrade_GetInstance = GetGameCoreGlobalAt<ProxyTypes::ICityTrade_GetInstance>(ICITY_TRADE_GET_INSTANCE_OFFSET);
+    DiplomaticRelations_Edit = GetGameCoreGlobalAt<ProxyTypes::DiplomaticRelations_Edit>(DIPLOMATIC_RELATIONS_EDIT);
+
+    SetMaxTurns = GetGameCoreGlobalAt<ProxyTypes::SetMaxTurns>(SET_MAX_TURNS_OFFSET);
+    SetHasConstructedTradingPost = GetGameCoreGlobalAt
+        <ProxyTypes::SetHasConstructedTradingPost>(SET_HAS_CONSTRUCTED_TRADING_POST_OFFSET);
+    Influence_SetTokensToGive = GetGameCoreGlobalAt<ProxyTypes::Influence_SetTokensToGive>(SET_TOKENS_TO_GIVE_OFFSET);
+    Cities_AddGreatWork = GetGameCoreGlobalAt<ProxyTypes::Cities_AddGreatWork>(CITIES_ADD_GREAT_WORK_OFFSET);
+    DiplomaticRelations_ChangeGrievanceScore = GetGameCoreGlobalAt
         <ProxyTypes::DiplomaticRelations_ChangeGrievanceScore>(DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET);
 
-    orig_RegisterScriptData = GetGameCoreFunctionAt<ProxyTypes::RegisterScriptData>(REGISTER_SCRIPT_DATA_OFFSET);
+    orig_RegisterScriptData = GetGameCoreGlobalAt<ProxyTypes::RegisterScriptData>(REGISTER_SCRIPT_DATA_OFFSET);
     CreateHook(orig_RegisterScriptData, &Hook_RegisterScriptData, &base_RegisterScriptData);
 
+    orig_RegisterScriptDataForUI = GetGameCoreGlobalAt<ProxyTypes::RegisterScriptDataForUI>(REGISTER_SCRIPT_DATA_FOR_UI_OFFSET);
+    CreateHook(orig_RegisterScriptDataForUI, &Hook_RegisterScriptDataForUI, &base_RegisterScriptDataForUI);
+
     lockedAppeals = {};
-    orig_SetAppeal = GetGameCoreFunctionAt<ProxyTypes::SetAppeal>(SET_APPEAL_OFFSET);
+    orig_SetAppeal = GetGameCoreGlobalAt<ProxyTypes::SetAppeal>(SET_APPEAL_OFFSET);
     CreateHook(orig_SetAppeal, &Hook_SetAppeal, &base_SetAppeal);
 
-    orig_Plot_PushMethods = GetGameCoreFunctionAt<ProxyTypes::PushMethods>(PLOT_PUSH_METHODS_OFFSET);
+    orig_Plot_PushMethods = GetGameCoreGlobalAt<ProxyTypes::PushMethods>(PLOT_PUSH_METHODS_OFFSET);
     CreateHook(orig_Plot_PushMethods, &Hook_Plot_PushMethods, &base_Plot_PushMethods);
 
-    orig_Cities_PushMethods = GetGameCoreFunctionAt<ProxyTypes::PushMethods>(CITIES_PUSH_METHODS_OFFSET);
+    orig_Cities_PushMethods = GetGameCoreGlobalAt<ProxyTypes::PushMethods>(CITIES_PUSH_METHODS_OFFSET);
     CreateHook(orig_Cities_PushMethods, &Hook_Cities_PushMethods, &base_Cities_PushMethods);
 
-    orig_Influence_PushMethods = GetGameCoreFunctionAt<ProxyTypes::PushMethods>(INFLUENCE_PUSH_METHODS_OFFSET);
+    orig_Influence_PushMethods = GetGameCoreGlobalAt<ProxyTypes::PushMethods>(INFLUENCE_PUSH_METHODS_OFFSET);
     CreateHook(orig_Influence_PushMethods, &Hook_Influence_PushMethods, &base_Influence_PushMethods);
+
+    orig_CityTrade_PushMethods = GetGameCoreGlobalAt<ProxyTypes::CachePushMethods>(ICITY_TRADE_PUSH_METHODS_OFFSET);
+    CreateHook(orig_CityTrade_PushMethods, &Hook_CityTrade_PushMethods, &base_CityTrade_PushMethods);
 }
 
 static void InitConsole() {

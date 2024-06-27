@@ -3,7 +3,7 @@
 
 namespace hks {
 	constexpr int LUA_GLOBAL = -10002;
-	
+
 	typedef struct lua_State lua_State;
 
 	typedef int(__cdecl* luaFunc)(lua_State*);
