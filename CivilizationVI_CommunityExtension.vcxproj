@@ -101,8 +101,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)include</IncludePath>
     <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(SolutionDir)lib\$(Configuration)</LibraryPath>
-    <OutDir>..\..\..\..\..\Program Files %28x86%29\Steam\steamapps\common\Sid Meier%27s Civilization VI\DLC\Expansion2\Binaries\Win64</OutDir>
-    <TargetName>GameCore_XP2_FinalRelease</TargetName>
+    <OutDir>..\..\..\OneDrive\Documents\My Games\Sid Meier%27s Civilization VI\Mods\CivilizationVI_CommunityExtension_Mod\Binaries\Win64</OutDir>
+    <TargetName>GameCore_XP2_CE_FinalRelease</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugCopy|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(SolutionDir)include</IncludePath>

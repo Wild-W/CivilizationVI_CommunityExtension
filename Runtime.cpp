@@ -29,6 +29,7 @@ namespace Runtime {
 			MH_Uninitialize();
 			FreeLibrary(GameCore);
 			GameCore = NULL;
+			GameCoreAddress = 0x0;
 		}
 	}
 
@@ -54,5 +55,15 @@ namespace Runtime {
 		else {
 			std::cout << "Console closed successfully." << std::endl;
 		}
+
+		// Reset standard input/output streams
+		freopen_s((FILE**)stdin, "NUL:", "r", stdin);
+		freopen_s((FILE**)stdout, "NUL:", "w", stdout);
+		freopen_s((FILE**)stderr, "NUL:", "w", stderr);
+
+		// Clear the error state for each of the C++ standard streams after redirect.
+		std::cin.clear();
+		std::cout.clear();
+		std::cerr.clear();
 	}
 };
