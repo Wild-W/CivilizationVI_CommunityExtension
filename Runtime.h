@@ -30,4 +30,8 @@ namespace Runtime {
 			std::cout << "Failed to enable hook! " << MH_StatusToString(status) << "\n";
 		}
 	}
+
+	extern void InitConsole();
+
+	extern void CloseConsole();
 };

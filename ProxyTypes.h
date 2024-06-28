@@ -22,4 +22,5 @@ namespace ProxyTypes {
 	typedef void(__thiscall* Influence_SetTokensToGive)(void* influence, int tokens);
 	typedef void(__thiscall* SetHasConstructedTradingPost)(void* trade, int playerId, bool didConstruct);
 	typedef void(__thiscall* CachePushMethods)(void*, hks::lua_State*, int);
+	typedef void* (__thiscall* FAutoVariable_edit)(void* object);
 }
