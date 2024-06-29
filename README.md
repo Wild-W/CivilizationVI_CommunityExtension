@@ -17,3 +17,8 @@ Probably. Open a feature request on the [issue tracker](https://github.com/Wild-
 
 ## License
 This project is distributed under AGPL 3.0. That means that **all** derivative works of this project **must be open source** and **distributed under the same AGPL 3.0 license**. This is to protect the modding community from bad actors and encourage collaboration. The only way this community can grow is if we work together.
+
+## Support
+<a href="https://ko-fi.com/wildw">
+  <img width="500" src="https://uploads-ssl.webflow.com/5c14e387dab576fe667689cf/5cbed8a4cf61eceb26012821_SupportMe_red.png" />
+</a>
