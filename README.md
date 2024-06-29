@@ -1,4 +1,4 @@
-# CivilizationVI_CommunityExtension
+# Civilization VI: Community Extension
 
 This mod is currently in beta. Report bugs on the [issue tracker](https://github.com/Wild-W/CivilizationVI_CommunityExtension/issues). You can also contact me directly or on the steam workshop page. I prefer if you do it on the issue tracker though.
 
