@@ -30,4 +30,6 @@ namespace ProxyTypes {
 	typedef void* (__cdecl* DiplomaticRelations_GetInstance)(hks::lua_State*, int, bool);
 	typedef bool(__thiscall* PromoteGovernor)(void* governors, int governorId, int governorPromotionIndex);
 	typedef void(__thiscall* NeutralizeGovernor)(void* governors, void* governor, int neutralizedTurns);
+	typedef void(__thiscall* EmergencyManager_ChangePlayerScore)(void* manager, int playerId, int emergencyIndex, int amount);
+	typedef void* (__cdecl* EmergencyManager_Get)(void);
 }

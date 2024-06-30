@@ -58,6 +58,9 @@ ProxyTypes::RegisterScriptDataForUI orig_RegisterScriptDataForUI;
 ProxyTypes::PromoteGovernor PromoteGovernor;
 ProxyTypes::Governors_GetInstance Governors_GetInstance;
 
+ProxyTypes::EmergencyManager_ChangePlayerScore EmergencyManager_ChangePlayerScore;
+ProxyTypes::EmergencyManager_Get EmergencyManager_Get;
+
 std::set<short*> lockedAppeals;
 
 void __cdecl Hook_SetAppeal(void* plot, int appeal) {
@@ -184,6 +187,27 @@ static int RegisterCultureManager(hks::lua_State* L) {
     return 0;
 }
 
+static int lEmergencyManager_ChangePlayerScore(hks::lua_State* L) {
+    void* manager = EmergencyManager_Get();
+    int playerId = hks::checkinteger(L, 1);
+    int emergencyIndex = hks::checkinteger(L, 2);
+    int amount = hks::checkinteger(L, 3);
+
+    EmergencyManager_ChangePlayerScore(manager, playerId, emergencyIndex, amount);
+    return 0;
+}
+
+static int RegisterEmergencyManager(hks::lua_State* L) {
+    std::cout << "Registering EmergencyManager!\n";
+
+    hks::createtable(L, 0, 1);
+
+    PushLuaMethod(L, lEmergencyManager_ChangePlayerScore, "lChangePlayerScore", -2, "ChangePlayerScore");
+
+    hks::setfield(L, hks::LUA_GLOBAL, "EmergencyManager");
+    return 0;
+}
+
 void PushSharedGlobals(hks::lua_State* L) {
     PushLuaMethod(L, MemoryManipulation::LuaExport::lMem, "lMem", hks::LUA_GLOBAL, "Mem");
     PushLuaMethod(L, MemoryManipulation::LuaExport::lObjMem, "lObjMem", hks::LUA_GLOBAL, "ObjMem");
@@ -197,6 +221,7 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     PushSharedGlobals(L);
     CCallWithErrorHandling(L, RegisterCityTradeManager, NULL);
     CCallWithErrorHandling(L, RegisterCultureManager, NULL);
+    CCallWithErrorHandling(L, RegisterEmergencyManager, NULL);
 
     base_RegisterScriptData(L);
 }
@@ -297,6 +322,8 @@ constexpr uintptr_t PROMOTE_GOVERNOR_OFFSET = 0x2df340;
 constexpr uintptr_t IPLAYER_GOVERNORS_PUSH_METHODS_OFFSET = 0x713b20;
 constexpr uintptr_t GOVERNORS_GET_INSTANCE_OFFSET = 0x7139c0;
 constexpr uintptr_t NEUTRALIAZE_GOVERNOR_OFFSET = 0x2df270;
+constexpr uintptr_t EMERGENCY_MANAGER_GET_OFFSET = 0x19a7b0;
+constexpr uintptr_t EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_OFFSET = 0x1991f0;
 #pragma endregion
 
 static void InitHooks() {
@@ -326,6 +353,9 @@ static void InitHooks() {
     Governors_GetInstance = GetGameCoreGlobalAt<ProxyTypes::Governors_GetInstance>(GOVERNORS_GET_INSTANCE_OFFSET);
 
     FAutoVariable_edit = GetGameCoreGlobalAt<ProxyTypes::FAutoVariable_edit>(GAME_F_AUTO_VARIABLE_EDIT_OFFSET);
+
+    EmergencyManager_ChangePlayerScore = GetGameCoreGlobalAt<ProxyTypes::EmergencyManager_ChangePlayerScore>(EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_OFFSET);
+    EmergencyManager_Get = GetGameCoreGlobalAt<ProxyTypes::EmergencyManager_Get>(EMERGENCY_MANAGER_GET_OFFSET);
 
     orig_RegisterScriptData = GetGameCoreGlobalAt<ProxyTypes::RegisterScriptData>(REGISTER_SCRIPT_DATA_OFFSET);
     CreateHook(orig_RegisterScriptData, &Hook_RegisterScriptData, &base_RegisterScriptData);
