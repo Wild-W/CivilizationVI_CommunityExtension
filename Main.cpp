@@ -21,6 +21,9 @@ ProxyTypes::PushMethods orig_Cities_PushMethods;
 ProxyTypes::PushMethods base_Influence_PushMethods;
 ProxyTypes::PushMethods orig_Influence_PushMethods;
 
+ProxyTypes::InstancedPushMethods base_IPlayerGovernors_PushMethods;
+ProxyTypes::InstancedPushMethods orig_IPlayerGovernors_PushMethods;
+
 ProxyTypes::InstancedPushMethods base_GameDiplomacy_PushMethods;
 ProxyTypes::InstancedPushMethods orig_GameDiplomacy_PushMethods;
 
@@ -51,6 +54,9 @@ ProxyTypes::RegisterScriptData orig_RegisterScriptData;
 
 ProxyTypes::RegisterScriptDataForUI base_RegisterScriptDataForUI;
 ProxyTypes::RegisterScriptDataForUI orig_RegisterScriptDataForUI;
+
+ProxyTypes::PromoteGovernor PromoteGovernor;
+ProxyTypes::Governors_GetInstance Governors_GetInstance;
 
 std::set<short*> lockedAppeals;
 
@@ -245,6 +251,23 @@ static void __cdecl Hook_GameDiplomacy_PushMethods(void* _, hks::lua_State* L, i
     base_GameDiplomacy_PushMethods(_, L, stackOffset);
 }
 
+static int lPromoteGovernor(hks::lua_State* L) {
+    void* governors = Governors_GetInstance(L, 1, true);
+    int governorId = hks::checkinteger(L, 2);
+    int governorPromotionIndex = hks::checkinteger(L, 3);
+
+    hks::pushinteger(L, PromoteGovernor(governors, governorId, governorPromotionIndex));
+    return 1;
+}
+
+static void __cdecl Hook_IPlayerGovernors_PushMethods(void* _, hks::lua_State* L, int stackOffset) {
+    std::cout << "Hooked PlayerGovernors::PushMethods!\n";
+
+    PushLuaMethod(L, lPromoteGovernor, "lPromoteGovernor", stackOffset, "PromoteGovernor");
+
+    base_IPlayerGovernors_PushMethods(_, L, stackOffset);
+}
+
 #pragma region Offsets
 constexpr uintptr_t CURRENT_GAME_OFFSET = 0xb8aa60;
 
@@ -270,10 +293,14 @@ constexpr uintptr_t CULTURE_FIND_OR_ADD_GREAT_WORK_OFFSET = 0x1c80e0;
 constexpr uintptr_t CULTURE_SET_GREAT_WORK_PLAYER_OFFSET = 0x1c8c80;
 constexpr uintptr_t DIPLOMATIC_RELATIONS_GET_INSTANCE_OFFSET = 0x6d86e0;
 constexpr uintptr_t IGAME_DIPLOMACY_PUSH_METHODS_OFFSET = 0x745660;
+constexpr uintptr_t PROMOTE_GOVERNOR_OFFSET = 0x2df340;
+constexpr uintptr_t IPLAYER_GOVERNORS_PUSH_METHODS_OFFSET = 0x713b20;
+constexpr uintptr_t GOVERNORS_GET_INSTANCE_OFFSET = 0x7139c0;
+constexpr uintptr_t NEUTRALIAZE_GOVERNOR_OFFSET = 0x2df270;
 #pragma endregion
 
 static void InitHooks() {
-    std::cout << "Initializing hooks!\n";
+    std::cout << "Initializing hooks ...\n";
     using namespace Runtime;
 
     CCallWithErrorHandling = GetGameCoreGlobalAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
@@ -294,6 +321,9 @@ static void InitHooks() {
     Cities_AddGreatWork = GetGameCoreGlobalAt<ProxyTypes::Cities_AddGreatWork>(CITIES_ADD_GREAT_WORK_OFFSET);
     DiplomaticRelations_ChangeGrievanceScore = GetGameCoreGlobalAt
         <ProxyTypes::DiplomaticRelations_ChangeGrievanceScore>(DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET);
+
+    PromoteGovernor = GetGameCoreGlobalAt<ProxyTypes::PromoteGovernor>(PROMOTE_GOVERNOR_OFFSET);
+    Governors_GetInstance = GetGameCoreGlobalAt<ProxyTypes::Governors_GetInstance>(GOVERNORS_GET_INSTANCE_OFFSET);
 
     FAutoVariable_edit = GetGameCoreGlobalAt<ProxyTypes::FAutoVariable_edit>(GAME_F_AUTO_VARIABLE_EDIT_OFFSET);
 
@@ -318,6 +348,11 @@ static void InitHooks() {
 
     orig_GameDiplomacy_PushMethods = GetGameCoreGlobalAt<ProxyTypes::InstancedPushMethods>(IGAME_DIPLOMACY_PUSH_METHODS_OFFSET);
     CreateHook(orig_GameDiplomacy_PushMethods, &Hook_GameDiplomacy_PushMethods, &base_GameDiplomacy_PushMethods);
+
+    orig_IPlayerGovernors_PushMethods = GetGameCoreGlobalAt<ProxyTypes::InstancedPushMethods>(IPLAYER_GOVERNORS_PUSH_METHODS_OFFSET);
+    CreateHook(orig_IPlayerGovernors_PushMethods, &Hook_IPlayerGovernors_PushMethods, &base_IPlayerGovernors_PushMethods);
+
+    std::cout << "Hooks initialized!\n";
 }
 
 DWORD WINAPI MainThread(LPVOID lpParam) {
