@@ -10,8 +10,6 @@
 
 HANDLE mainThread;
 
-void* CurrentGame;
-
 ProxyTypes::DllCreateGameContext base_DllCreateGameContext;
 
 ProxyTypes::PushMethods base_Plot_PushMethods;
@@ -23,10 +21,13 @@ ProxyTypes::PushMethods orig_Cities_PushMethods;
 ProxyTypes::PushMethods base_Influence_PushMethods;
 ProxyTypes::PushMethods orig_Influence_PushMethods;
 
+ProxyTypes::InstancedPushMethods base_GameDiplomacy_PushMethods;
+ProxyTypes::InstancedPushMethods orig_GameDiplomacy_PushMethods;
+
 ProxyTypes::IMapPlot_GetInstance IMapPlot_GetInstance;
 ProxyTypes::IPlayerCities_GetInstance IPlayerCities_GetInstance;
 ProxyTypes::IPlayerInfluence_GetInstance IPlayerInfluence_GetInstance;
-ProxyTypes::DiplomaticRelations_Edit DiplomaticRelations_Edit;
+ProxyTypes::DiplomaticRelations_GetInstance DiplomaticRelations_GetInstance;
 
 ProxyTypes::FAutoVariable_edit FAutoVariable_edit;
 
@@ -35,6 +36,10 @@ ProxyTypes::SetHasConstructedTradingPost SetHasConstructedTradingPost;
 ProxyTypes::DiplomaticRelations_ChangeGrievanceScore DiplomaticRelations_ChangeGrievanceScore;
 ProxyTypes::Cities_AddGreatWork Cities_AddGreatWork;
 ProxyTypes::Influence_SetTokensToGive Influence_SetTokensToGive;
+
+ProxyTypes::Culture_Get Culture_Get;
+ProxyTypes::FindOrAddGreatWork FindOrAddGreatWork;
+ProxyTypes::SetGreatWorkPlayer SetGreatWorkPlayer;
 
 ProxyTypes::CCallWithErrorHandling CCallWithErrorHandling;
 
@@ -79,11 +84,11 @@ static int lLockAppeal(hks::lua_State* L) {
 }
 
 static int lChangeGrievanceScore(hks::lua_State* L) {
-    int player1Id = hks::checkinteger(L, 1);
-    int player2Id = hks::checkinteger(L, 2);
-    int amount = hks::checkinteger(L, 3);
+    void* diplomaticRelations = DiplomaticRelations_GetInstance(L, 1, true);
+    int player1Id = hks::checkinteger(L, 2);
+    int player2Id = hks::checkinteger(L, 3);
+    int amount = hks::checkinteger(L, 4);
 
-    void* diplomaticRelations = DiplomaticRelations_Edit();
     DiplomaticRelations_ChangeGrievanceScore(diplomaticRelations, player1Id, player2Id, amount);
     return 0;
 }
@@ -91,29 +96,25 @@ static int lChangeGrievanceScore(hks::lua_State* L) {
 static void __cdecl Hook_Plot_PushMethods(hks::lua_State* L, int stackOffset) {
     std::cout << "Hooked Plot::PushMethods!\n";
 
-    hks::pushnamedcclosure(L, lSetAppeal, 0, "lSetAppeal", 0);
-    hks::setfield(L, stackOffset, "SetAppeal");
-    hks::pushnamedcclosure(L, lLockAppeal, 0, "lLockAppeal", 0);
-    hks::setfield(L, stackOffset, "LockAppeal");
+    PushLuaMethod(L, lSetAppeal, "lSetAppeal", stackOffset, "SetAppeal");
+    PushLuaMethod(L, lLockAppeal, "lLockAppeal", stackOffset, "LockAppeal");
 
     base_Plot_PushMethods(L, stackOffset);
 }
 
 static int __cdecl lCities_AddGreatWork(hks::lua_State* L) {
     void* cities = IPlayerCities_GetInstance(L, 1, true);
-    int greatWorkIndex = hks::checkinteger(L, 2);
-    std::cout << cities << ' ' << greatWorkIndex << '\n';
+    int greatWorkListIndex = hks::checkinteger(L, 2);
+    std::cout << cities << ' ' << greatWorkListIndex << '\n';
 
-    Cities_AddGreatWork(cities, greatWorkIndex);
-    std::cout << "After\n";
+    Cities_AddGreatWork(cities, greatWorkListIndex);
     return 0;
 }
 
 static void __cdecl Hook_Cities_PushMethods(hks::lua_State* L, int stackOffset) {
     std::cout << "Hooked Cities::PushMethods!\n";
 
-    hks::pushnamedcclosure(L, lCities_AddGreatWork, 0, "lAddGreatWork", 0);
-    hks::setfield(L, stackOffset, "AddGreatWork");
+    PushLuaMethod(L, lCities_AddGreatWork, "lAddGreatWork", stackOffset, "AddGreatWork");
 
     base_Cities_PushMethods(L, stackOffset);
 }
@@ -136,37 +137,51 @@ static int __cdecl lSetHasConstructedTradingPost(hks::lua_State* L) {
     return 0;
 }
 
-static int RegisterDiplomaticRelations(hks::lua_State* L) {
-    std::cout << "Registering DiplomaticRelations!\n";
-
-    hks::createtable(L, 0, 1);
-
-    hks::pushnamedcclosure(L, lChangeGrievanceScore, 0, "lChangeGrievanceScore", 0);
-    hks::setfield(L, -2, "ChangeGrievanceScore");
-
-    hks::setfield(L, hks::LUA_GLOBAL, "DiplomaticRelations");
-    return 0;
-}
-
 static int RegisterCityTradeManager(hks::lua_State* L) {
     std::cout << "Registering CityTradeManager!\n";
 
     hks::createtable(L, 0, 1);
 
-    hks::pushnamedcclosure(L, lSetHasConstructedTradingPost, 0, "lSetHasConstructedTradingPost", 0);
-    hks::setfield(L, -2, "SetHasConstructedTradingPost");
+    PushLuaMethod(L, lSetHasConstructedTradingPost, "lSetHasConstructedTradingPost", -2, "SetHasConstructedTradingPost");
 
     hks::setfield(L, hks::LUA_GLOBAL, "CityTradeManager");
     return 0;
 }
 
-void PushSharedGlobals(hks::lua_State* L) {
-    hks::pushnamedcclosure(L, MemoryManipulation::LuaExport::lMem, 0, "lMem", 0);
-    hks::setfield(L, hks::LUA_GLOBAL, "Mem");
-    hks::pushnamedcclosure(L, MemoryManipulation::LuaExport::lObjMem, 0, "lObjMem", 0);
-    hks::setfield(L, hks::LUA_GLOBAL, "ObjMem");
+static int lFindOrAddGreatWork(hks::lua_State* L) {
+    void* culture = Culture_Get();
+    unsigned int greatWorkIndex = hks::checkinteger(L, 1);
 
-    CCallWithErrorHandling(L, RegisterDiplomaticRelations, NULL);
+    int greatWorkListIndex = FindOrAddGreatWork(culture, greatWorkIndex);
+    hks::pushinteger(L, greatWorkListIndex);
+    return 1;
+}
+
+static int lSetGreatWorkPlayer(hks::lua_State* L) {
+    void* culture = Culture_Get();
+    int greatWorkListIndex = hks::checkinteger(L, 1);
+    int playerId = hks::checkinteger(L, 2);
+
+    SetGreatWorkPlayer(culture, greatWorkListIndex, playerId);
+    return 0;
+}
+
+static int RegisterCultureManager(hks::lua_State* L) {
+    std::cout << "Registering CultureManager!\n";
+
+    hks::createtable(L, 0, 2);
+
+    PushLuaMethod(L, lFindOrAddGreatWork, "lFindOrAddGreatWork", -2, "FindOrAddGreatWork");
+    PushLuaMethod(L, lSetGreatWorkPlayer, "lSetGreatWorkPlayer", -2, "SetGreatWorkPlayer");
+
+    hks::setfield(L, hks::LUA_GLOBAL, "CultureManager");
+    return 0;
+}
+
+void PushSharedGlobals(hks::lua_State* L) {
+    PushLuaMethod(L, MemoryManipulation::LuaExport::lMem, "lMem", hks::LUA_GLOBAL, "Mem");
+    PushLuaMethod(L, MemoryManipulation::LuaExport::lObjMem, "lObjMem", hks::LUA_GLOBAL, "ObjMem");
+
     MemoryManipulation::LuaExport::PushFieldTypes(L);
 }
 
@@ -175,6 +190,7 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
 
     PushSharedGlobals(L);
     CCallWithErrorHandling(L, RegisterCityTradeManager, NULL);
+    CCallWithErrorHandling(L, RegisterCultureManager, NULL);
 
     base_RegisterScriptData(L);
 }
@@ -214,21 +230,19 @@ static int lAdjustPoints(hks::lua_State* L) {
 static void __cdecl Hook_Influence_PushMethods(hks::lua_State* L, int stackOffset) {
     std::cout << "Hooked Influence::PushMethods!\n";
 
-    hks::pushnamedcclosure(L, lSetTokensToGive, 0, "lSetTokensToGive", 0);
-    hks::setfield(L, stackOffset, "SetTokensToGive");
-    hks::pushnamedcclosure(L, lSetPoints, 0, "lSetPoints", 0);
-    hks::setfield(L, stackOffset, "SetPoints");
-    hks::pushnamedcclosure(L, lAdjustPoints, 0, "lAdjustPoints", 0);
-    hks::setfield(L, stackOffset, "AdjustPoints");
+    PushLuaMethod(L, lSetTokensToGive, "lSetTokensToGive", stackOffset, "SetTokensToGive");
+    PushLuaMethod(L, lSetPoints, "lSetPoints", stackOffset, "SetPoints");
+    PushLuaMethod(L, lAdjustPoints, "lAdjustPoints", stackOffset, "AdjustPoints");
 
     base_Influence_PushMethods(L, stackOffset);
 }
 
-static int __cdecl lSetMaxTurns(hks::lua_State* L) {
-    void* game = CurrentGame;
-    int turnCount = hks::checkinteger(L, 1);
+static void __cdecl Hook_GameDiplomacy_PushMethods(void* _, hks::lua_State* L, int stackOffset) {
+    std::cout << "Hooked GameDiplomacy::PushMethods!\n";
 
-    return 0;
+    PushLuaMethod(L, lChangeGrievanceScore, "lChangeGrievanceScore", stackOffset, "ChangeGrievanceScore");
+
+    base_GameDiplomacy_PushMethods(_, L, stackOffset);
 }
 
 #pragma region Offsets
@@ -251,20 +265,27 @@ constexpr uintptr_t SET_HAS_CONSTRUCTED_TRADING_POST_OFFSET = 0x14e720;
 constexpr uintptr_t REGISTER_SCRIPT_DATA_FOR_UI_OFFSET = 0x5bdd80;
 constexpr uintptr_t SET_MAX_TURNS_OFFSET = 0x597960;
 constexpr uintptr_t GAME_F_AUTO_VARIABLE_EDIT_OFFSET = 0x72a920;
+constexpr uintptr_t CULTURE_GET_OFFSET = 0x1c8250;
+constexpr uintptr_t CULTURE_FIND_OR_ADD_GREAT_WORK_OFFSET = 0x1c80e0;
+constexpr uintptr_t CULTURE_SET_GREAT_WORK_PLAYER_OFFSET = 0x1c8c80;
+constexpr uintptr_t DIPLOMATIC_RELATIONS_GET_INSTANCE_OFFSET = 0x6d86e0;
+constexpr uintptr_t IGAME_DIPLOMACY_PUSH_METHODS_OFFSET = 0x745660;
 #pragma endregion
 
 static void InitHooks() {
     std::cout << "Initializing hooks!\n";
     using namespace Runtime;
 
-    CurrentGame = GetGameCoreGlobalAt<void*>(CURRENT_GAME_OFFSET);
-
     CCallWithErrorHandling = GetGameCoreGlobalAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
 
     IPlayerCities_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IPlayerCities_GetInstance>(IPLAYER_CITIES_GET_INSTANCE_OFFSET);
     IMapPlot_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IMapPlot_GetInstance>(IMAP_PLOT_GET_INSTANCE_OFFSET);
     IPlayerInfluence_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IPlayerInfluence_GetInstance>(IPLAYER_INFLUENCE_GET_INSTANCE_OFFSET);
-    DiplomaticRelations_Edit = GetGameCoreGlobalAt<ProxyTypes::DiplomaticRelations_Edit>(DIPLOMATIC_RELATIONS_EDIT);
+    DiplomaticRelations_GetInstance = GetGameCoreGlobalAt<ProxyTypes::DiplomaticRelations_GetInstance>(DIPLOMATIC_RELATIONS_GET_INSTANCE_OFFSET);
+
+    Culture_Get = GetGameCoreGlobalAt<ProxyTypes::Culture_Get>(CULTURE_GET_OFFSET);
+    FindOrAddGreatWork = GetGameCoreGlobalAt<ProxyTypes::FindOrAddGreatWork>(CULTURE_FIND_OR_ADD_GREAT_WORK_OFFSET);
+    SetGreatWorkPlayer = GetGameCoreGlobalAt<ProxyTypes::SetGreatWorkPlayer>(CULTURE_SET_GREAT_WORK_PLAYER_OFFSET);
 
     SetMaxTurns = GetGameCoreGlobalAt<ProxyTypes::SetMaxTurns>(SET_MAX_TURNS_OFFSET);
     SetHasConstructedTradingPost = GetGameCoreGlobalAt
@@ -294,6 +315,9 @@ static void InitHooks() {
 
     orig_Influence_PushMethods = GetGameCoreGlobalAt<ProxyTypes::PushMethods>(INFLUENCE_PUSH_METHODS_OFFSET);
     CreateHook(orig_Influence_PushMethods, &Hook_Influence_PushMethods, &base_Influence_PushMethods);
+
+    orig_GameDiplomacy_PushMethods = GetGameCoreGlobalAt<ProxyTypes::InstancedPushMethods>(IGAME_DIPLOMACY_PUSH_METHODS_OFFSET);
+    CreateHook(orig_GameDiplomacy_PushMethods, &Hook_GameDiplomacy_PushMethods, &base_GameDiplomacy_PushMethods);
 }
 
 DWORD WINAPI MainThread(LPVOID lpParam) {

@@ -2,6 +2,10 @@
 #include <iostream>
 #include <Windows.h>
 
+#define PushLuaMethod(L, func, cclosurename, stackOffset, name) \
+    hks::pushnamedcclosure(L, func, 0, cclosurename, 0); \
+    hks::setfield(L, stackOffset, name);
+
 namespace hks {
 	constexpr int LUA_GLOBAL = -10002;
 

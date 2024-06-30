@@ -21,6 +21,10 @@ namespace ProxyTypes {
 	typedef void(__thiscall* Buildings_AddGreatWorkSlots)(void* buildings, unsigned int buildingType);
 	typedef void(__thiscall* Influence_SetTokensToGive)(void* influence, int tokens);
 	typedef void(__thiscall* SetHasConstructedTradingPost)(void* trade, int playerId, bool didConstruct);
-	typedef void(__thiscall* CachePushMethods)(void*, hks::lua_State*, int);
+	typedef void(__thiscall* InstancedPushMethods)(void*, hks::lua_State*, int);
 	typedef void* (__thiscall* FAutoVariable_edit)(void* object);
+	typedef void* (__cdecl* Culture_Get)(void);
+	typedef int (__thiscall* FindOrAddGreatWork)(void* culture, unsigned int greatWorkIndex);
+	typedef void(__thiscall* SetGreatWorkPlayer)(void* culture, unsigned int, int playerId);
+	typedef void* (__cdecl* DiplomaticRelations_GetInstance)(hks::lua_State*, int, bool);
 }
