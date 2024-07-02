@@ -69,6 +69,6 @@ namespace hks {
             std::cout << "Failed to load HavokScript! " << GetLastError() << '\n';
             return;
         }
-		InitHavokScriptImports(hksDll);
+        InitHavokScriptImports(hksDll);
     }
 }

@@ -61,6 +61,17 @@ ProxyTypes::Governors_GetInstance Governors_GetInstance;
 ProxyTypes::EmergencyManager_ChangePlayerScore EmergencyManager_ChangePlayerScore;
 ProxyTypes::EmergencyManager_Get EmergencyManager_Get;
 
+ProxyTypes::GlobalParameters_Initialize base_GlobalParameters_Initialize;
+ProxyTypes::GlobalParameters_Initialize orig_GlobalParameters_Initialize;
+
+ProxyTypes::GlobalParameters_Get GlobalParameters_Get;
+
+ProxyTypes::GetTourismFromMonopolies base_GetTourismFromMonopolies;
+ProxyTypes::GetTourismFromMonopolies orig_GetTourismFromMonopolies;
+
+ProxyTypes::ApplyTourism ApplyTourism;
+ProxyTypes::GetPlayersToProcess GetPlayersToProcess;
+
 std::set<short*> lockedAppeals;
 
 void __cdecl Hook_SetAppeal(void* plot, int appeal) {
@@ -208,6 +219,55 @@ static int RegisterEmergencyManager(hks::lua_State* L) {
     return 0;
 }
 
+//std::vector<void*> getAlivePlayers() {
+//    void* playerManager = PlayerManager_Edit();
+//    std::vector<void*> alivePlayers;
+//
+//    uintptr_t* start = *(uintptr_t**)(playerManager + 0x50);
+//    uintptr_t* end = *(uintptr_t**)(playerManager + 0x58);
+//
+//    while (start < end) {
+//        void* player = reinterpret_cast<void*>(*start);
+//        // Assuming some method or property to check if the player is alive
+//        if (player->isAlive()) {
+//            alivePlayers.push_back(player);
+//        }
+//        start++;
+//    }
+//
+//    return alivePlayers;
+//}
+
+static double monopolyTourismModifier = 1.0;
+
+static int lGetMonopolyTourismModifier(hks::lua_State* L) {
+    hks::pushnumber(L, monopolyTourismModifier);
+    return 1;
+}
+
+static int lSetMonopolyTourismModifier(hks::lua_State* L) {
+    monopolyTourismModifier = hks::checknumber(L, 1);
+    return 0;
+}
+
+static int lChangeMonopolyTourismModifier(hks::lua_State* L) {
+    monopolyTourismModifier += hks::checknumber(L, 1);
+    return 0;
+}
+
+static int RegisterEconomicManager(hks::lua_State* L) {
+    std::cout << "Registering EconomicManager!\n";
+
+    hks::createtable(L, 0, 3);
+
+    PushLuaMethod(L, lGetMonopolyTourismModifier, "lGetMonopolyTourismModifier", -2, "GetMonopolyTourismModifier");
+    PushLuaMethod(L, lSetMonopolyTourismModifier, "lSetMonopolyTourismModifier", -2, "SetMonopolyTourismModifier");
+    PushLuaMethod(L, lChangeMonopolyTourismModifier, "lChangeMonopolyTourismModifier", -2, "ChangeMonopolyTourismModifier");
+
+    hks::setfield(L, hks::LUA_GLOBAL, "EconomicManager");
+    return 0;
+}
+
 void PushSharedGlobals(hks::lua_State* L) {
     PushLuaMethod(L, MemoryManipulation::LuaExport::lMem, "lMem", hks::LUA_GLOBAL, "Mem");
     PushLuaMethod(L, MemoryManipulation::LuaExport::lObjMem, "lObjMem", hks::LUA_GLOBAL, "ObjMem");
@@ -222,6 +282,7 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     CCallWithErrorHandling(L, RegisterCityTradeManager, NULL);
     CCallWithErrorHandling(L, RegisterCultureManager, NULL);
     CCallWithErrorHandling(L, RegisterEmergencyManager, NULL);
+    CCallWithErrorHandling(L, RegisterEconomicManager, NULL);
 
     base_RegisterScriptData(L);
 }
@@ -293,6 +354,48 @@ static void __cdecl Hook_IPlayerGovernors_PushMethods(void* _, hks::lua_State* L
     base_IPlayerGovernors_PushMethods(_, L, stackOffset);
 }
 
+static void* Query(void* dbConnection, const char* query) {
+    // return (**(databaseQueryFunction**)(*(uintptr_t*)databaseConnection + 0x18))(databaseConnection, query, 0xffffffff);
+    typedef long long* (*DatabaseQueryFunction)(void* dbConnection, const char* query, int limit);
+
+    long long* dbQuery = nullptr;
+
+    if (dbConnection != nullptr) {
+        uintptr_t funcPtrAddress = *(uintptr_t*)((char*)dbConnection + 0x18);
+        
+        if (funcPtrAddress != 0 && funcPtrAddress != 0xFFFFFFFF) {
+            DatabaseQueryFunction queryFunc = (DatabaseQueryFunction)funcPtrAddress;
+            dbQuery = queryFunc(dbConnection, query, -1);
+        }
+        else {
+            std::cerr << "Invalid function pointer address: " << funcPtrAddress << '\n';
+        }
+    }
+
+    return dbQuery;
+}
+
+// monopolyTourismModifier = *(int *)(*(longlong *)(economicManager + 0xb8) + 4 + playerId * 8);
+
+// float* monopolyTourismModifier;
+
+//static void __cdecl Hook_GlobalParameters_Initialize(void* globalParameters, void* databaseConnection) {
+//    std::cout << "dbConnection: " << databaseConnection << '\n';
+//    void* databaseQuery = Query(databaseConnection, "SELECT Value From GlobalParameters WHERE Name = ? LIMIT 1");
+//    std::cout << "dbQuery: " << databaseQuery << '\n';
+//    if (databaseQuery != NULL) {
+//        GlobalParameters_Get(globalParameters, databaseQuery, "MONOPOLY_TOURISM_MODIFIER", monopolyTourismModifier, 1.0);
+//        std::cout << *monopolyTourismModifier << '\n';
+//    }
+//
+//    base_GlobalParameters_Initialize(globalParameters, databaseConnection);
+//}
+
+static int __cdecl Hook_GetTourismFromMonopolies(void* economicManager, int playerId) {
+    int result = base_GetTourismFromMonopolies(economicManager, playerId);
+    return result * std::round(monopolyTourismModifier);
+}
+
 #pragma region Offsets
 constexpr uintptr_t CURRENT_GAME_OFFSET = 0xb8aa60;
 
@@ -324,6 +427,11 @@ constexpr uintptr_t GOVERNORS_GET_INSTANCE_OFFSET = 0x7139c0;
 constexpr uintptr_t NEUTRALIAZE_GOVERNOR_OFFSET = 0x2df270;
 constexpr uintptr_t EMERGENCY_MANAGER_GET_OFFSET = 0x19a7b0;
 constexpr uintptr_t EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_OFFSET = 0x1991f0;
+constexpr uintptr_t GLOBAL_PARAMETERS_INITIALIZE_OFFSET = 0x1f02a0;
+constexpr uintptr_t GLOBAL_PARAMETERS_GET_OFFSET = 0x1f0120;
+constexpr uintptr_t GET_TOURISM_FROM_MONOPOLIES_OFFSET = 0x62dd20;
+constexpr uintptr_t APPLY_TOURISM_OFFSET = 0x27a0e0;
+constexpr uintptr_t GET_PLAYERS_TO_PROCESS_OFFSET = 0x49d40;
 #pragma endregion
 
 static void InitHooks() {
@@ -357,6 +465,10 @@ static void InitHooks() {
     EmergencyManager_ChangePlayerScore = GetGameCoreGlobalAt<ProxyTypes::EmergencyManager_ChangePlayerScore>(EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_OFFSET);
     EmergencyManager_Get = GetGameCoreGlobalAt<ProxyTypes::EmergencyManager_Get>(EMERGENCY_MANAGER_GET_OFFSET);
 
+    GlobalParameters_Get = GetGameCoreGlobalAt<ProxyTypes::GlobalParameters_Get>(GLOBAL_PARAMETERS_GET_OFFSET);
+    ApplyTourism = GetGameCoreGlobalAt<ProxyTypes::ApplyTourism>(APPLY_TOURISM_OFFSET);
+    GetPlayersToProcess = GetGameCoreGlobalAt<ProxyTypes::GetPlayersToProcess>(GET_PLAYERS_TO_PROCESS_OFFSET);
+
     orig_RegisterScriptData = GetGameCoreGlobalAt<ProxyTypes::RegisterScriptData>(REGISTER_SCRIPT_DATA_OFFSET);
     CreateHook(orig_RegisterScriptData, &Hook_RegisterScriptData, &base_RegisterScriptData);
 
@@ -381,6 +493,12 @@ static void InitHooks() {
 
     orig_IPlayerGovernors_PushMethods = GetGameCoreGlobalAt<ProxyTypes::InstancedPushMethods>(IPLAYER_GOVERNORS_PUSH_METHODS_OFFSET);
     CreateHook(orig_IPlayerGovernors_PushMethods, &Hook_IPlayerGovernors_PushMethods, &base_IPlayerGovernors_PushMethods);
+
+    // orig_GlobalParameters_Initialize = GetGameCoreGlobalAt<ProxyTypes::GlobalParameters_Initialize>(GLOBAL_PARAMETERS_INITIALIZE_OFFSET);
+    // CreateHook(orig_GlobalParameters_Initialize, &Hook_GlobalParameters_Initialize, &base_GlobalParameters_Initialize);
+
+    orig_GetTourismFromMonopolies = GetGameCoreGlobalAt<ProxyTypes::GetTourismFromMonopolies>(GET_TOURISM_FROM_MONOPOLIES_OFFSET);
+    CreateHook(orig_GetTourismFromMonopolies, &Hook_GetTourismFromMonopolies, &base_GetTourismFromMonopolies);
 
     std::cout << "Hooks initialized!\n";
 }
