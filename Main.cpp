@@ -59,6 +59,7 @@ ProxyTypes::PromoteGovernor PromoteGovernor;
 ProxyTypes::Governors_GetInstance Governors_GetInstance;
 
 ProxyTypes::EmergencyManager_ChangePlayerScore EmergencyManager_ChangePlayerScore;
+ProxyTypes::EmergencyManager_ChangePlayerScore2 EmergencyManager_ChangePlayerScore2;
 ProxyTypes::EmergencyManager_Get EmergencyManager_Get;
 
 ProxyTypes::GlobalParameters_Initialize base_GlobalParameters_Initialize;
@@ -199,12 +200,26 @@ static int RegisterCultureManager(hks::lua_State* L) {
 }
 
 static int lEmergencyManager_ChangePlayerScore(hks::lua_State* L) {
+    int argCount = hks::gettop(L);
+
     void* manager = EmergencyManager_Get();
     int playerId = hks::checkinteger(L, 1);
-    int emergencyIndex = hks::checkinteger(L, 2);
-    int amount = hks::checkinteger(L, 3);
 
-    EmergencyManager_ChangePlayerScore(manager, playerId, emergencyIndex, amount);
+    if (argCount == 3) {
+        int emergencyHash = hks::checkinteger(L, 2);
+        int amount = hks::checkinteger(L, 3);
+        EmergencyManager_ChangePlayerScore(manager, playerId, emergencyHash, amount);
+    }
+    else if (argCount == 4) {
+        int otherPlayerId = hks::checkinteger(L, 2);
+        int emergencyIndex = hks::checkinteger(L, 3);
+        int amount = hks::checkinteger(L, 4);
+        EmergencyManager_ChangePlayerScore2(manager, playerId, otherPlayerId, emergencyIndex, amount);
+    }
+    else {
+        hks::error(L, "Incorrect number of arguments. Expected 3 or 4.");
+    }
+
     return 0;
 }
 
@@ -238,20 +253,20 @@ static int RegisterEmergencyManager(hks::lua_State* L) {
 //    return alivePlayers;
 //}
 
-static double monopolyTourismModifier = 1.0;
+static double monopolyTourismMultiplier = 1.0;
 
-static int lGetMonopolyTourismModifier(hks::lua_State* L) {
-    hks::pushnumber(L, monopolyTourismModifier);
+static int lGetMonopolyTourismMultiplier(hks::lua_State* L) {
+    hks::pushnumber(L, monopolyTourismMultiplier);
     return 1;
 }
 
-static int lSetMonopolyTourismModifier(hks::lua_State* L) {
-    monopolyTourismModifier = hks::checknumber(L, 1);
+static int lSetMonopolyTourismMultiplier(hks::lua_State* L) {
+    monopolyTourismMultiplier = hks::checknumber(L, 1);
     return 0;
 }
 
-static int lChangeMonopolyTourismModifier(hks::lua_State* L) {
-    monopolyTourismModifier += hks::checknumber(L, 1);
+static int lChangeMonopolyTourismMultiplier(hks::lua_State* L) {
+    monopolyTourismMultiplier += hks::checknumber(L, 1);
     return 0;
 }
 
@@ -260,9 +275,9 @@ static int RegisterEconomicManager(hks::lua_State* L) {
 
     hks::createtable(L, 0, 3);
 
-    PushLuaMethod(L, lGetMonopolyTourismModifier, "lGetMonopolyTourismModifier", -2, "GetMonopolyTourismModifier");
-    PushLuaMethod(L, lSetMonopolyTourismModifier, "lSetMonopolyTourismModifier", -2, "SetMonopolyTourismModifier");
-    PushLuaMethod(L, lChangeMonopolyTourismModifier, "lChangeMonopolyTourismModifier", -2, "ChangeMonopolyTourismModifier");
+    PushLuaMethod(L, lGetMonopolyTourismMultiplier, "lGetMonopolyTourismMultiplier", -2, "GetMonopolyTourismMultiplier");
+    PushLuaMethod(L, lSetMonopolyTourismMultiplier, "lSetMonopolyTourismMultiplier", -2, "SetMonopolyTourismMultiplier");
+    PushLuaMethod(L, lChangeMonopolyTourismMultiplier, "lChangeMonopolyTourismMultiplier", -2, "ChangeMonopolyTourismMultiplier");
 
     hks::setfield(L, hks::LUA_GLOBAL, "EconomicManager");
     return 0;
@@ -393,7 +408,7 @@ static void* Query(void* dbConnection, const char* query) {
 
 static int __cdecl Hook_GetTourismFromMonopolies(void* economicManager, int playerId) {
     int result = base_GetTourismFromMonopolies(economicManager, playerId);
-    return result * std::round(monopolyTourismModifier);
+    return std::round(result * monopolyTourismMultiplier);
 }
 
 #pragma region Offsets
@@ -427,6 +442,7 @@ constexpr uintptr_t GOVERNORS_GET_INSTANCE_OFFSET = 0x7139c0;
 constexpr uintptr_t NEUTRALIAZE_GOVERNOR_OFFSET = 0x2df270;
 constexpr uintptr_t EMERGENCY_MANAGER_GET_OFFSET = 0x19a7b0;
 constexpr uintptr_t EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_OFFSET = 0x1991f0;
+constexpr uintptr_t EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_2_OFFSET = 0x199140;
 constexpr uintptr_t GLOBAL_PARAMETERS_INITIALIZE_OFFSET = 0x1f02a0;
 constexpr uintptr_t GLOBAL_PARAMETERS_GET_OFFSET = 0x1f0120;
 constexpr uintptr_t GET_TOURISM_FROM_MONOPOLIES_OFFSET = 0x62dd20;
@@ -463,6 +479,7 @@ static void InitHooks() {
     FAutoVariable_edit = GetGameCoreGlobalAt<ProxyTypes::FAutoVariable_edit>(GAME_F_AUTO_VARIABLE_EDIT_OFFSET);
 
     EmergencyManager_ChangePlayerScore = GetGameCoreGlobalAt<ProxyTypes::EmergencyManager_ChangePlayerScore>(EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_OFFSET);
+    EmergencyManager_ChangePlayerScore2 = GetGameCoreGlobalAt<ProxyTypes::EmergencyManager_ChangePlayerScore2>(EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_2_OFFSET);
     EmergencyManager_Get = GetGameCoreGlobalAt<ProxyTypes::EmergencyManager_Get>(EMERGENCY_MANAGER_GET_OFFSET);
 
     GlobalParameters_Get = GetGameCoreGlobalAt<ProxyTypes::GlobalParameters_Get>(GLOBAL_PARAMETERS_GET_OFFSET);

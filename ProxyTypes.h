@@ -32,6 +32,7 @@ namespace ProxyTypes {
 	typedef bool(__thiscall* PromoteGovernor)(void* governors, int governorId, int governorPromotionIndex);
 	typedef void(__thiscall* NeutralizeGovernor)(void* governors, void* governor, int neutralizedTurns);
 	typedef void(__thiscall* EmergencyManager_ChangePlayerScore)(void* manager, int playerId, int emergencyIndex, int amount);
+	typedef void(__thiscall* EmergencyManager_ChangePlayerScore2)(void* manager, int player1Id, int player2Id, int emergencyIndex, int amount);
 	typedef void* (__cdecl* EmergencyManager_Get)(void);
 	typedef void(__thiscall* GlobalParameters_Initialize)(void* globalParameters, void* databaseConnection);
 	typedef bool(__thiscall* GlobalParameters_Get)(void* globalParameters, void* databaseQuery, const char* name, float* value, float defaultValue);

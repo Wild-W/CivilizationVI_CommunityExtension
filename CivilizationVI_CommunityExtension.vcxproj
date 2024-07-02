@@ -218,11 +218,13 @@
     <ClCompile Include="HavokScript.cpp" />
     <ClCompile Include="MemoryManipulation.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Plot.cpp" />
     <ClCompile Include="Runtime.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HavokScript.h" />
     <ClInclude Include="MemoryManipulation.h" />
+    <ClInclude Include="Plot.h" />
     <ClInclude Include="ProxyTypes.h" />
     <ClInclude Include="Runtime.h" />
   </ItemGroup>
