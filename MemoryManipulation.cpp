@@ -26,9 +26,9 @@ namespace MemoryManipulation {
             case FIELD_SHORT: hks::pushinteger(L, *(short*)address); break;
             case FIELD_UNSIGNED_SHORT: hks::pushinteger(L, *(unsigned short*)address); break;
             case FIELD_INT: hks::pushinteger(L, *(int*)address); break;
-            case FIELD_UNSIGNED_INT: hks::pushinteger(L, *(unsigned int*)address); break;
-            case FIELD_LONG_LONG_INT: hks::pushinteger(L, *(long long int*)address); break;
-            case FIELD_UNSIGNED_LONG_LONG_INT: hks::pushinteger(L, *(unsigned long long int*)address); break;
+            case FIELD_UNSIGNED_INT: hks::pushnumber(L, static_cast<double>(*(unsigned int*)address)); break;
+            case FIELD_LONG_LONG_INT: hks::pushnumber(L, static_cast<double>(*(long long int*)address)); break;
+            case FIELD_UNSIGNED_LONG_LONG_INT: hks::pushnumber(L, static_cast<double>(*(unsigned long long int*)address)); break;
             case FIELD_CHAR: hks::pushinteger(L, *(char*)address); break;
             case FIELD_FLOAT: hks::pushnumber(L, *(float*)address); break;
             case FIELD_DOUBLE: hks::pushnumber(L, *(double*)address); break;

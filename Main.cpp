@@ -73,6 +73,8 @@ ProxyTypes::GetTourismFromMonopolies orig_GetTourismFromMonopolies;
 ProxyTypes::ApplyTourism ApplyTourism;
 ProxyTypes::GetPlayersToProcess GetPlayersToProcess;
 
+ProxyTypes::EconomicManager_Get EconomicManager_Get;
+
 std::set<short*> lockedAppeals;
 
 void __cdecl Hook_SetAppeal(void* plot, int appeal) {
@@ -255,6 +257,19 @@ static int RegisterEmergencyManager(hks::lua_State* L) {
 
 static double monopolyTourismMultiplier = 1.0;
 
+static int __cdecl Hook_GetTourismFromMonopolies(void* economicManager, int playerId) {
+    int result = base_GetTourismFromMonopolies(economicManager, playerId);
+    return std::round(result * monopolyTourismMultiplier);
+}
+
+static int lGetTourismFromMonopolies(hks::lua_State* L) {
+    void* economicManager = EconomicManager_Get();
+    int playerId = hks::checkinteger(L, 1);
+
+    int tourism = Hook_GetTourismFromMonopolies(economicManager, playerId);
+    return 1;
+}
+
 static int lGetMonopolyTourismMultiplier(hks::lua_State* L) {
     hks::pushnumber(L, monopolyTourismMultiplier);
     return 1;
@@ -273,11 +288,12 @@ static int lChangeMonopolyTourismMultiplier(hks::lua_State* L) {
 static int RegisterEconomicManager(hks::lua_State* L) {
     std::cout << "Registering EconomicManager!\n";
 
-    hks::createtable(L, 0, 3);
+    hks::createtable(L, 0, 4);
 
     PushLuaMethod(L, lGetMonopolyTourismMultiplier, "lGetMonopolyTourismMultiplier", -2, "GetMonopolyTourismMultiplier");
     PushLuaMethod(L, lSetMonopolyTourismMultiplier, "lSetMonopolyTourismMultiplier", -2, "SetMonopolyTourismMultiplier");
     PushLuaMethod(L, lChangeMonopolyTourismMultiplier, "lChangeMonopolyTourismMultiplier", -2, "ChangeMonopolyTourismMultiplier");
+    PushLuaMethod(L, lGetTourismFromMonopolies, "lGetTourismFromMonopolies", -2, "GetTourismFromMonopolies");
 
     hks::setfield(L, hks::LUA_GLOBAL, "EconomicManager");
     return 0;
@@ -406,11 +422,6 @@ static void* Query(void* dbConnection, const char* query) {
 //    base_GlobalParameters_Initialize(globalParameters, databaseConnection);
 //}
 
-static int __cdecl Hook_GetTourismFromMonopolies(void* economicManager, int playerId) {
-    int result = base_GetTourismFromMonopolies(economicManager, playerId);
-    return std::round(result * monopolyTourismMultiplier);
-}
-
 #pragma region Offsets
 constexpr uintptr_t CURRENT_GAME_OFFSET = 0xb8aa60;
 
@@ -448,6 +459,7 @@ constexpr uintptr_t GLOBAL_PARAMETERS_GET_OFFSET = 0x1f0120;
 constexpr uintptr_t GET_TOURISM_FROM_MONOPOLIES_OFFSET = 0x62dd20;
 constexpr uintptr_t APPLY_TOURISM_OFFSET = 0x27a0e0;
 constexpr uintptr_t GET_PLAYERS_TO_PROCESS_OFFSET = 0x49d40;
+constexpr uintptr_t ECONOMIC_MANAGER_GET_OFFSET = 0x62cdf0;
 #pragma endregion
 
 static void InitHooks() {
@@ -485,6 +497,8 @@ static void InitHooks() {
     GlobalParameters_Get = GetGameCoreGlobalAt<ProxyTypes::GlobalParameters_Get>(GLOBAL_PARAMETERS_GET_OFFSET);
     ApplyTourism = GetGameCoreGlobalAt<ProxyTypes::ApplyTourism>(APPLY_TOURISM_OFFSET);
     GetPlayersToProcess = GetGameCoreGlobalAt<ProxyTypes::GetPlayersToProcess>(GET_PLAYERS_TO_PROCESS_OFFSET);
+
+    EconomicManager_Get = GetGameCoreGlobalAt<ProxyTypes::EconomicManager_Get>(ECONOMIC_MANAGER_GET_OFFSET);
 
     orig_RegisterScriptData = GetGameCoreGlobalAt<ProxyTypes::RegisterScriptData>(REGISTER_SCRIPT_DATA_OFFSET);
     CreateHook(orig_RegisterScriptData, &Hook_RegisterScriptData, &base_RegisterScriptData);

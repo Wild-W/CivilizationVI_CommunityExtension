@@ -39,4 +39,5 @@ namespace ProxyTypes {
 	typedef int(__thiscall* GetTourismFromMonopolies)(void* economicManager, int playerId);
 	typedef void(__thiscall* ApplyTourism)(void* playerCulture);
 	typedef void(__cdecl* GetPlayersToProcess)(std::vector<int>*);
+	typedef void* (__cdecl* EconomicManager_Get)(void);
 }
