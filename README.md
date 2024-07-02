@@ -10,7 +10,7 @@ This mod is currently in beta. Report bugs on the [issue tracker](https://github
 This mod exposes new tools for modders to use by editing Civ VI's base code.
 
 ### How does this mod edit the base code?
-In essence, the game will load a custom dll, which then in turn loads the GameCore DLL and makes changes to it. If you want to learn more, join the [Civilization VI Modding Helpline](https://discord.gg/jSVhyBYvZR) and ask me there. (My username is wildw)
+In essence, the game will load a custom DLL, which then in turn loads the GameCore DLL and makes changes to it. If you want to learn more, join the [Civilization VI Modding Helpline](https://discord.gg/jSVhyBYvZR) and ask me there. (My username is wildw)
 
 ### Can you implement X feature?
 Probably. Open a feature request on the [issue tracker](https://github.com/Wild-W/CivilizationVI_CommunityExtension/issues). The more precise you are with your request the more likely I'll be able to implement it.
