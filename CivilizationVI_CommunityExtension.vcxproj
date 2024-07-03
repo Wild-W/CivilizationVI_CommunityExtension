@@ -215,7 +215,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CultureManager.cpp" />
     <ClCompile Include="EconomicManager.cpp" />
+    <ClCompile Include="EmergencyManager.cpp" />
     <ClCompile Include="GameDiplomacy.cpp" />
     <ClCompile Include="HavokScript.cpp" />
     <ClCompile Include="MemoryManipulation.cpp" />
@@ -226,7 +228,9 @@
     <ClCompile Include="Runtime.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CultureManager.h" />
     <ClInclude Include="EconomicManager.h" />
+    <ClInclude Include="EmergencyManager.h" />
     <ClInclude Include="GameDiplomacy.h" />
     <ClInclude Include="HavokScript.h" />
     <ClInclude Include="MemoryManipulation.h" />

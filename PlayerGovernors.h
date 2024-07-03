@@ -5,6 +5,7 @@ namespace PlayerGovernors {
     typedef class Governors;
     typedef class IPlayerGovernors;
     namespace Types {
+        typedef void(__thiscall* NeutralizeGovernor)(Governors* governors, void* governor, int neutralizedTurns);
         typedef bool(__thiscall* PromoteGovernor)(Governors* governors, int governorId, int governorPromotionIndex);
         typedef Governors* (__cdecl* GetInstance)(hks::lua_State*, int, bool);
         typedef void(__thiscall* PushMethods)(IPlayerGovernors*, hks::lua_State*, int);

@@ -53,6 +53,8 @@ namespace Plot {
     void Create() {
         using namespace Runtime;
 
+        GetInstance = GetGameCoreGlobalAt<Types::GetInstance>(GET_INSTANCE_OFFSET);
+
         lockedAppeals = {};
         orig_SetAppeal = GetGameCoreGlobalAt<Types::SetAppeal>(SET_APPEAL_OFFSET);
         CreateHook(orig_SetAppeal, &SetAppeal, &base_SetAppeal);

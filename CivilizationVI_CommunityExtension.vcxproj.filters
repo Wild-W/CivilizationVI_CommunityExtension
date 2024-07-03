@@ -45,6 +45,12 @@
     <ClCompile Include="GameDiplomacy.cpp">
       <Filter>Source Files\GameCore</Filter>
     </ClCompile>
+    <ClCompile Include="EmergencyManager.cpp">
+      <Filter>Source Files\GameCore</Filter>
+    </ClCompile>
+    <ClCompile Include="CultureManager.cpp">
+      <Filter>Source Files\GameCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HavokScript.h">
@@ -72,6 +78,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GameDiplomacy.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EmergencyManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CultureManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

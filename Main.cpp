@@ -13,6 +13,8 @@
 #include "PlayerGovernors.h"
 #include "PlayerInfluence.h"
 #include "GameDiplomacy.h"
+#include "EmergencyManager.h"
+#include "CultureManager.h"
 
 HANDLE mainThread;
 
@@ -29,10 +31,6 @@ ProxyTypes::SetMaxTurns SetMaxTurns;
 ProxyTypes::SetHasConstructedTradingPost SetHasConstructedTradingPost;
 ProxyTypes::Cities_AddGreatWork Cities_AddGreatWork;
 
-ProxyTypes::Culture_Get Culture_Get;
-ProxyTypes::FindOrAddGreatWork FindOrAddGreatWork;
-ProxyTypes::SetGreatWorkPlayer SetGreatWorkPlayer;
-
 ProxyTypes::CCallWithErrorHandling CCallWithErrorHandling;
 
 ProxyTypes::RegisterScriptData base_RegisterScriptData;
@@ -40,10 +38,6 @@ ProxyTypes::RegisterScriptData orig_RegisterScriptData;
 
 ProxyTypes::RegisterScriptDataForUI base_RegisterScriptDataForUI;
 ProxyTypes::RegisterScriptDataForUI orig_RegisterScriptDataForUI;
-
-ProxyTypes::EmergencyManager_ChangePlayerScore EmergencyManager_ChangePlayerScore;
-ProxyTypes::EmergencyManager_ChangePlayerScore2 EmergencyManager_ChangePlayerScore2;
-ProxyTypes::EmergencyManager_Get EmergencyManager_Get;
 
 ProxyTypes::GlobalParameters_Initialize base_GlobalParameters_Initialize;
 ProxyTypes::GlobalParameters_Initialize orig_GlobalParameters_Initialize;
@@ -99,71 +93,6 @@ static int RegisterCityTradeManager(hks::lua_State* L) {
     return 0;
 }
 
-static int lFindOrAddGreatWork(hks::lua_State* L) {
-    void* culture = Culture_Get();
-    unsigned int greatWorkIndex = hks::checkinteger(L, 1);
-
-    int greatWorkListIndex = FindOrAddGreatWork(culture, greatWorkIndex);
-    hks::pushinteger(L, greatWorkListIndex);
-    return 1;
-}
-
-static int lSetGreatWorkPlayer(hks::lua_State* L) {
-    void* culture = Culture_Get();
-    int greatWorkListIndex = hks::checkinteger(L, 1);
-    int playerId = hks::checkinteger(L, 2);
-
-    SetGreatWorkPlayer(culture, greatWorkListIndex, playerId);
-    return 0;
-}
-
-static int RegisterCultureManager(hks::lua_State* L) {
-    std::cout << "Registering CultureManager!\n";
-
-    hks::createtable(L, 0, 2);
-
-    PushLuaMethod(L, lFindOrAddGreatWork, "lFindOrAddGreatWork", -2, "FindOrAddGreatWork");
-    PushLuaMethod(L, lSetGreatWorkPlayer, "lSetGreatWorkPlayer", -2, "SetGreatWorkPlayer");
-
-    hks::setfield(L, hks::LUA_GLOBAL, "CultureManager");
-    return 0;
-}
-
-static int lEmergencyManager_ChangePlayerScore(hks::lua_State* L) {
-    int argCount = hks::gettop(L);
-
-    void* manager = EmergencyManager_Get();
-    int playerId = hks::checkinteger(L, 1);
-
-    if (argCount == 3) {
-        int emergencyHash = hks::checkinteger(L, 2);
-        int amount = hks::checkinteger(L, 3);
-        EmergencyManager_ChangePlayerScore(manager, playerId, emergencyHash, amount);
-    }
-    else if (argCount == 4) {
-        int otherPlayerId = hks::checkinteger(L, 2);
-        int emergencyIndex = hks::checkinteger(L, 3);
-        int amount = hks::checkinteger(L, 4);
-        EmergencyManager_ChangePlayerScore2(manager, playerId, otherPlayerId, emergencyIndex, amount);
-    }
-    else {
-        hks::error(L, "Incorrect number of arguments. Expected 3 or 4.");
-    }
-
-    return 0;
-}
-
-static int RegisterEmergencyManager(hks::lua_State* L) {
-    std::cout << "Registering EmergencyManager!\n";
-
-    hks::createtable(L, 0, 1);
-
-    PushLuaMethod(L, lEmergencyManager_ChangePlayerScore, "lChangePlayerScore", -2, "ChangePlayerScore");
-
-    hks::setfield(L, hks::LUA_GLOBAL, "EmergencyManager");
-    return 0;
-}
-
 //std::vector<void*> getAlivePlayers() {
 //    void* playerManager = PlayerManager_Edit();
 //    std::vector<void*> alivePlayers;
@@ -195,8 +124,8 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
 
     PushSharedGlobals(L);
     CCallWithErrorHandling(L, RegisterCityTradeManager, NULL);
-    CCallWithErrorHandling(L, RegisterCultureManager, NULL);
-    CCallWithErrorHandling(L, RegisterEmergencyManager, NULL);
+    CCallWithErrorHandling(L, CultureManager::Register, NULL);
+    CCallWithErrorHandling(L, EmergencyManager::Register, NULL);
     CCallWithErrorHandling(L, EconomicManager::Register, NULL);
 
     base_RegisterScriptData(L);
@@ -251,7 +180,6 @@ static void* Query(void* dbConnection, const char* query) {
 constexpr uintptr_t CURRENT_GAME_OFFSET = 0xb8aa60;
 
 constexpr uintptr_t REGISTER_SCRIPT_DATA_OFFSET = 0x5bdac0;
-constexpr uintptr_t IMAP_PLOT_GET_INSTANCE_OFFSET = 0x15d60;
 constexpr uintptr_t IPLAYER_CITIES_GET_INSTANCE_OFFSET = 0x6ee9b0;
 constexpr uintptr_t C_CALL_WITH_ERROR_HANDLING_OFFSET = 0x9ad880;
 constexpr uintptr_t CITIES_ADD_GREAT_WORK_OFFSET = 0x2643b0;
@@ -260,13 +188,7 @@ constexpr uintptr_t SET_HAS_CONSTRUCTED_TRADING_POST_OFFSET = 0x14e720;
 constexpr uintptr_t REGISTER_SCRIPT_DATA_FOR_UI_OFFSET = 0x5bdd80;
 constexpr uintptr_t SET_MAX_TURNS_OFFSET = 0x597960;
 constexpr uintptr_t GAME_F_AUTO_VARIABLE_EDIT_OFFSET = 0x72a920;
-constexpr uintptr_t CULTURE_GET_OFFSET = 0x1c8250;
-constexpr uintptr_t CULTURE_FIND_OR_ADD_GREAT_WORK_OFFSET = 0x1c80e0;
-constexpr uintptr_t CULTURE_SET_GREAT_WORK_PLAYER_OFFSET = 0x1c8c80;
 constexpr uintptr_t NEUTRALIAZE_GOVERNOR_OFFSET = 0x2df270;
-constexpr uintptr_t EMERGENCY_MANAGER_GET_OFFSET = 0x19a7b0;
-constexpr uintptr_t EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_OFFSET = 0x1991f0;
-constexpr uintptr_t EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_2_OFFSET = 0x199140;
 constexpr uintptr_t GLOBAL_PARAMETERS_INITIALIZE_OFFSET = 0x1f02a0;
 constexpr uintptr_t GLOBAL_PARAMETERS_GET_OFFSET = 0x1f0120;
 constexpr uintptr_t APPLY_TOURISM_OFFSET = 0x27a0e0;
@@ -280,9 +202,6 @@ static void InitHooks() {
     CCallWithErrorHandling = GetGameCoreGlobalAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
 
     IPlayerCities_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IPlayerCities_GetInstance>(IPLAYER_CITIES_GET_INSTANCE_OFFSET);
-    Culture_Get = GetGameCoreGlobalAt<ProxyTypes::Culture_Get>(CULTURE_GET_OFFSET);
-    FindOrAddGreatWork = GetGameCoreGlobalAt<ProxyTypes::FindOrAddGreatWork>(CULTURE_FIND_OR_ADD_GREAT_WORK_OFFSET);
-    SetGreatWorkPlayer = GetGameCoreGlobalAt<ProxyTypes::SetGreatWorkPlayer>(CULTURE_SET_GREAT_WORK_PLAYER_OFFSET);
 
     SetMaxTurns = GetGameCoreGlobalAt<ProxyTypes::SetMaxTurns>(SET_MAX_TURNS_OFFSET);
     SetHasConstructedTradingPost = GetGameCoreGlobalAt
@@ -290,10 +209,6 @@ static void InitHooks() {
     Cities_AddGreatWork = GetGameCoreGlobalAt<ProxyTypes::Cities_AddGreatWork>(CITIES_ADD_GREAT_WORK_OFFSET);
 
     FAutoVariable_edit = GetGameCoreGlobalAt<ProxyTypes::FAutoVariable_edit>(GAME_F_AUTO_VARIABLE_EDIT_OFFSET);
-
-    EmergencyManager_ChangePlayerScore = GetGameCoreGlobalAt<ProxyTypes::EmergencyManager_ChangePlayerScore>(EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_OFFSET);
-    EmergencyManager_ChangePlayerScore2 = GetGameCoreGlobalAt<ProxyTypes::EmergencyManager_ChangePlayerScore2>(EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_2_OFFSET);
-    EmergencyManager_Get = GetGameCoreGlobalAt<ProxyTypes::EmergencyManager_Get>(EMERGENCY_MANAGER_GET_OFFSET);
 
     GlobalParameters_Get = GetGameCoreGlobalAt<ProxyTypes::GlobalParameters_Get>(GLOBAL_PARAMETERS_GET_OFFSET);
     ApplyTourism = GetGameCoreGlobalAt<ProxyTypes::ApplyTourism>(APPLY_TOURISM_OFFSET);
@@ -313,6 +228,8 @@ static void InitHooks() {
     PlayerGovernors::Create();
     PlayerInfluence::Create();
     GameDiplomacy::Create();
+    EmergencyManager::Create();
+    CultureManager::Create();
 
     std::cout << "Hooks initialized!\n";
 }

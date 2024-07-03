@@ -21,6 +21,7 @@ namespace Plot {
 
     constexpr uintptr_t SET_APPEAL_OFFSET = 0x61270;
     constexpr uintptr_t PUSH_METHODS_OFFSET = 0x1b2e0;
+    constexpr uintptr_t GET_INSTANCE_OFFSET = 0x15d60;
 
     extern Types::GetInstance GetInstance;
 
