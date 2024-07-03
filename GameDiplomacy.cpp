@@ -32,7 +32,7 @@ namespace GameDiplomacy {
         GetInstance = GetGameCoreGlobalAt<Types::GetInstance>(GET_INSTANCE_OFFSET);
         ChangeGrievanceScore = GetGameCoreGlobalAt<Types::ChangeGrievanceScore>(CHANGE_GRIEVANCE_SCORE_OFFSET);
 
-        orig_GameDiplomacy_PushMethods = GetGameCoreGlobalAt<ProxyTypes::InstancedPushMethods>(PUSH_METHODS_OFFSET);
-        CreateHook<Types::PushMethods>(orig_GameDiplomacy_PushMethods, &PushMethods, &base_GameDiplomacy_PushMethods);
+        orig_GameDiplomacy_PushMethods = GetGameCoreGlobalAt<Types::PushMethods>(PUSH_METHODS_OFFSET);
+        CreateHook(orig_GameDiplomacy_PushMethods, &PushMethods, &base_GameDiplomacy_PushMethods);
     }
 }

@@ -1,4 +1,6 @@
 #pragma once
+#include "HavokScript.h"
+#include "ProxyTypes.h"
 
 namespace PlayerCities {
 	typedef class IPlayerCities;

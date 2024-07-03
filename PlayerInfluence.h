@@ -1,5 +1,6 @@
 #pragma once
 #include "HavokScript.h"
+#include "ProxyTypes.h"
 
 namespace PlayerInfluence {
     typedef class Influence;

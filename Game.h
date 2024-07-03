@@ -1,4 +1,5 @@
 #pragma once
+#include "Runtime.h"
 
 namespace Game {
 	namespace Types {

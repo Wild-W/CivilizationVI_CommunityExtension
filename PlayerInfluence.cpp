@@ -49,6 +49,6 @@ namespace PlayerInfluence {
         SetTokensToGive = GetGameCoreGlobalAt<Types::SetTokensToGive>(SET_TOKENS_TO_GIVE_OFFSET);
 
         orig_PushMethods = GetGameCoreGlobalAt<ProxyTypes::PushMethods>(PUSH_METHODS_OFFSET);
-        CreateHook<ProxyTypes::PushMethods>(orig_PushMethods, &PushMethods, &base_PushMethods);
+        CreateHook(orig_PushMethods, &PushMethods, &base_PushMethods);
     }
 }

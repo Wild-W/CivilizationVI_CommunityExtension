@@ -19,8 +19,8 @@ namespace GameDiplomacy {
     extern Types::ChangeGrievanceScore ChangeGrievanceScore;
     extern Types::GetInstance GetInstance;
 
-    extern ProxyTypes::InstancedPushMethods base_GameDiplomacy_PushMethods;
-    extern ProxyTypes::InstancedPushMethods orig_GameDiplomacy_PushMethods;
+    extern Types::PushMethods base_GameDiplomacy_PushMethods;
+    extern Types::PushMethods orig_GameDiplomacy_PushMethods;
 
 	extern int lChangeGrievanceScore(hks::lua_State* L);
 
