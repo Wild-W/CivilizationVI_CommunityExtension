@@ -1,22 +1,21 @@
 #include "EconomicManager.h"
-#include "ProxyTypes.h"
 #include "HavokScript.h"
 #include "Runtime.h"
 
 namespace EconomicManager {
-    ProxyTypes::GetTourismFromMonopolies base_GetTourismFromMonopolies;
-    ProxyTypes::GetTourismFromMonopolies orig_GetTourismFromMonopolies;
-    ProxyTypes::EconomicManager_Get Get;
+    Types::GetTourismFromMonopolies base_GetTourismFromMonopolies;
+    Types::GetTourismFromMonopolies orig_GetTourismFromMonopolies;
+    Types::Get Get;
 
     double monopolyTourismMultiplier = 1.0;
 
-    int __cdecl GetTourismFromMonopolies(void* economicManager, int playerId) {
+    int __cdecl GetTourismFromMonopolies(Manager* economicManager, int playerId) {
         int result = base_GetTourismFromMonopolies(economicManager, playerId);
         return std::round(result * monopolyTourismMultiplier);
     }
 
     int lGetTourismFromMonopolies(hks::lua_State* L) {
-        void* economicManager = Get();
+        Manager* economicManager = Get();
         int playerId = hks::checkinteger(L, 1);
 
         int tourism = GetTourismFromMonopolies(economicManager, playerId);
@@ -55,9 +54,9 @@ namespace EconomicManager {
     void Create() {
         using namespace Runtime;
 
-        Get = GetGameCoreGlobalAt<ProxyTypes::EconomicManager_Get>(ECONOMIC_MANAGER_GET_OFFSET);
+        Get = GetGameCoreGlobalAt<Types::Get>(GET_OFFSET);
 
-        orig_GetTourismFromMonopolies = GetGameCoreGlobalAt<ProxyTypes::GetTourismFromMonopolies>(GET_TOURISM_FROM_MONOPOLIES_OFFSET);
+        orig_GetTourismFromMonopolies = GetGameCoreGlobalAt<Types::GetTourismFromMonopolies>(GET_TOURISM_FROM_MONOPOLIES_OFFSET);
         CreateHook(orig_GetTourismFromMonopolies, &GetTourismFromMonopolies, &base_GetTourismFromMonopolies);
     }
 }

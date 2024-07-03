@@ -32,8 +32,6 @@ namespace ProxyTypes {
 	typedef void* (__cdecl* EmergencyManager_Get)(void);
 	typedef void(__thiscall* GlobalParameters_Initialize)(void* globalParameters, void* databaseConnection);
 	typedef bool(__thiscall* GlobalParameters_Get)(void* globalParameters, void* databaseQuery, const char* name, float* value, float defaultValue);
-	typedef int(__thiscall* GetTourismFromMonopolies)(void* economicManager, int playerId);
 	typedef void(__thiscall* ApplyTourism)(void* playerCulture);
 	typedef void(__cdecl* GetPlayersToProcess)(std::vector<int>*);
-	typedef void* (__cdecl* EconomicManager_Get)(void);
 }

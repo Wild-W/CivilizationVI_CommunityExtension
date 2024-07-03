@@ -9,7 +9,7 @@ namespace PlayerGovernors {
     Types::GetInstance GetInstance;
 
     int lPromoteGovernor(hks::lua_State* L) {
-        void* governors = GetInstance(L, 1, true);
+        Governors* governors = GetInstance(L, 1, true);
         int governorId = hks::checkinteger(L, 2);
         int governorPromotionIndex = hks::checkinteger(L, 3);
 

@@ -4,13 +4,19 @@
 #include "Runtime.h"
 
 namespace EconomicManager {
-    extern ProxyTypes::GetTourismFromMonopolies base_GetTourismFromMonopolies;
-    extern ProxyTypes::GetTourismFromMonopolies orig_GetTourismFromMonopolies;
-    extern ProxyTypes::EconomicManager_Get Get;
+    typedef class Manager;
+    namespace Types {
+        typedef Manager* (__cdecl* Get)(void);
+        typedef int(__thiscall* GetTourismFromMonopolies)(Manager* economicManager, int playerId);
+    }
+    
+    extern Types::GetTourismFromMonopolies base_GetTourismFromMonopolies;
+    extern Types::GetTourismFromMonopolies orig_GetTourismFromMonopolies;
+    extern Types::Get Get;
 
     extern double monopolyTourismMultiplier;
 
-    extern int __cdecl GetTourismFromMonopolies(void* economicManager, int playerId);
+    extern int __cdecl GetTourismFromMonopolies(Manager* economicManager, int playerId);
 
     extern int lGetTourismFromMonopolies(hks::lua_State* L);
     extern int lGetMonopolyTourismMultiplier(hks::lua_State* L);
@@ -19,7 +25,7 @@ namespace EconomicManager {
 
     extern int Register(hks::lua_State* L);
 
-    constexpr uintptr_t ECONOMIC_MANAGER_GET_OFFSET = 0x62cdf0;
+    constexpr uintptr_t GET_OFFSET = 0x62cdf0;
     constexpr uintptr_t GET_TOURISM_FROM_MONOPOLIES_OFFSET = 0x62dd20;
 
     extern void Create();
