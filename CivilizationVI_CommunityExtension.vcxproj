@@ -216,6 +216,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="EconomicManager.cpp" />
+    <ClCompile Include="GameDiplomacy.cpp" />
     <ClCompile Include="HavokScript.cpp" />
     <ClCompile Include="MemoryManipulation.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -226,6 +227,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EconomicManager.h" />
+    <ClInclude Include="GameDiplomacy.h" />
     <ClInclude Include="HavokScript.h" />
     <ClInclude Include="MemoryManipulation.h" />
     <ClInclude Include="PlayerGovernors.h" />

@@ -9,11 +9,9 @@ namespace ProxyTypes {
 	typedef void* (__cdecl* IPlayerCities_GetInstance)(hks::lua_State*, int, bool);
 	typedef void* (__cdecl* ICityTrade_GetInstance)(hks::lua_State*, int, bool);
 	typedef void(__cdecl* RegisterScriptDataForUI)(hks::lua_State* _, hks::lua_State* L);
-	typedef void(__cdecl* DiplomaticRelations_ChangeGrievanceScore)(void* diplomaticRelations, int player1Id, int player2Id, int amount);
 	typedef void(__cdecl* RegisterScriptData)(hks::lua_State*);
 	typedef void* (__cdecl* DllCreateGameContext)(void);
 	typedef void(__cdecl* PushMethods)(hks::lua_State*, int);
-	typedef void* (__cdecl* DiplomaticRelations_Edit)(void);
 	typedef bool(__cdecl* CCallWithErrorHandling)(hks::lua_State* L, hks::luaFunc, void*);
 	typedef void(__thiscall* Cities_AddGreatWork)(void* cities, unsigned int greatWorkIndex);
 	typedef void(__thiscall* Buildings_AddGreatWorkSlots)(void* buildings, unsigned int buildingType);
@@ -23,7 +21,6 @@ namespace ProxyTypes {
 	typedef void* (__cdecl* Culture_Get)(void);
 	typedef int (__thiscall* FindOrAddGreatWork)(void* culture, unsigned int greatWorkIndex);
 	typedef void(__thiscall* SetGreatWorkPlayer)(void* culture, unsigned int, int playerId);
-	typedef void* (__cdecl* DiplomaticRelations_GetInstance)(hks::lua_State*, int, bool);
 	typedef void(__thiscall* NeutralizeGovernor)(void* governors, void* governor, int neutralizedTurns);
 	typedef void(__thiscall* EmergencyManager_ChangePlayerScore)(void* manager, int playerId, int emergencyIndex, int amount);
 	typedef void(__thiscall* EmergencyManager_ChangePlayerScore2)(void* manager, int player1Id, int player2Id, int emergencyIndex, int amount);

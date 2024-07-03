@@ -12,6 +12,7 @@
 #include "Plot.h"
 #include "PlayerGovernors.h"
 #include "PlayerInfluence.h"
+#include "GameDiplomacy.h"
 
 HANDLE mainThread;
 
@@ -20,17 +21,12 @@ ProxyTypes::DllCreateGameContext base_DllCreateGameContext;
 ProxyTypes::PushMethods base_Cities_PushMethods;
 ProxyTypes::PushMethods orig_Cities_PushMethods;
 
-ProxyTypes::InstancedPushMethods base_GameDiplomacy_PushMethods;
-ProxyTypes::InstancedPushMethods orig_GameDiplomacy_PushMethods;
-
 ProxyTypes::IPlayerCities_GetInstance IPlayerCities_GetInstance;
-ProxyTypes::DiplomaticRelations_GetInstance DiplomaticRelations_GetInstance;
 
 ProxyTypes::FAutoVariable_edit FAutoVariable_edit;
 
 ProxyTypes::SetMaxTurns SetMaxTurns;
 ProxyTypes::SetHasConstructedTradingPost SetHasConstructedTradingPost;
-ProxyTypes::DiplomaticRelations_ChangeGrievanceScore DiplomaticRelations_ChangeGrievanceScore;
 ProxyTypes::Cities_AddGreatWork Cities_AddGreatWork;
 
 ProxyTypes::Culture_Get Culture_Get;
@@ -56,16 +52,6 @@ ProxyTypes::GlobalParameters_Get GlobalParameters_Get;
 
 ProxyTypes::ApplyTourism ApplyTourism;
 ProxyTypes::GetPlayersToProcess GetPlayersToProcess;
-
-static int lChangeGrievanceScore(hks::lua_State* L) {
-    void* diplomaticRelations = DiplomaticRelations_GetInstance(L, 1, true);
-    int player1Id = hks::checkinteger(L, 2);
-    int player2Id = hks::checkinteger(L, 3);
-    int amount = hks::checkinteger(L, 4);
-
-    DiplomaticRelations_ChangeGrievanceScore(diplomaticRelations, player1Id, player2Id, amount);
-    return 0;
-}
 
 static int __cdecl lCities_AddGreatWork(hks::lua_State* L) {
     void* cities = IPlayerCities_GetInstance(L, 1, true);
@@ -224,14 +210,6 @@ void __cdecl Hook_RegisterScriptDataForUI(hks::lua_State* _, hks::lua_State* L) 
     base_RegisterScriptDataForUI(_, L);
 }
 
-static void __cdecl Hook_GameDiplomacy_PushMethods(void* _, hks::lua_State* L, int stackOffset) {
-    std::cout << "Hooked GameDiplomacy::PushMethods!\n";
-
-    PushLuaMethod(L, lChangeGrievanceScore, "lChangeGrievanceScore", stackOffset, "ChangeGrievanceScore");
-
-    base_GameDiplomacy_PushMethods(_, L, stackOffset);
-}
-
 static void* Query(void* dbConnection, const char* query) {
     // return (**(databaseQueryFunction**)(*(uintptr_t*)databaseConnection + 0x18))(databaseConnection, query, 0xffffffff);
     typedef long long* (*DatabaseQueryFunction)(void* dbConnection, const char* query, int limit);
@@ -273,10 +251,8 @@ static void* Query(void* dbConnection, const char* query) {
 constexpr uintptr_t CURRENT_GAME_OFFSET = 0xb8aa60;
 
 constexpr uintptr_t REGISTER_SCRIPT_DATA_OFFSET = 0x5bdac0;
-constexpr uintptr_t DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET = 0x1cea40;
 constexpr uintptr_t IMAP_PLOT_GET_INSTANCE_OFFSET = 0x15d60;
 constexpr uintptr_t IPLAYER_CITIES_GET_INSTANCE_OFFSET = 0x6ee9b0;
-constexpr uintptr_t DIPLOMATIC_RELATIONS_EDIT = 0x1d0220;
 constexpr uintptr_t C_CALL_WITH_ERROR_HANDLING_OFFSET = 0x9ad880;
 constexpr uintptr_t CITIES_ADD_GREAT_WORK_OFFSET = 0x2643b0;
 constexpr uintptr_t CITIES_PUSH_METHODS_OFFSET = 0x6eeb10;
@@ -287,8 +263,6 @@ constexpr uintptr_t GAME_F_AUTO_VARIABLE_EDIT_OFFSET = 0x72a920;
 constexpr uintptr_t CULTURE_GET_OFFSET = 0x1c8250;
 constexpr uintptr_t CULTURE_FIND_OR_ADD_GREAT_WORK_OFFSET = 0x1c80e0;
 constexpr uintptr_t CULTURE_SET_GREAT_WORK_PLAYER_OFFSET = 0x1c8c80;
-constexpr uintptr_t DIPLOMATIC_RELATIONS_GET_INSTANCE_OFFSET = 0x6d86e0;
-constexpr uintptr_t IGAME_DIPLOMACY_PUSH_METHODS_OFFSET = 0x745660;
 constexpr uintptr_t NEUTRALIAZE_GOVERNOR_OFFSET = 0x2df270;
 constexpr uintptr_t EMERGENCY_MANAGER_GET_OFFSET = 0x19a7b0;
 constexpr uintptr_t EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_OFFSET = 0x1991f0;
@@ -306,8 +280,6 @@ static void InitHooks() {
     CCallWithErrorHandling = GetGameCoreGlobalAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
 
     IPlayerCities_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IPlayerCities_GetInstance>(IPLAYER_CITIES_GET_INSTANCE_OFFSET);
-    DiplomaticRelations_GetInstance = GetGameCoreGlobalAt<ProxyTypes::DiplomaticRelations_GetInstance>(DIPLOMATIC_RELATIONS_GET_INSTANCE_OFFSET);
-
     Culture_Get = GetGameCoreGlobalAt<ProxyTypes::Culture_Get>(CULTURE_GET_OFFSET);
     FindOrAddGreatWork = GetGameCoreGlobalAt<ProxyTypes::FindOrAddGreatWork>(CULTURE_FIND_OR_ADD_GREAT_WORK_OFFSET);
     SetGreatWorkPlayer = GetGameCoreGlobalAt<ProxyTypes::SetGreatWorkPlayer>(CULTURE_SET_GREAT_WORK_PLAYER_OFFSET);
@@ -316,8 +288,6 @@ static void InitHooks() {
     SetHasConstructedTradingPost = GetGameCoreGlobalAt
         <ProxyTypes::SetHasConstructedTradingPost>(SET_HAS_CONSTRUCTED_TRADING_POST_OFFSET);
     Cities_AddGreatWork = GetGameCoreGlobalAt<ProxyTypes::Cities_AddGreatWork>(CITIES_ADD_GREAT_WORK_OFFSET);
-    DiplomaticRelations_ChangeGrievanceScore = GetGameCoreGlobalAt
-        <ProxyTypes::DiplomaticRelations_ChangeGrievanceScore>(DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET);
 
     FAutoVariable_edit = GetGameCoreGlobalAt<ProxyTypes::FAutoVariable_edit>(GAME_F_AUTO_VARIABLE_EDIT_OFFSET);
 
@@ -338,13 +308,11 @@ static void InitHooks() {
     orig_Cities_PushMethods = GetGameCoreGlobalAt<ProxyTypes::PushMethods>(CITIES_PUSH_METHODS_OFFSET);
     CreateHook(orig_Cities_PushMethods, &Hook_Cities_PushMethods, &base_Cities_PushMethods);
 
-    orig_GameDiplomacy_PushMethods = GetGameCoreGlobalAt<ProxyTypes::InstancedPushMethods>(IGAME_DIPLOMACY_PUSH_METHODS_OFFSET);
-    CreateHook(orig_GameDiplomacy_PushMethods, &Hook_GameDiplomacy_PushMethods, &base_GameDiplomacy_PushMethods);
-
     EconomicManager::Create();
     Plot::Create();
     PlayerGovernors::Create();
     PlayerInfluence::Create();
+    GameDiplomacy::Create();
 
     std::cout << "Hooks initialized!\n";
 }
