@@ -15,21 +15,14 @@
 #include "GameDiplomacy.h"
 #include "EmergencyManager.h"
 #include "CultureManager.h"
+#include "Game.h"
+#include "CityTradeManager.h"
 
 HANDLE mainThread;
 
 ProxyTypes::DllCreateGameContext base_DllCreateGameContext;
 
-ProxyTypes::PushMethods base_Cities_PushMethods;
-ProxyTypes::PushMethods orig_Cities_PushMethods;
-
-ProxyTypes::IPlayerCities_GetInstance IPlayerCities_GetInstance;
-
-ProxyTypes::FAutoVariable_edit FAutoVariable_edit;
-
 ProxyTypes::SetMaxTurns SetMaxTurns;
-ProxyTypes::SetHasConstructedTradingPost SetHasConstructedTradingPost;
-ProxyTypes::Cities_AddGreatWork Cities_AddGreatWork;
 
 ProxyTypes::CCallWithErrorHandling CCallWithErrorHandling;
 
@@ -46,52 +39,6 @@ ProxyTypes::GlobalParameters_Get GlobalParameters_Get;
 
 ProxyTypes::ApplyTourism ApplyTourism;
 ProxyTypes::GetPlayersToProcess GetPlayersToProcess;
-
-static int __cdecl lCities_AddGreatWork(hks::lua_State* L) {
-    void* cities = IPlayerCities_GetInstance(L, 1, true);
-    int greatWorkListIndex = hks::checkinteger(L, 2);
-    std::cout << cities << ' ' << greatWorkListIndex << '\n';
-
-    Cities_AddGreatWork(cities, greatWorkListIndex);
-    return 0;
-}
-
-static void __cdecl Hook_Cities_PushMethods(hks::lua_State* L, int stackOffset) {
-    std::cout << "Hooked Cities::PushMethods!\n";
-
-    PushLuaMethod(L, lCities_AddGreatWork, "lAddGreatWork", stackOffset, "AddGreatWork");
-
-    base_Cities_PushMethods(L, stackOffset);
-}
-
-static int __cdecl lSetHasConstructedTradingPost(hks::lua_State* L) {
-    hks::getfield(L, 1, "__instance");
-    void* city = hks::touserdata(L, -1);
-    if (city == NULL) {
-        hks::error(L, "Failed to retrieve __instance field as userdata. Is your object NULL?");
-        return 0;
-    }
-    hks::pop(L, 1);
-
-    void* cityTrade = FAutoVariable_edit((void*)((uintptr_t)city + 0xe78));
-    int playerId = hks::checkinteger(L, 2);
-    bool didConstruct = hks::toboolean(L, 3);
-    std::cout << cityTrade << ' ' << playerId << ' ' << didConstruct << '\n';
-
-    SetHasConstructedTradingPost(cityTrade, playerId, didConstruct);
-    return 0;
-}
-
-static int RegisterCityTradeManager(hks::lua_State* L) {
-    std::cout << "Registering CityTradeManager!\n";
-
-    hks::createtable(L, 0, 1);
-
-    PushLuaMethod(L, lSetHasConstructedTradingPost, "lSetHasConstructedTradingPost", -2, "SetHasConstructedTradingPost");
-
-    hks::setfield(L, hks::LUA_GLOBAL, "CityTradeManager");
-    return 0;
-}
 
 //std::vector<void*> getAlivePlayers() {
 //    void* playerManager = PlayerManager_Edit();
@@ -123,7 +70,7 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     std::cout << "Registering lua globals!\n";
 
     PushSharedGlobals(L);
-    CCallWithErrorHandling(L, RegisterCityTradeManager, NULL);
+    CCallWithErrorHandling(L, CityTradeManager::Register, NULL);
     CCallWithErrorHandling(L, CultureManager::Register, NULL);
     CCallWithErrorHandling(L, EmergencyManager::Register, NULL);
     CCallWithErrorHandling(L, EconomicManager::Register, NULL);
@@ -180,15 +127,9 @@ static void* Query(void* dbConnection, const char* query) {
 constexpr uintptr_t CURRENT_GAME_OFFSET = 0xb8aa60;
 
 constexpr uintptr_t REGISTER_SCRIPT_DATA_OFFSET = 0x5bdac0;
-constexpr uintptr_t IPLAYER_CITIES_GET_INSTANCE_OFFSET = 0x6ee9b0;
 constexpr uintptr_t C_CALL_WITH_ERROR_HANDLING_OFFSET = 0x9ad880;
-constexpr uintptr_t CITIES_ADD_GREAT_WORK_OFFSET = 0x2643b0;
-constexpr uintptr_t CITIES_PUSH_METHODS_OFFSET = 0x6eeb10;
-constexpr uintptr_t SET_HAS_CONSTRUCTED_TRADING_POST_OFFSET = 0x14e720;
 constexpr uintptr_t REGISTER_SCRIPT_DATA_FOR_UI_OFFSET = 0x5bdd80;
 constexpr uintptr_t SET_MAX_TURNS_OFFSET = 0x597960;
-constexpr uintptr_t GAME_F_AUTO_VARIABLE_EDIT_OFFSET = 0x72a920;
-constexpr uintptr_t NEUTRALIAZE_GOVERNOR_OFFSET = 0x2df270;
 constexpr uintptr_t GLOBAL_PARAMETERS_INITIALIZE_OFFSET = 0x1f02a0;
 constexpr uintptr_t GLOBAL_PARAMETERS_GET_OFFSET = 0x1f0120;
 constexpr uintptr_t APPLY_TOURISM_OFFSET = 0x27a0e0;
@@ -201,14 +142,7 @@ static void InitHooks() {
 
     CCallWithErrorHandling = GetGameCoreGlobalAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
 
-    IPlayerCities_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IPlayerCities_GetInstance>(IPLAYER_CITIES_GET_INSTANCE_OFFSET);
-
     SetMaxTurns = GetGameCoreGlobalAt<ProxyTypes::SetMaxTurns>(SET_MAX_TURNS_OFFSET);
-    SetHasConstructedTradingPost = GetGameCoreGlobalAt
-        <ProxyTypes::SetHasConstructedTradingPost>(SET_HAS_CONSTRUCTED_TRADING_POST_OFFSET);
-    Cities_AddGreatWork = GetGameCoreGlobalAt<ProxyTypes::Cities_AddGreatWork>(CITIES_ADD_GREAT_WORK_OFFSET);
-
-    FAutoVariable_edit = GetGameCoreGlobalAt<ProxyTypes::FAutoVariable_edit>(GAME_F_AUTO_VARIABLE_EDIT_OFFSET);
 
     GlobalParameters_Get = GetGameCoreGlobalAt<ProxyTypes::GlobalParameters_Get>(GLOBAL_PARAMETERS_GET_OFFSET);
     ApplyTourism = GetGameCoreGlobalAt<ProxyTypes::ApplyTourism>(APPLY_TOURISM_OFFSET);
@@ -220,9 +154,6 @@ static void InitHooks() {
     orig_RegisterScriptDataForUI = GetGameCoreGlobalAt<ProxyTypes::RegisterScriptDataForUI>(REGISTER_SCRIPT_DATA_FOR_UI_OFFSET);
     CreateHook(orig_RegisterScriptDataForUI, &Hook_RegisterScriptDataForUI, &base_RegisterScriptDataForUI);
 
-    orig_Cities_PushMethods = GetGameCoreGlobalAt<ProxyTypes::PushMethods>(CITIES_PUSH_METHODS_OFFSET);
-    CreateHook(orig_Cities_PushMethods, &Hook_Cities_PushMethods, &base_Cities_PushMethods);
-
     EconomicManager::Create();
     Plot::Create();
     PlayerGovernors::Create();
@@ -230,6 +161,8 @@ static void InitHooks() {
     GameDiplomacy::Create();
     EmergencyManager::Create();
     CultureManager::Create();
+    Game::Create();
+    CityTradeManager::Create();
 
     std::cout << "Hooks initialized!\n";
 }

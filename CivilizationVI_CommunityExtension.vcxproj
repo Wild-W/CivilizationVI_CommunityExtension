@@ -215,25 +215,33 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="City.cpp" />
+    <ClCompile Include="CityTradeManager.cpp" />
     <ClCompile Include="CultureManager.cpp" />
     <ClCompile Include="EconomicManager.cpp" />
     <ClCompile Include="EmergencyManager.cpp" />
+    <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameDiplomacy.cpp" />
     <ClCompile Include="HavokScript.cpp" />
     <ClCompile Include="MemoryManipulation.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="PlayerCities.cpp" />
     <ClCompile Include="PlayerGovernors.cpp" />
     <ClCompile Include="PlayerInfluence.cpp" />
     <ClCompile Include="Plot.cpp" />
     <ClCompile Include="Runtime.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="City.h" />
+    <ClInclude Include="CityTradeManager.h" />
     <ClInclude Include="CultureManager.h" />
     <ClInclude Include="EconomicManager.h" />
     <ClInclude Include="EmergencyManager.h" />
+    <ClInclude Include="Game.h" />
     <ClInclude Include="GameDiplomacy.h" />
     <ClInclude Include="HavokScript.h" />
     <ClInclude Include="MemoryManipulation.h" />
+    <ClInclude Include="PlayerCities.h" />
     <ClInclude Include="PlayerGovernors.h" />
     <ClInclude Include="PlayerInfluence.h" />
     <ClInclude Include="Plot.h" />

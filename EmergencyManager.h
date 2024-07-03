@@ -8,6 +8,10 @@ namespace EmergencyManager {
 		typedef void(__thiscall* ChangePlayerScore2)(Manager* manager, int player1Id, int player2Id, int emergencyIndex, int amount);
 		typedef Manager* (__cdecl* Get)(void);
 	}
+	extern Types::ChangePlayerScore ChangePlayerScore;
+	extern Types::ChangePlayerScore2 ChangePlayerScore2;
+	extern Types::Get Get;
+
 	constexpr uintptr_t GET_OFFSET = 0x19a7b0;
 	constexpr uintptr_t CHANGE_PLAYER_SCORE_OFFSET = 0x1991f0;
 	constexpr uintptr_t CHANGE_PLAYER_SCORE_2_OFFSET = 0x199140;

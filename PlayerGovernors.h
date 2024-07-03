@@ -20,6 +20,7 @@ namespace PlayerGovernors {
     constexpr uintptr_t PROMOTE_GOVERNOR_OFFSET = 0x2df340;
     constexpr uintptr_t PUSH_METHODS_OFFSET = 0x713b20;
     constexpr uintptr_t GET_INSTANCE_OFFSET = 0x7139c0;
+    constexpr uintptr_t NEUTRALIZE_GOVERNOR_OFFSET = 0x2df270;
 
     extern int lPromoteGovernor(hks::lua_State* L);
 
