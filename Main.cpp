@@ -11,6 +11,7 @@
 #include "EconomicManager.h"
 #include "Plot.h"
 #include "PlayerGovernors.h"
+#include "PlayerInfluence.h"
 
 HANDLE mainThread;
 
@@ -19,14 +20,10 @@ ProxyTypes::DllCreateGameContext base_DllCreateGameContext;
 ProxyTypes::PushMethods base_Cities_PushMethods;
 ProxyTypes::PushMethods orig_Cities_PushMethods;
 
-ProxyTypes::PushMethods base_Influence_PushMethods;
-ProxyTypes::PushMethods orig_Influence_PushMethods;
-
 ProxyTypes::InstancedPushMethods base_GameDiplomacy_PushMethods;
 ProxyTypes::InstancedPushMethods orig_GameDiplomacy_PushMethods;
 
 ProxyTypes::IPlayerCities_GetInstance IPlayerCities_GetInstance;
-ProxyTypes::IPlayerInfluence_GetInstance IPlayerInfluence_GetInstance;
 ProxyTypes::DiplomaticRelations_GetInstance DiplomaticRelations_GetInstance;
 
 ProxyTypes::FAutoVariable_edit FAutoVariable_edit;
@@ -35,7 +32,6 @@ ProxyTypes::SetMaxTurns SetMaxTurns;
 ProxyTypes::SetHasConstructedTradingPost SetHasConstructedTradingPost;
 ProxyTypes::DiplomaticRelations_ChangeGrievanceScore DiplomaticRelations_ChangeGrievanceScore;
 ProxyTypes::Cities_AddGreatWork Cities_AddGreatWork;
-ProxyTypes::Influence_SetTokensToGive Influence_SetTokensToGive;
 
 ProxyTypes::Culture_Get Culture_Get;
 ProxyTypes::FindOrAddGreatWork FindOrAddGreatWork;
@@ -228,40 +224,6 @@ void __cdecl Hook_RegisterScriptDataForUI(hks::lua_State* _, hks::lua_State* L) 
     base_RegisterScriptDataForUI(_, L);
 }
 
-static int lSetTokensToGive(hks::lua_State* L) {
-    void* influence = IPlayerInfluence_GetInstance(L, 1, true);
-    int tokens = hks::checkinteger(L, 2);
-
-    Influence_SetTokensToGive(influence, tokens);
-    return 0;
-}
-
-static int lSetPoints(hks::lua_State* L) {
-    void* influence = IPlayerInfluence_GetInstance(L, 1, true);
-    double points = hks::checknumber(L, 2);
-
-    *(unsigned int*)((uintptr_t)influence + 0xb8) = static_cast<unsigned int>(std::round(points * 256.0));
-    return 0;
-}
-
-static int lAdjustPoints(hks::lua_State* L) {
-    void* influence = IPlayerInfluence_GetInstance(L, 1, true);
-    double amountPoints = hks::checknumber(L, 2);
-
-    *(unsigned int*)((uintptr_t)influence + 0xb8) += static_cast<unsigned int>(std::round(amountPoints * 256.0));
-    return 0;
-}
-
-static void __cdecl Hook_Influence_PushMethods(hks::lua_State* L, int stackOffset) {
-    std::cout << "Hooked Influence::PushMethods!\n";
-
-    PushLuaMethod(L, lSetTokensToGive, "lSetTokensToGive", stackOffset, "SetTokensToGive");
-    PushLuaMethod(L, lSetPoints, "lSetPoints", stackOffset, "SetPoints");
-    PushLuaMethod(L, lAdjustPoints, "lAdjustPoints", stackOffset, "AdjustPoints");
-
-    base_Influence_PushMethods(L, stackOffset);
-}
-
 static void __cdecl Hook_GameDiplomacy_PushMethods(void* _, hks::lua_State* L, int stackOffset) {
     std::cout << "Hooked GameDiplomacy::PushMethods!\n";
 
@@ -318,9 +280,6 @@ constexpr uintptr_t DIPLOMATIC_RELATIONS_EDIT = 0x1d0220;
 constexpr uintptr_t C_CALL_WITH_ERROR_HANDLING_OFFSET = 0x9ad880;
 constexpr uintptr_t CITIES_ADD_GREAT_WORK_OFFSET = 0x2643b0;
 constexpr uintptr_t CITIES_PUSH_METHODS_OFFSET = 0x6eeb10;
-constexpr uintptr_t IPLAYER_INFLUENCE_GET_INSTANCE_OFFSET = 0x6f34f0;
-constexpr uintptr_t SET_TOKENS_TO_GIVE_OFFSET = 0x2edaf0;
-constexpr uintptr_t INFLUENCE_PUSH_METHODS_OFFSET = 0x6f3650;
 constexpr uintptr_t SET_HAS_CONSTRUCTED_TRADING_POST_OFFSET = 0x14e720;
 constexpr uintptr_t REGISTER_SCRIPT_DATA_FOR_UI_OFFSET = 0x5bdd80;
 constexpr uintptr_t SET_MAX_TURNS_OFFSET = 0x597960;
@@ -347,7 +306,6 @@ static void InitHooks() {
     CCallWithErrorHandling = GetGameCoreGlobalAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
 
     IPlayerCities_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IPlayerCities_GetInstance>(IPLAYER_CITIES_GET_INSTANCE_OFFSET);
-    IPlayerInfluence_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IPlayerInfluence_GetInstance>(IPLAYER_INFLUENCE_GET_INSTANCE_OFFSET);
     DiplomaticRelations_GetInstance = GetGameCoreGlobalAt<ProxyTypes::DiplomaticRelations_GetInstance>(DIPLOMATIC_RELATIONS_GET_INSTANCE_OFFSET);
 
     Culture_Get = GetGameCoreGlobalAt<ProxyTypes::Culture_Get>(CULTURE_GET_OFFSET);
@@ -357,7 +315,6 @@ static void InitHooks() {
     SetMaxTurns = GetGameCoreGlobalAt<ProxyTypes::SetMaxTurns>(SET_MAX_TURNS_OFFSET);
     SetHasConstructedTradingPost = GetGameCoreGlobalAt
         <ProxyTypes::SetHasConstructedTradingPost>(SET_HAS_CONSTRUCTED_TRADING_POST_OFFSET);
-    Influence_SetTokensToGive = GetGameCoreGlobalAt<ProxyTypes::Influence_SetTokensToGive>(SET_TOKENS_TO_GIVE_OFFSET);
     Cities_AddGreatWork = GetGameCoreGlobalAt<ProxyTypes::Cities_AddGreatWork>(CITIES_ADD_GREAT_WORK_OFFSET);
     DiplomaticRelations_ChangeGrievanceScore = GetGameCoreGlobalAt
         <ProxyTypes::DiplomaticRelations_ChangeGrievanceScore>(DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET);
@@ -381,15 +338,13 @@ static void InitHooks() {
     orig_Cities_PushMethods = GetGameCoreGlobalAt<ProxyTypes::PushMethods>(CITIES_PUSH_METHODS_OFFSET);
     CreateHook(orig_Cities_PushMethods, &Hook_Cities_PushMethods, &base_Cities_PushMethods);
 
-    orig_Influence_PushMethods = GetGameCoreGlobalAt<ProxyTypes::PushMethods>(INFLUENCE_PUSH_METHODS_OFFSET);
-    CreateHook(orig_Influence_PushMethods, &Hook_Influence_PushMethods, &base_Influence_PushMethods);
-
     orig_GameDiplomacy_PushMethods = GetGameCoreGlobalAt<ProxyTypes::InstancedPushMethods>(IGAME_DIPLOMACY_PUSH_METHODS_OFFSET);
     CreateHook(orig_GameDiplomacy_PushMethods, &Hook_GameDiplomacy_PushMethods, &base_GameDiplomacy_PushMethods);
 
     EconomicManager::Create();
     Plot::Create();
     PlayerGovernors::Create();
+    PlayerInfluence::Create();
 
     std::cout << "Hooks initialized!\n";
 }

@@ -7,7 +7,6 @@
 namespace ProxyTypes {
 	typedef void(__thiscall* SetMaxTurns)(void* game, int turnCount);
 	typedef void* (__cdecl* IPlayerCities_GetInstance)(hks::lua_State*, int, bool);
-	typedef void* (__cdecl* IPlayerInfluence_GetInstance)(hks::lua_State*, int, bool);
 	typedef void* (__cdecl* ICityTrade_GetInstance)(hks::lua_State*, int, bool);
 	typedef void(__cdecl* RegisterScriptDataForUI)(hks::lua_State* _, hks::lua_State* L);
 	typedef void(__cdecl* DiplomaticRelations_ChangeGrievanceScore)(void* diplomaticRelations, int player1Id, int player2Id, int amount);
@@ -18,7 +17,6 @@ namespace ProxyTypes {
 	typedef bool(__cdecl* CCallWithErrorHandling)(hks::lua_State* L, hks::luaFunc, void*);
 	typedef void(__thiscall* Cities_AddGreatWork)(void* cities, unsigned int greatWorkIndex);
 	typedef void(__thiscall* Buildings_AddGreatWorkSlots)(void* buildings, unsigned int buildingType);
-	typedef void(__thiscall* Influence_SetTokensToGive)(void* influence, int tokens);
 	typedef void(__thiscall* SetHasConstructedTradingPost)(void* trade, int playerId, bool didConstruct);
 	typedef void(__thiscall* InstancedPushMethods)(void*, hks::lua_State*, int);
 	typedef void* (__thiscall* FAutoVariable_edit)(void* object);

@@ -39,6 +39,9 @@
     <ClCompile Include="PlayerGovernors.cpp">
       <Filter>Source Files\GameCore</Filter>
     </ClCompile>
+    <ClCompile Include="PlayerInfluence.cpp">
+      <Filter>Source Files\GameCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HavokScript.h">
@@ -60,6 +63,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PlayerGovernors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerInfluence.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
