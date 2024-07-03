@@ -17,6 +17,7 @@
 #include "CultureManager.h"
 #include "Game.h"
 #include "CityTradeManager.h"
+#include "PlayerCities.h"
 
 HANDLE mainThread;
 
@@ -163,6 +164,7 @@ static void InitHooks() {
     CultureManager::Create();
     Game::Create();
     CityTradeManager::Create();
+    PlayerCities::Create();
 
     std::cout << "Hooks initialized!\n";
 }
