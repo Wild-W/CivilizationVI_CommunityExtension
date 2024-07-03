@@ -1,10 +1,19 @@
 #include "Plot.h"
 #include <set>
+#include "Runtime.h"
 
 namespace Plot {
     std::set<short*> lockedAppeals;
 
-    void __cdecl Hook_SetAppeal(Instance* plot, int appeal) {
+    ProxyTypes::PushMethods base_PushMethods;
+    ProxyTypes::PushMethods orig_PushMethods;
+
+    Types::SetAppeal base_SetAppeal;
+    Types::SetAppeal orig_SetAppeal;
+    
+    Types::GetInstance GetInstance;
+
+    void __cdecl SetAppeal(Instance* plot, int appeal) {
         std::cout << "Hooked SetAppeal!\n";
         if (lockedAppeals.find((short*)((uintptr_t)plot + 0x4a)) == lockedAppeals.end()) {
             base_SetAppeal(plot, appeal);
@@ -15,7 +24,7 @@ namespace Plot {
         Instance* plot = GetInstance(L, 1, true);
         int appeal = hks::checkinteger(L, 2);
         std::cout << plot << ' ' << appeal << '\n';
-        Hook_SetAppeal(plot, appeal);
+        SetAppeal(plot, appeal);
         return 0;
     }
 
@@ -30,5 +39,25 @@ namespace Plot {
             lockedAppeals.erase(appealAddress);
         }
         return 0;
+    }
+
+    void __cdecl PushMethods(hks::lua_State* L, int stackOffset) {
+        std::cout << "Hooked Plot::PushMethods!\n";
+
+        PushLuaMethod(L, lSetAppeal, "lSetAppeal", stackOffset, "SetAppeal");
+        PushLuaMethod(L, lLockAppeal, "lLockAppeal", stackOffset, "LockAppeal");
+
+        base_PushMethods(L, stackOffset);
+    }
+
+    void Create() {
+        using namespace Runtime;
+
+        lockedAppeals = {};
+        orig_SetAppeal = GetGameCoreGlobalAt<Types::SetAppeal>(SET_APPEAL_OFFSET);
+        CreateHook(orig_SetAppeal, &SetAppeal, &base_SetAppeal);
+
+        orig_PushMethods = GetGameCoreGlobalAt<ProxyTypes::PushMethods>(PUSH_METHODS_OFFSET);
+        CreateHook(orig_PushMethods, &PushMethods, &base_PushMethods);
     }
 }

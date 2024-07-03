@@ -7,13 +7,14 @@
 #include "MemoryManipulation.h"
 #include "ProxyTypes.h"
 #include <cmath>
+#include <algorithm>
+#include "EconomicManager.h"
+#include "Plot.h"
+#include "PlayerGovernors.h"
 
 HANDLE mainThread;
 
 ProxyTypes::DllCreateGameContext base_DllCreateGameContext;
-
-ProxyTypes::PushMethods base_Plot_PushMethods;
-ProxyTypes::PushMethods orig_Plot_PushMethods;
 
 ProxyTypes::PushMethods base_Cities_PushMethods;
 ProxyTypes::PushMethods orig_Cities_PushMethods;
@@ -21,13 +22,9 @@ ProxyTypes::PushMethods orig_Cities_PushMethods;
 ProxyTypes::PushMethods base_Influence_PushMethods;
 ProxyTypes::PushMethods orig_Influence_PushMethods;
 
-ProxyTypes::InstancedPushMethods base_IPlayerGovernors_PushMethods;
-ProxyTypes::InstancedPushMethods orig_IPlayerGovernors_PushMethods;
-
 ProxyTypes::InstancedPushMethods base_GameDiplomacy_PushMethods;
 ProxyTypes::InstancedPushMethods orig_GameDiplomacy_PushMethods;
 
-ProxyTypes::IMapPlot_GetInstance IMapPlot_GetInstance;
 ProxyTypes::IPlayerCities_GetInstance IPlayerCities_GetInstance;
 ProxyTypes::IPlayerInfluence_GetInstance IPlayerInfluence_GetInstance;
 ProxyTypes::DiplomaticRelations_GetInstance DiplomaticRelations_GetInstance;
@@ -46,17 +43,11 @@ ProxyTypes::SetGreatWorkPlayer SetGreatWorkPlayer;
 
 ProxyTypes::CCallWithErrorHandling CCallWithErrorHandling;
 
-ProxyTypes::SetAppeal base_SetAppeal;
-ProxyTypes::SetAppeal orig_SetAppeal;
-
 ProxyTypes::RegisterScriptData base_RegisterScriptData;
 ProxyTypes::RegisterScriptData orig_RegisterScriptData;
 
 ProxyTypes::RegisterScriptDataForUI base_RegisterScriptDataForUI;
 ProxyTypes::RegisterScriptDataForUI orig_RegisterScriptDataForUI;
-
-ProxyTypes::PromoteGovernor PromoteGovernor;
-ProxyTypes::Governors_GetInstance Governors_GetInstance;
 
 ProxyTypes::EmergencyManager_ChangePlayerScore EmergencyManager_ChangePlayerScore;
 ProxyTypes::EmergencyManager_ChangePlayerScore2 EmergencyManager_ChangePlayerScore2;
@@ -67,44 +58,8 @@ ProxyTypes::GlobalParameters_Initialize orig_GlobalParameters_Initialize;
 
 ProxyTypes::GlobalParameters_Get GlobalParameters_Get;
 
-ProxyTypes::GetTourismFromMonopolies base_GetTourismFromMonopolies;
-ProxyTypes::GetTourismFromMonopolies orig_GetTourismFromMonopolies;
-
 ProxyTypes::ApplyTourism ApplyTourism;
 ProxyTypes::GetPlayersToProcess GetPlayersToProcess;
-
-ProxyTypes::EconomicManager_Get EconomicManager_Get;
-
-std::set<short*> lockedAppeals;
-
-void __cdecl Hook_SetAppeal(void* plot, int appeal) {
-    std::cout << "Hooked SetAppeal!\n";
-    if (lockedAppeals.find((short*)((uintptr_t)plot + 0x4a)) == lockedAppeals.end()) {
-        base_SetAppeal(plot, appeal);
-    }
-}
-
-static int lSetAppeal(hks::lua_State* L) {
-    void* plot = IMapPlot_GetInstance(L, 1, true);
-    int appeal = hks::checkinteger(L, 2);
-    std::cout << plot << ' ' << appeal << '\n';
-    Hook_SetAppeal(plot, appeal);
-    return 0;
-}
-
-static int lLockAppeal(hks::lua_State* L) {
-    void* plot = IMapPlot_GetInstance(L, 1, true);
-    bool setToLock = hks::toboolean(L, 2);
-    short* appealAddress = (short*)((uintptr_t)plot + 0x4a);
-    std::cout << "Plot adr: " << plot << "\nAppeal adr: " << appealAddress << "\nAppeal: " << *appealAddress << "\nsetToLock: " << setToLock << '\n';
-    if (setToLock) {
-        lockedAppeals.insert(appealAddress);
-    }
-    else {
-        lockedAppeals.erase(appealAddress);
-    }
-    return 0;
-}
 
 static int lChangeGrievanceScore(hks::lua_State* L) {
     void* diplomaticRelations = DiplomaticRelations_GetInstance(L, 1, true);
@@ -114,15 +69,6 @@ static int lChangeGrievanceScore(hks::lua_State* L) {
 
     DiplomaticRelations_ChangeGrievanceScore(diplomaticRelations, player1Id, player2Id, amount);
     return 0;
-}
-
-static void __cdecl Hook_Plot_PushMethods(hks::lua_State* L, int stackOffset) {
-    std::cout << "Hooked Plot::PushMethods!\n";
-
-    PushLuaMethod(L, lSetAppeal, "lSetAppeal", stackOffset, "SetAppeal");
-    PushLuaMethod(L, lLockAppeal, "lLockAppeal", stackOffset, "LockAppeal");
-
-    base_Plot_PushMethods(L, stackOffset);
 }
 
 static int __cdecl lCities_AddGreatWork(hks::lua_State* L) {
@@ -255,50 +201,6 @@ static int RegisterEmergencyManager(hks::lua_State* L) {
 //    return alivePlayers;
 //}
 
-static double monopolyTourismMultiplier = 1.0;
-
-static int __cdecl Hook_GetTourismFromMonopolies(void* economicManager, int playerId) {
-    int result = base_GetTourismFromMonopolies(economicManager, playerId);
-    return std::round(result * monopolyTourismMultiplier);
-}
-
-static int lGetTourismFromMonopolies(hks::lua_State* L) {
-    void* economicManager = EconomicManager_Get();
-    int playerId = hks::checkinteger(L, 1);
-
-    int tourism = Hook_GetTourismFromMonopolies(economicManager, playerId);
-    return 1;
-}
-
-static int lGetMonopolyTourismMultiplier(hks::lua_State* L) {
-    hks::pushnumber(L, monopolyTourismMultiplier);
-    return 1;
-}
-
-static int lSetMonopolyTourismMultiplier(hks::lua_State* L) {
-    monopolyTourismMultiplier = hks::checknumber(L, 1);
-    return 0;
-}
-
-static int lChangeMonopolyTourismMultiplier(hks::lua_State* L) {
-    monopolyTourismMultiplier += hks::checknumber(L, 1);
-    return 0;
-}
-
-static int RegisterEconomicManager(hks::lua_State* L) {
-    std::cout << "Registering EconomicManager!\n";
-
-    hks::createtable(L, 0, 4);
-
-    PushLuaMethod(L, lGetMonopolyTourismMultiplier, "lGetMonopolyTourismMultiplier", -2, "GetMonopolyTourismMultiplier");
-    PushLuaMethod(L, lSetMonopolyTourismMultiplier, "lSetMonopolyTourismMultiplier", -2, "SetMonopolyTourismMultiplier");
-    PushLuaMethod(L, lChangeMonopolyTourismMultiplier, "lChangeMonopolyTourismMultiplier", -2, "ChangeMonopolyTourismMultiplier");
-    PushLuaMethod(L, lGetTourismFromMonopolies, "lGetTourismFromMonopolies", -2, "GetTourismFromMonopolies");
-
-    hks::setfield(L, hks::LUA_GLOBAL, "EconomicManager");
-    return 0;
-}
-
 void PushSharedGlobals(hks::lua_State* L) {
     PushLuaMethod(L, MemoryManipulation::LuaExport::lMem, "lMem", hks::LUA_GLOBAL, "Mem");
     PushLuaMethod(L, MemoryManipulation::LuaExport::lObjMem, "lObjMem", hks::LUA_GLOBAL, "ObjMem");
@@ -313,7 +215,7 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     CCallWithErrorHandling(L, RegisterCityTradeManager, NULL);
     CCallWithErrorHandling(L, RegisterCultureManager, NULL);
     CCallWithErrorHandling(L, RegisterEmergencyManager, NULL);
-    CCallWithErrorHandling(L, RegisterEconomicManager, NULL);
+    CCallWithErrorHandling(L, EconomicManager::Register, NULL);
 
     base_RegisterScriptData(L);
 }
@@ -368,23 +270,6 @@ static void __cdecl Hook_GameDiplomacy_PushMethods(void* _, hks::lua_State* L, i
     base_GameDiplomacy_PushMethods(_, L, stackOffset);
 }
 
-static int lPromoteGovernor(hks::lua_State* L) {
-    void* governors = Governors_GetInstance(L, 1, true);
-    int governorId = hks::checkinteger(L, 2);
-    int governorPromotionIndex = hks::checkinteger(L, 3);
-
-    hks::pushinteger(L, PromoteGovernor(governors, governorId, governorPromotionIndex));
-    return 1;
-}
-
-static void __cdecl Hook_IPlayerGovernors_PushMethods(void* _, hks::lua_State* L, int stackOffset) {
-    std::cout << "Hooked PlayerGovernors::PushMethods!\n";
-
-    PushLuaMethod(L, lPromoteGovernor, "lPromoteGovernor", stackOffset, "PromoteGovernor");
-
-    base_IPlayerGovernors_PushMethods(_, L, stackOffset);
-}
-
 static void* Query(void* dbConnection, const char* query) {
     // return (**(databaseQueryFunction**)(*(uintptr_t*)databaseConnection + 0x18))(databaseConnection, query, 0xffffffff);
     typedef long long* (*DatabaseQueryFunction)(void* dbConnection, const char* query, int limit);
@@ -425,8 +310,6 @@ static void* Query(void* dbConnection, const char* query) {
 #pragma region Offsets
 constexpr uintptr_t CURRENT_GAME_OFFSET = 0xb8aa60;
 
-constexpr uintptr_t SET_APPEAL_OFFSET = 0x61270;
-constexpr uintptr_t PLOT_PUSH_METHODS_OFFSET = 0x1b2e0;
 constexpr uintptr_t REGISTER_SCRIPT_DATA_OFFSET = 0x5bdac0;
 constexpr uintptr_t DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET = 0x1cea40;
 constexpr uintptr_t IMAP_PLOT_GET_INSTANCE_OFFSET = 0x15d60;
@@ -447,19 +330,14 @@ constexpr uintptr_t CULTURE_FIND_OR_ADD_GREAT_WORK_OFFSET = 0x1c80e0;
 constexpr uintptr_t CULTURE_SET_GREAT_WORK_PLAYER_OFFSET = 0x1c8c80;
 constexpr uintptr_t DIPLOMATIC_RELATIONS_GET_INSTANCE_OFFSET = 0x6d86e0;
 constexpr uintptr_t IGAME_DIPLOMACY_PUSH_METHODS_OFFSET = 0x745660;
-constexpr uintptr_t PROMOTE_GOVERNOR_OFFSET = 0x2df340;
-constexpr uintptr_t IPLAYER_GOVERNORS_PUSH_METHODS_OFFSET = 0x713b20;
-constexpr uintptr_t GOVERNORS_GET_INSTANCE_OFFSET = 0x7139c0;
 constexpr uintptr_t NEUTRALIAZE_GOVERNOR_OFFSET = 0x2df270;
 constexpr uintptr_t EMERGENCY_MANAGER_GET_OFFSET = 0x19a7b0;
 constexpr uintptr_t EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_OFFSET = 0x1991f0;
 constexpr uintptr_t EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_2_OFFSET = 0x199140;
 constexpr uintptr_t GLOBAL_PARAMETERS_INITIALIZE_OFFSET = 0x1f02a0;
 constexpr uintptr_t GLOBAL_PARAMETERS_GET_OFFSET = 0x1f0120;
-constexpr uintptr_t GET_TOURISM_FROM_MONOPOLIES_OFFSET = 0x62dd20;
 constexpr uintptr_t APPLY_TOURISM_OFFSET = 0x27a0e0;
 constexpr uintptr_t GET_PLAYERS_TO_PROCESS_OFFSET = 0x49d40;
-constexpr uintptr_t ECONOMIC_MANAGER_GET_OFFSET = 0x62cdf0;
 #pragma endregion
 
 static void InitHooks() {
@@ -469,7 +347,6 @@ static void InitHooks() {
     CCallWithErrorHandling = GetGameCoreGlobalAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
 
     IPlayerCities_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IPlayerCities_GetInstance>(IPLAYER_CITIES_GET_INSTANCE_OFFSET);
-    IMapPlot_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IMapPlot_GetInstance>(IMAP_PLOT_GET_INSTANCE_OFFSET);
     IPlayerInfluence_GetInstance = GetGameCoreGlobalAt<ProxyTypes::IPlayerInfluence_GetInstance>(IPLAYER_INFLUENCE_GET_INSTANCE_OFFSET);
     DiplomaticRelations_GetInstance = GetGameCoreGlobalAt<ProxyTypes::DiplomaticRelations_GetInstance>(DIPLOMATIC_RELATIONS_GET_INSTANCE_OFFSET);
 
@@ -485,9 +362,6 @@ static void InitHooks() {
     DiplomaticRelations_ChangeGrievanceScore = GetGameCoreGlobalAt
         <ProxyTypes::DiplomaticRelations_ChangeGrievanceScore>(DIPLOMATIC_RELATIONS_CHANGE_GRIEVANCE_SCORE_OFFSET);
 
-    PromoteGovernor = GetGameCoreGlobalAt<ProxyTypes::PromoteGovernor>(PROMOTE_GOVERNOR_OFFSET);
-    Governors_GetInstance = GetGameCoreGlobalAt<ProxyTypes::Governors_GetInstance>(GOVERNORS_GET_INSTANCE_OFFSET);
-
     FAutoVariable_edit = GetGameCoreGlobalAt<ProxyTypes::FAutoVariable_edit>(GAME_F_AUTO_VARIABLE_EDIT_OFFSET);
 
     EmergencyManager_ChangePlayerScore = GetGameCoreGlobalAt<ProxyTypes::EmergencyManager_ChangePlayerScore>(EMERGENCY_MANAGER_CHANGE_PLAYER_SCORE_OFFSET);
@@ -498,20 +372,11 @@ static void InitHooks() {
     ApplyTourism = GetGameCoreGlobalAt<ProxyTypes::ApplyTourism>(APPLY_TOURISM_OFFSET);
     GetPlayersToProcess = GetGameCoreGlobalAt<ProxyTypes::GetPlayersToProcess>(GET_PLAYERS_TO_PROCESS_OFFSET);
 
-    EconomicManager_Get = GetGameCoreGlobalAt<ProxyTypes::EconomicManager_Get>(ECONOMIC_MANAGER_GET_OFFSET);
-
     orig_RegisterScriptData = GetGameCoreGlobalAt<ProxyTypes::RegisterScriptData>(REGISTER_SCRIPT_DATA_OFFSET);
     CreateHook(orig_RegisterScriptData, &Hook_RegisterScriptData, &base_RegisterScriptData);
 
     orig_RegisterScriptDataForUI = GetGameCoreGlobalAt<ProxyTypes::RegisterScriptDataForUI>(REGISTER_SCRIPT_DATA_FOR_UI_OFFSET);
     CreateHook(orig_RegisterScriptDataForUI, &Hook_RegisterScriptDataForUI, &base_RegisterScriptDataForUI);
-
-    lockedAppeals = {};
-    orig_SetAppeal = GetGameCoreGlobalAt<ProxyTypes::SetAppeal>(SET_APPEAL_OFFSET);
-    CreateHook(orig_SetAppeal, &Hook_SetAppeal, &base_SetAppeal);
-
-    orig_Plot_PushMethods = GetGameCoreGlobalAt<ProxyTypes::PushMethods>(PLOT_PUSH_METHODS_OFFSET);
-    CreateHook(orig_Plot_PushMethods, &Hook_Plot_PushMethods, &base_Plot_PushMethods);
 
     orig_Cities_PushMethods = GetGameCoreGlobalAt<ProxyTypes::PushMethods>(CITIES_PUSH_METHODS_OFFSET);
     CreateHook(orig_Cities_PushMethods, &Hook_Cities_PushMethods, &base_Cities_PushMethods);
@@ -522,14 +387,9 @@ static void InitHooks() {
     orig_GameDiplomacy_PushMethods = GetGameCoreGlobalAt<ProxyTypes::InstancedPushMethods>(IGAME_DIPLOMACY_PUSH_METHODS_OFFSET);
     CreateHook(orig_GameDiplomacy_PushMethods, &Hook_GameDiplomacy_PushMethods, &base_GameDiplomacy_PushMethods);
 
-    orig_IPlayerGovernors_PushMethods = GetGameCoreGlobalAt<ProxyTypes::InstancedPushMethods>(IPLAYER_GOVERNORS_PUSH_METHODS_OFFSET);
-    CreateHook(orig_IPlayerGovernors_PushMethods, &Hook_IPlayerGovernors_PushMethods, &base_IPlayerGovernors_PushMethods);
-
-    // orig_GlobalParameters_Initialize = GetGameCoreGlobalAt<ProxyTypes::GlobalParameters_Initialize>(GLOBAL_PARAMETERS_INITIALIZE_OFFSET);
-    // CreateHook(orig_GlobalParameters_Initialize, &Hook_GlobalParameters_Initialize, &base_GlobalParameters_Initialize);
-
-    orig_GetTourismFromMonopolies = GetGameCoreGlobalAt<ProxyTypes::GetTourismFromMonopolies>(GET_TOURISM_FROM_MONOPOLIES_OFFSET);
-    CreateHook(orig_GetTourismFromMonopolies, &Hook_GetTourismFromMonopolies, &base_GetTourismFromMonopolies);
+    EconomicManager::Create();
+    Plot::Create();
+    PlayerGovernors::Create();
 
     std::cout << "Hooks initialized!\n";
 }

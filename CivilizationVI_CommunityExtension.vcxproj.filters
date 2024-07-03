@@ -33,6 +33,12 @@
     <ClCompile Include="Plot.cpp">
       <Filter>Source Files\GameCore</Filter>
     </ClCompile>
+    <ClCompile Include="EconomicManager.cpp">
+      <Filter>Source Files\GameCore</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerGovernors.cpp">
+      <Filter>Source Files\GameCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HavokScript.h">
@@ -48,6 +54,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Plot.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EconomicManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerGovernors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

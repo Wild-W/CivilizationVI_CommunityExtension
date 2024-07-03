@@ -1,23 +1,34 @@
 #pragma once
 #include "HavokScript.h"
 #include "ProxyTypes.h"
+#include <set>
 
 namespace Plot {
     typedef class Instance;
 
-    ProxyTypes::PushMethods base_Plot_PushMethods;
-    ProxyTypes::PushMethods orig_Plot_PushMethods;
+    namespace Types {
+        typedef void(__thiscall* SetAppeal)(void* plot, int appeal);
+        typedef Instance* (__cdecl* GetInstance)(hks::lua_State*, int, bool);
+    }
 
-    ProxyTypes::SetAppeal base_SetAppeal;
-    ProxyTypes::SetAppeal orig_SetAppeal;
+    extern ProxyTypes::PushMethods base_PushMethods;
+    extern ProxyTypes::PushMethods orig_PushMethods;
 
-    typedef Instance* (__cdecl* IMapPlot_GetInstance)(hks::lua_State*, int, bool);
-    IMapPlot_GetInstance GetInstance;
+    extern Types::SetAppeal base_SetAppeal;
+    extern Types::SetAppeal orig_SetAppeal;
+    
+    extern std::set<short*> lockedAppeals;
 
-    extern void __cdecl Hook_SetAppeal(Instance* plot, int appeal);
+    constexpr uintptr_t SET_APPEAL_OFFSET = 0x61270;
+    constexpr uintptr_t PUSH_METHODS_OFFSET = 0x1b2e0;
+
+    extern Types::GetInstance GetInstance;
+
+    extern void __cdecl SetAppeal(Instance* plot, int appeal);
 
     extern int lSetAppeal(hks::lua_State* L);
-
     extern int lLockAppeal(hks::lua_State* L);
-};
+
+    extern void Create();
+}
 
