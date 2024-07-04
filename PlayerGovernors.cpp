@@ -13,7 +13,7 @@ namespace PlayerGovernors {
         int governorId = hks::checkinteger(L, 2);
         int governorPromotionIndex = hks::checkinteger(L, 3);
 
-        hks::pushinteger(L, PromoteGovernor(governors, governorId, governorPromotionIndex));
+        hks::pushboolean(L, PromoteGovernor(governors, governorId, governorPromotionIndex));
         return 1;
     }
 

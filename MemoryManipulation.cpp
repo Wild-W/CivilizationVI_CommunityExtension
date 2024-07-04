@@ -9,8 +9,8 @@ namespace MemoryManipulation {
         FIELD_UNSIGNED_SHORT,
         FIELD_INT,
         FIELD_UNSIGNED_INT,
-        FIELD_LONG_LONG_INT,
-        FIELD_UNSIGNED_LONG_LONG_INT,
+        FIELD_LONG_LONG,
+        FIELD_UNSIGNED_LONG_LONG,
         FIELD_CHAR,
         FIELD_FLOAT,
         FIELD_DOUBLE,
@@ -27,13 +27,13 @@ namespace MemoryManipulation {
             case FIELD_UNSIGNED_SHORT: hks::pushinteger(L, *(unsigned short*)address); break;
             case FIELD_INT: hks::pushinteger(L, *(int*)address); break;
             case FIELD_UNSIGNED_INT: hks::pushnumber(L, static_cast<double>(*(unsigned int*)address)); break;
-            case FIELD_LONG_LONG_INT: hks::pushnumber(L, static_cast<double>(*(long long int*)address)); break;
-            case FIELD_UNSIGNED_LONG_LONG_INT: hks::pushnumber(L, static_cast<double>(*(unsigned long long int*)address)); break;
+            case FIELD_LONG_LONG: hks::pushnumber(L, static_cast<double>(*(long long int*)address)); break;
+            case FIELD_UNSIGNED_LONG_LONG: hks::pushnumber(L, static_cast<double>(*(unsigned long long int*)address)); break;
             case FIELD_CHAR: hks::pushinteger(L, *(char*)address); break;
             case FIELD_FLOAT: hks::pushnumber(L, *(float*)address); break;
             case FIELD_DOUBLE: hks::pushnumber(L, *(double*)address); break;
             case FIELD_C_STRING: hks::pushfstring(L, *(char**)address); break;
-            case FIELD_BOOL: hks::pushinteger(L, *(bool*)address); break;
+            case FIELD_BOOL: hks::pushboolean(L, *(bool*)address); break;
             default: hks::error(L, "Invalid FieldType parameter was passed!"); return 0;
             }
             return 1;
@@ -46,8 +46,8 @@ namespace MemoryManipulation {
             case FIELD_UNSIGNED_SHORT: *(unsigned short*)address = static_cast<unsigned short>(hks::checkinteger(L, index)); break;
             case FIELD_INT: *(int*)address = hks::checkinteger(L, index); break;
             case FIELD_UNSIGNED_INT: *(unsigned int*)address = static_cast<unsigned int>(hks::checkinteger(L, index)); break;
-            case FIELD_LONG_LONG_INT: *(long long int*)address = static_cast<long long int>(hks::checkinteger(L, index)); break;
-            case FIELD_UNSIGNED_LONG_LONG_INT: *(unsigned long long int*)address =
+            case FIELD_LONG_LONG: *(long long int*)address = static_cast<long long int>(hks::checkinteger(L, index)); break;
+            case FIELD_UNSIGNED_LONG_LONG: *(unsigned long long int*)address =
                 static_cast<unsigned long long int>(hks::checkinteger(L, index)); break;
             case FIELD_CHAR: *(char*)address = static_cast<char>(hks::checkinteger(L, index)); break;
             case FIELD_FLOAT: *(float*)address = static_cast<float>(hks::checknumber(L, index)); break;
@@ -117,11 +117,11 @@ namespace MemoryManipulation {
             hks::pushinteger(L, FIELD_UNSIGNED_INT);
             hks::setfield(L, hks::LUA_GLOBAL, "FIELD_UNSIGNED_INT");
 
-            hks::pushinteger(L, FIELD_LONG_LONG_INT);
-            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_LONG_LONG_INT");
+            hks::pushinteger(L, FIELD_LONG_LONG);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_LONG_LONG");
 
-            hks::pushinteger(L, FIELD_UNSIGNED_LONG_LONG_INT);
-            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_UNSIGNED_LONG_LONG_INT");
+            hks::pushinteger(L, FIELD_UNSIGNED_LONG_LONG);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_UNSIGNED_LONG_LONG");
 
             hks::pushinteger(L, FIELD_CHAR);
             hks::setfield(L, hks::LUA_GLOBAL, "FIELD_CHAR");

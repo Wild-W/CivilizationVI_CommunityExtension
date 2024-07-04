@@ -73,6 +73,18 @@ namespace hks {
 		hks::error(L, errorMessage.append(std::to_string(playerId)).c_str());
 		return -1;
 	}
+	
+	void pushboolean(lua_State* L, bool value) {
+		// Access the Lua stack top pointer
+		int* stackTop = *(int**)((uintptr_t)L + 0x48);
+
+		// Push a Lua boolean value onto the stack
+		*stackTop = 1;
+		stackTop[2] = static_cast<unsigned int>(value);
+
+		// Increment the stack top pointer by 4 bytes
+		*(int**)((uintptr_t)L + 0x48) = stackTop + 0x4;
+	}
 
 	// Should only ever be called once.
     void InitHavokScript() {

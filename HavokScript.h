@@ -47,6 +47,7 @@ namespace hks {
 	extern hksi_lua_createtableType createtable;
 
 	extern int checkplayerid(lua_State*, int);
+	extern void pushboolean(lua_State* L, bool value);
 
 	// Should only ever be called once
 	extern void InitHavokScript();
