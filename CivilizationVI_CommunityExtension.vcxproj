@@ -241,6 +241,7 @@
     <ClInclude Include="GameDiplomacy.h" />
     <ClInclude Include="HavokScript.h" />
     <ClInclude Include="MemoryManipulation.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerCities.h" />
     <ClInclude Include="PlayerGovernors.h" />
     <ClInclude Include="PlayerInfluence.h" />

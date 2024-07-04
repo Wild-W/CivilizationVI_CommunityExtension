@@ -9,7 +9,7 @@ namespace PlayerCities {
 	Types::GetInstance GetInstance;
 
 	int lAddGreatWork(hks::lua_State* L) {
-		Cities* cities = GetInstance(L, 1, true);
+		Player::Cities* cities = GetInstance(L, 1, true);
 		int greatWorkListIndex = hks::checkinteger(L, 2);
 		std::cout << cities << ' ' << greatWorkListIndex << '\n';
 

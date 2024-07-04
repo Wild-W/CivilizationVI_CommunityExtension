@@ -1,5 +1,6 @@
 #include <iostream>
 #include <Windows.h>
+#include <string>
 
 namespace hks {
 	constexpr int LUA_GLOBAL = -10002;
@@ -60,6 +61,17 @@ namespace hks {
 			getfield = (hksi_lua_getfieldType)GetProcAddress(hksDll, "?hksi_lua_getfield@@YAXPEAUlua_State@@HPEBD@Z");
 			createtable = (hksi_lua_createtableType)GetProcAddress(hksDll, "?lua_createtable@@YAXPEAUlua_State@@HH@Z");
 		}
+	}
+
+	int checkplayerid(lua_State* L, int position) {
+		int playerId = hks::checkinteger(L, position);
+		if (0 <= playerId && playerId < 64) {
+			return playerId;
+		}
+
+		std::string errorMessage = "Invalid playerId: ";
+		hks::error(L, errorMessage.append(std::to_string(playerId)).c_str());
+		return -1;
 	}
 
 	// Should only ever be called once.

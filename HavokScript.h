@@ -46,6 +46,8 @@ namespace hks {
 	typedef void(__cdecl* hksi_lua_createtableType)(lua_State*, int, int);
 	extern hksi_lua_createtableType createtable;
 
+	extern int checkplayerid(lua_State*, int);
+
 	// Should only ever be called once
 	extern void InitHavokScript();
 }

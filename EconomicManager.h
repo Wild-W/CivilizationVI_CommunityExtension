@@ -14,7 +14,8 @@ namespace EconomicManager {
     extern Types::GetTourismFromMonopolies orig_GetTourismFromMonopolies;
     extern Types::Get Get;
 
-    extern double monopolyTourismMultiplier;
+    extern double globalMonopolyTourismMultiplier;
+    extern double playerMonopolyTourismMultipliers[64];
 
     extern int __cdecl GetTourismFromMonopolies(Manager* economicManager, int playerId);
 

@@ -1,13 +1,13 @@
 #pragma once
 #include "HavokScript.h"
 #include "ProxyTypes.h"
+#include "Player.h"
 
 namespace PlayerCities {
 	typedef class IPlayerCities;
-	typedef class Cities;
 	namespace Types {
-		typedef Cities* (__cdecl* GetInstance)(hks::lua_State*, int, bool);
-		typedef void(__thiscall* AddGreatWork)(Cities* cities, unsigned int greatWorkIndex);
+		typedef Player::Cities* (__cdecl* GetInstance)(hks::lua_State*, int, bool);
+		typedef void(__thiscall* AddGreatWork)(Player::Cities* cities, unsigned int greatWorkIndex);
 	}
 	
 	extern ProxyTypes::PushMethods base_PushMethods;
