@@ -1,6 +1,7 @@
 #include "HavokScript.h"
 #include "MinHook.h"
 #include "Runtime.h"
+#include <vector>
 
 namespace MemoryManipulation {
     enum FieldType {
@@ -16,7 +17,7 @@ namespace MemoryManipulation {
         FIELD_DOUBLE,
         FIELD_C_STRING,
         FIELD_BOOL,
-        FIELD_VOID
+        FIELD_POINTER
     };
 
     namespace {
@@ -28,6 +29,7 @@ namespace MemoryManipulation {
             case FIELD_INT: hks::pushinteger(L, *(int*)address); break;
             case FIELD_UNSIGNED_INT: hks::pushnumber(L, static_cast<double>(*(unsigned int*)address)); break;
             case FIELD_LONG_LONG: hks::pushnumber(L, static_cast<double>(*(long long int*)address)); break;
+            case FIELD_POINTER:
             case FIELD_UNSIGNED_LONG_LONG: hks::pushnumber(L, static_cast<double>(*(unsigned long long int*)address)); break;
             case FIELD_CHAR: hks::pushinteger(L, *(char*)address); break;
             case FIELD_FLOAT: hks::pushnumber(L, *(float*)address); break;
@@ -47,8 +49,8 @@ namespace MemoryManipulation {
             case FIELD_INT: *(int*)address = hks::checkinteger(L, index); break;
             case FIELD_UNSIGNED_INT: *(unsigned int*)address = static_cast<unsigned int>(hks::checkinteger(L, index)); break;
             case FIELD_LONG_LONG: *(long long int*)address = static_cast<long long int>(hks::checkinteger(L, index)); break;
-            case FIELD_UNSIGNED_LONG_LONG: *(unsigned long long int*)address =
-                static_cast<unsigned long long int>(hks::checkinteger(L, index)); break;
+            case FIELD_POINTER:
+            case FIELD_UNSIGNED_LONG_LONG: *(unsigned long long int*)address = static_cast<unsigned long long int>(hks::checkinteger(L, index)); break;
             case FIELD_CHAR: *(char*)address = static_cast<char>(hks::checkinteger(L, index)); break;
             case FIELD_FLOAT: *(float*)address = static_cast<float>(hks::checknumber(L, index)); break;
             case FIELD_DOUBLE: *(double*)address = hks::checknumber(L, index); break;
@@ -57,7 +59,7 @@ namespace MemoryManipulation {
                 const char* inputString = hks::checklstring(L, index, &length);
                 char* newString = (char*)malloc(length + 1);
                 if (!newString) {
-                    hks::error(L, "String memory allocation failed");
+                    hks::error(L, "String memory allocation failed!");
                     return;
                 }
                 strcpy_s(newString, length, inputString);
@@ -99,6 +101,24 @@ namespace MemoryManipulation {
             return PushCValue(L, memoryType, objectAddress + offsetAddress);
         }
 
+        int lRegisterCallEvent(hks::lua_State* L) {
+            hks::luaFunc callback = hks::tocfunction(L, 1);
+            uintptr_t address = static_cast<uintptr_t>(hks::checknumber(L, 2));
+
+            int parametersLength = hks::objlen(L, 3);
+            std::vector<FieldType> fieldTypes;
+            for (int i = 1; i <= parametersLength; i++) {
+                hks::pushinteger(L, i);
+                hks::gettable(L, 3);
+                fieldTypes.push_back((FieldType)hks::checkinteger(L, -1));
+                hks::pop(L, 1);
+            }
+
+
+
+            return 0;
+        }
+
         void PushFieldTypes(hks::lua_State* L) {
             std::cout << "Pushing Field Types!\n";
 
@@ -137,6 +157,9 @@ namespace MemoryManipulation {
 
             hks::pushinteger(L, FIELD_BOOL);
             hks::setfield(L, hks::LUA_GLOBAL, "FIELD_BOOL");
+
+            hks::pushinteger(L, FIELD_POINTER);
+            hks::setfield(L, hks::LUA_GLOBAL, "FIELD_POINTER");
         }
     }
 }

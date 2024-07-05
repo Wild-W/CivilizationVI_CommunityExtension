@@ -45,6 +45,14 @@ namespace hks {
 	extern PopType pop;
 	typedef void(__cdecl* hksi_lua_createtableType)(lua_State*, int, int);
 	extern hksi_lua_createtableType createtable;
+	typedef luaFunc(__cdecl* lua_tocfunctionType)(lua_State*, int);
+	extern lua_tocfunctionType tocfunction;
+	typedef void(__cdecl* hksL_checktableType)(lua_State*, int);
+	extern hksL_checktableType checktable;
+	typedef unsigned long long(__cdecl* hks_lua_objlenType)(lua_State*, int);
+	extern hks_lua_objlenType objlen;
+	typedef void(__cdecl* hks_lua_gettableType)(lua_State*, int);
+	extern hks_lua_gettableType gettable;
 
 	extern int checkplayerid(lua_State*, int);
 	extern void pushboolean(lua_State* L, bool value);

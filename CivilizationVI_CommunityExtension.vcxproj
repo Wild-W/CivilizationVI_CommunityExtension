@@ -239,6 +239,7 @@
     <ClInclude Include="EmergencyManager.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameDiplomacy.h" />
+    <ClInclude Include="Governor.h" />
     <ClInclude Include="HavokScript.h" />
     <ClInclude Include="MemoryManipulation.h" />
     <ClInclude Include="Player.h" />

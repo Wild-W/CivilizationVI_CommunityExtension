@@ -21,8 +21,8 @@ namespace MemoryManipulation {
 
     namespace LuaExport {
         extern int lMem(hks::lua_State* L);
-
         extern int lObjMem(hks::lua_State* L);
+        extern int lRegisterCallEvent(hks::lua_State* L);
 
         extern void PushFieldTypes(hks::lua_State* L);
     }
