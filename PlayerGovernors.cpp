@@ -91,7 +91,6 @@ namespace PlayerGovernors {
 
     int lGetNeutralizedIndefinitely(hks::lua_State* L) {
         Governors* governors = GetInstance(L, 1, true);
-        int governorIndex = hks::checkinteger(L, 2);
 
         hks::pushinteger(L, GetNeutralizedIndefinitely(governors));
         return 1;
