@@ -2,6 +2,7 @@
 #include "MinHook.h"
 #include "Runtime.h"
 #include <vector>
+#include <sstream>
 
 namespace MemoryManipulation {
     enum FieldType {
@@ -21,6 +22,17 @@ namespace MemoryManipulation {
     };
 
     namespace {
+        bool isExecutable(void* address) {
+            MEMORY_BASIC_INFORMATION mbi;
+            if (VirtualQuery(address, &mbi, sizeof(mbi))) {
+                return (mbi.Protect & PAGE_EXECUTE) ||
+                    (mbi.Protect & PAGE_EXECUTE_READ) ||
+                    (mbi.Protect & PAGE_EXECUTE_READWRITE) ||
+                    (mbi.Protect & PAGE_EXECUTE_WRITECOPY);
+            }
+            return false;
+        }
+
         static int PushCValue(hks::lua_State* L, FieldType fieldType, uintptr_t address) {
             switch (fieldType) {
             case FIELD_BYTE: hks::pushinteger(L, *(byte*)address); break;
@@ -42,6 +54,14 @@ namespace MemoryManipulation {
         }
 
         static void SetCValue(hks::lua_State* L, FieldType memoryType, uintptr_t address, int index) {
+            if (isExecutable((void*)address)) {
+                // User is trying to overwrite executable data! No good!
+                std::stringstream errorStream;
+                errorStream << "Could not write to executable address 0x" << std::hex << address << '!';
+                hks::error(L, errorStream.str().c_str());
+                return;
+            }
+
             switch (memoryType) {
             case FIELD_BYTE: *(byte*)address = static_cast<byte>(hks::checkinteger(L, index)); break;
             case FIELD_SHORT: *(short*)address = static_cast<short>(hks::checkinteger(L, index)); break;
