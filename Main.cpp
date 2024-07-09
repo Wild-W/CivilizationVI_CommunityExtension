@@ -18,6 +18,8 @@
 #include "Game.h"
 #include "CityTradeManager.h"
 #include "PlayerCities.h"
+#include "GovernorManager.h"
+#include "Player.h"
 
 HANDLE mainThread;
 
@@ -75,6 +77,7 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     CCallWithErrorHandling(L, CultureManager::Register, NULL);
     CCallWithErrorHandling(L, EmergencyManager::Register, NULL);
     CCallWithErrorHandling(L, EconomicManager::Register, NULL);
+    CCallWithErrorHandling(L, GovernorManager::Register, NULL);
 
     base_RegisterScriptData(L);
 }
@@ -165,6 +168,7 @@ static void InitHooks() {
     Game::Create();
     CityTradeManager::Create();
     PlayerCities::Create();
+    Player::Create();
 
     std::cout << "Hooks initialized!\n";
 }

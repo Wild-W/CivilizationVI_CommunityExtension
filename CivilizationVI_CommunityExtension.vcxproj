@@ -222,9 +222,11 @@
     <ClCompile Include="EmergencyManager.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameDiplomacy.cpp" />
+    <ClCompile Include="GovernorManager.cpp" />
     <ClCompile Include="HavokScript.cpp" />
     <ClCompile Include="MemoryManipulation.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerCities.cpp" />
     <ClCompile Include="PlayerGovernors.cpp" />
     <ClCompile Include="PlayerInfluence.cpp" />
@@ -240,6 +242,7 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameDiplomacy.h" />
     <ClInclude Include="Governor.h" />
+    <ClInclude Include="GovernorManager.h" />
     <ClInclude Include="HavokScript.h" />
     <ClInclude Include="MemoryManipulation.h" />
     <ClInclude Include="Player.h" />

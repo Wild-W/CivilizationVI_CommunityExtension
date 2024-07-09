@@ -6,6 +6,7 @@ namespace PlayerGovernors {
     typedef class Governors;
     typedef class IPlayerGovernors;
     namespace Types {
+        typedef Governors* (__cdecl* Edit)(int playerId);
         typedef void(__thiscall* NeutralizeGovernor)(Governors* governors, Governor::Instance* governor, int neutralizedTurns);
         typedef bool(__thiscall* PromoteGovernor)(Governors* governors, int governorId, int governorPromotionIndex);
         typedef Governors* (__cdecl* GetInstance)(hks::lua_State*, int, bool);
@@ -20,11 +21,19 @@ namespace PlayerGovernors {
     namespace Cache {
         typedef class Governors;
         namespace Types {
-            typedef int(__thiscall* GetTurnsToEstablish)(Governors* governors, int governorHash);
+            typedef int(__thiscall* GetTurnsToEstablish)(Cache::Governors* governors, int governorHash);
         }
+
         extern Cache::Types::GetTurnsToEstablish orig_GetTurnsToEstablish;
         extern Cache::Types::GetTurnsToEstablish base_GetTurnsToEstablish;
-        extern Cache::Types::GetTurnsToEstablish GetTurnsToEstablish;
+
+        extern int GetTurnsToEstablish(Cache::Governors* governors, int governorHash);
+
+        extern void SetTurnsToEstablishDelay(Cache::Governors* governors, int governorHash, int amount);
+        extern void ChangeTurnsToEstablishDelay(Cache::Governors* governors, int governorHash, int amount);
+        extern int GetTurnsToEstablishDelay(Cache::Governors* governors, int governorHash);
+
+        constexpr uintptr_t GET_TURNS_TO_ESTABLISH_OFFSET = 0xbab10;
     }
 
     extern Types::PushMethods base_PushMethods;
@@ -33,6 +42,7 @@ namespace PlayerGovernors {
     extern Types::GetTurnsToEstablish base_GetTurnsToEstablish;
     extern Types::GetTurnsToEstablish orig_GetTurnsToEstablish;
 
+    extern Types::Edit Edit;
     extern Types::PromoteGovernor PromoteGovernor;
     extern Types::GetInstance GetInstance;
     extern Types::GetGovernor GetGovernor;
@@ -41,11 +51,12 @@ namespace PlayerGovernors {
     extern Types::UnassignGovernor UnassignGovernor;
     extern Types::ChangeNeutralizedIndefinitely ChangeNeutralizedIndefinitely;
     extern int GetNeutralizedIndefinitely(Governors* governors);
-    extern int GetTurnsToEstablishDelay(Governors* governors, int governorIndex);
+    extern int GetTurnsToEstablishDelay(Governors* governors, int governorHash);
     extern int GetTurnsToEstablish(Governors* governors, int governorIndex);
-    extern void SetTurnsToEstablishDelay(Governors* governors, int governorIndex, int amount);
-    extern void ChangeTurnsToEstablishDelay(Governors* governors, int governorIndex, int amount);
+    extern void SetTurnsToEstablishDelay(Governors* governors, int governorHash, int amount);
+    extern void ChangeTurnsToEstablishDelay(Governors* governors, int governorHash, int amount);
 
+    constexpr uintptr_t EDIT_OFFSET = 0x2de930;
     constexpr uintptr_t PROMOTE_GOVERNOR_OFFSET = 0x2df340;
     constexpr uintptr_t PUSH_METHODS_OFFSET = 0x713b20;
     constexpr uintptr_t GET_INSTANCE_OFFSET = 0x7139c0;
@@ -55,11 +66,7 @@ namespace PlayerGovernors {
     constexpr uintptr_t UNASSIGN_GOVERNOR_OFFSET = 0x2df800;
     constexpr uintptr_t CHANGE_NEUTRALIZED_INDEFINITELY_OFFSET = 0x2de310;
     constexpr uintptr_t GET_TURNS_TO_ESTABLISH_OFFSET = 0x2ded40;
-    constexpr uintptr_t CACHE_GET_TURNS_TO_ESTABLISH_OFFSET = 0xbab10;
 
-    extern int lGetTurnsToEstablishDelay(hks::lua_State* L);
-    extern int lChangeTurnsToEstablishDelay(hks::lua_State* L);
-    extern int lSetTurnsToEstablishDelay(hks::lua_State* L);
     extern int lGetNeutralizedIndefinitely(hks::lua_State* L);
     extern int lChangeNeutralizedIndefinitely(hks::lua_State* L);
     extern int lPromoteGovernor(hks::lua_State* L);

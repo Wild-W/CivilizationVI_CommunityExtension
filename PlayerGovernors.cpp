@@ -10,6 +10,7 @@ namespace PlayerGovernors {
     Types::GetTurnsToEstablish base_GetTurnsToEstablish;
     Types::GetTurnsToEstablish orig_GetTurnsToEstablish;
 
+    Types::Edit Edit;
     Types::PromoteGovernor PromoteGovernor;
     Types::GetInstance GetInstance;
     Types::GetGovernor GetGovernor;
@@ -24,9 +25,33 @@ namespace PlayerGovernors {
         Cache::Types::GetTurnsToEstablish base_GetTurnsToEstablish;
         Cache::Types::GetTurnsToEstablish orig_GetTurnsToEstablish;
 
-        int GetTurnsToEstablish(Cache::Governors* governors, int governorIndex) {
-            std::cout << "Hooked CacheGovernors::GetTurnsToEstablish!\n" << governorIndex << ' ' << GetTurnsToEstablishDelay(governors, governorIndex) << '\n';
-            return Cache::base_GetTurnsToEstablish(governors, governorIndex) + GetTurnsToEstablishDelay(governors, governorIndex);
+        std::unordered_map<Cache::Governors*, std::unordered_map<int, int>> governorsTurnsToEstablishDelay = {};
+
+        int GetTurnsToEstablishDelay(Cache::Governors* governors, int governorHash) {
+            int indexChangeResult = 0;
+            auto governorsIterator = Cache::governorsTurnsToEstablishDelay.find(governors);
+            if (governorsIterator != Cache::governorsTurnsToEstablishDelay.end()) {
+                auto indexIterator = governorsIterator->second.find(governorHash);
+                if (indexIterator != governorsIterator->second.end()) {
+                    indexChangeResult = indexIterator->second;
+                }
+            }
+
+            return indexChangeResult;
+        }
+
+        void SetTurnsToEstablishDelay(Cache::Governors* governors, int governorHash, int amount) {
+            Cache::governorsTurnsToEstablishDelay[governors][governorHash] = amount;
+        }
+
+        void ChangeTurnsToEstablishDelay(Cache::Governors* governors, int governorHash, int amount) {
+            Cache::governorsTurnsToEstablishDelay[governors][governorHash] += amount;
+        }
+
+        // Hook
+        int GetTurnsToEstablish(Cache::Governors* governors, int governorHash) {
+            std::cout << "Hooked CacheGovernors::GetTurnsToEstablish!\n" << governorHash << ' ' << Cache::GetTurnsToEstablishDelay(governors, governorHash) << '\n';
+            return Cache::base_GetTurnsToEstablish(governors, governorHash) + Cache::GetTurnsToEstablishDelay(governors, governorHash);
         }
     }
 
@@ -44,9 +69,9 @@ namespace PlayerGovernors {
     }
 
     // Hook
-    int GetTurnsToEstablish(Governors* governors, int governorIndex) {
-        std::cout << "Hooked Governors::GetTurnsToEstablish!\n" << governorIndex << ' ' << GetTurnsToEstablishDelay(governors, governorIndex) << '\n';
-        return base_GetTurnsToEstablish(governors, governorIndex) + GetTurnsToEstablishDelay(governors, governorIndex);
+    int GetTurnsToEstablish(Governors* governors, int governorHash) {
+        std::cout << "Hooked Governors::GetTurnsToEstablish!\n" << governorHash << ' ' << GetTurnsToEstablishDelay(governors, governorHash) << '\n';
+        return base_GetTurnsToEstablish(governors, governorHash) + GetTurnsToEstablishDelay(governors, governorHash);
     }
 
     void SetTurnsToEstablishDelay(Governors* governors, int governorHash, int amount) {
@@ -60,33 +85,6 @@ namespace PlayerGovernors {
     int GetNeutralizedIndefinitely(Governors* governors) {
         int* neutralizedCount = (int*)Game::FAutoVariable_edit((void*)((uintptr_t)governors + 0x120));
         return *neutralizedCount;
-    }
-
-
-    int lChangeTurnsToEstablishDelay(hks::lua_State* L) {
-        Governors* governors = GetInstance(L, 1, true);
-        int governorHash = hks::checkinteger(L, 2);
-        int amount = hks::checkinteger(L, 3);
-
-        ChangeTurnsToEstablishDelay(governors, governorHash, amount);
-        return 0;
-    }
-
-    int lSetTurnsToEstablishDelay(hks::lua_State* L) {
-        Governors* governors = GetInstance(L, 1, true);
-        int governorHash = hks::checkinteger(L, 2);
-        int amount = hks::checkinteger(L, 3);
-
-        SetTurnsToEstablishDelay(governors, governorHash, amount);
-        return 0;
-    }
-
-    int lGetTurnsToEstablishDelay(hks::lua_State* L) {
-        Governors* governors = GetInstance(L, 1, true);
-        int governorHash = hks::checkinteger(L, 2);
-
-        hks::pushinteger(L, GetTurnsToEstablishDelay(governors, governorHash));
-        return 1;
     }
 
     int lGetNeutralizedIndefinitely(hks::lua_State* L) {
@@ -156,9 +154,6 @@ namespace PlayerGovernors {
         PushLuaMethod(L, lUnassignGovernor, "lUnassignGovernor", stackOffset, "UnassignGovernor");
         PushLuaMethod(L, lChangeNeutralizedIndefinitely, "lChangeNeutralizedIndefinitely", stackOffset, "ChangeNeutralizedIndefinitely");
         PushLuaMethod(L, lGetNeutralizedIndefinitely, "lGetNeutralizedIndefinitely", stackOffset, "GetNeutralizedIndefinitely");
-        PushLuaMethod(L, lChangeTurnsToEstablishDelay, "lChangeTurnsToEstablishDelay", stackOffset, "ChangeTurnsToEstablishDelay");
-        PushLuaMethod(L, lGetTurnsToEstablishDelay, "lGetTurnsToEstablishDelay", stackOffset, "GetTurnsToEstablishDelay");
-        PushLuaMethod(L, lSetTurnsToEstablishDelay, "lSetTurnsToEstablishDelay", stackOffset, "SetTurnsToEstablishDelay");
 
         base_PushMethods(playerGovernors, L, stackOffset);
     }
@@ -166,6 +161,7 @@ namespace PlayerGovernors {
     void Create() {
         using namespace Runtime;
 
+        Edit = GetGameCoreGlobalAt<Types::Edit>(EDIT_OFFSET);
         PromoteGovernor = GetGameCoreGlobalAt<Types::PromoteGovernor>(PROMOTE_GOVERNOR_OFFSET);
         GetInstance = GetGameCoreGlobalAt<Types::GetInstance>(GET_INSTANCE_OFFSET);
         GetGovernor = GetGameCoreGlobalAt<Types::GetGovernor>(GET_GOVERNOR_OFFSET);
@@ -179,7 +175,7 @@ namespace PlayerGovernors {
         orig_GetTurnsToEstablish = GetGameCoreGlobalAt<Types::GetTurnsToEstablish>(GET_TURNS_TO_ESTABLISH_OFFSET);
         CreateHook(orig_GetTurnsToEstablish, &GetTurnsToEstablish, &base_GetTurnsToEstablish);
 
-        // Cache::orig_GetTurnsToEstablish = GetGameCoreGlobalAt<Cache::Types::GetTurnsToEstablish>(CACHE_GET_TURNS_TO_ESTABLISH_OFFSET);
-        // CreateHook(Cache::orig_GetTurnsToEstablish, &Cache::GetTurnsToEstablish, &Cache::base_GetTurnsToEstablish);
+        Cache::orig_GetTurnsToEstablish = GetGameCoreGlobalAt<Cache::Types::GetTurnsToEstablish>(Cache::GET_TURNS_TO_ESTABLISH_OFFSET);
+        CreateHook(Cache::orig_GetTurnsToEstablish, &Cache::GetTurnsToEstablish, &Cache::base_GetTurnsToEstablish);
     }
 }
