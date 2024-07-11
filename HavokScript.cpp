@@ -24,6 +24,11 @@ namespace hks {
 	hksL_checktableType checktable;
 	hks_lua_objlenType objlen;
 	hks_lua_gettableType gettable;
+	hksi_lua_cpcallType cpcall;
+	hski_lua_pushvalueType pushvalue;
+	RefType ref;
+	hksi_lua_pcallType pcall;
+	hksi_lua_rawgetiType rawgeti;
 
 	namespace {
 		static void InitHavokScriptImports(HMODULE hksDll) {
@@ -47,6 +52,11 @@ namespace hks {
 			checktable = (hksL_checktableType)GetProcAddress(hksDll, "?hksL_checktable@@YAXPEAUlua_State@@H@Z");
 			objlen = (hks_lua_objlenType)GetProcAddress(hksDll, "?hksi_lua_objlen@@YA_KPEAUlua_State@@H@Z");
 			gettable = (hks_lua_gettableType)GetProcAddress(hksDll, "?hksi_lua_gettable@@YAXPEAUlua_State@@H@Z");
+			cpcall = (hksi_lua_cpcallType)GetProcAddress(hksDll, "?hksi_lua_cpcall@@YAHPEAUlua_State@@P6AH0@ZPEAX@Z");
+			ref = (RefType)GetProcAddress(hksDll, "?luaL_ref@@YAHPEAUlua_State@@H@Z");
+			pcall = (hksi_lua_pcallType)GetProcAddress(hksDll, "?hksi_lua_pcall@@YAHPEAUlua_State@@HHH@Z");
+			pushvalue = (hski_lua_pushvalueType)GetProcAddress(hksDll, "?hksi_lua_pushvalue@@YAXPEAUlua_State@@H@Z");
+			rawgeti = (hksi_lua_rawgetiType)GetProcAddress(hksDll, "?hksi_lua_rawgeti@@YAXPEAUlua_State@@HH@Z");
 		}
 	}
 

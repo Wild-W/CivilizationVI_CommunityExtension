@@ -1,3 +1,4 @@
+#include "Runtime.h"
 #include "MinHook.h"
 #include <iostream>
 #pragma comment(lib, "libMinHook.x64.lib")
@@ -5,6 +6,7 @@
 namespace Runtime {
 	HMODULE GameCore;
 	uintptr_t GameCoreAddress;
+	asmjit::JitRuntime Jit;
 
 	// Should only be called once
 	void Create() {

@@ -3,6 +3,8 @@
 #include "Runtime.h"
 #include <vector>
 #include <sstream>
+#include "asmjit/x86.h"
+#include "capstone/capstone.h"
 
 namespace MemoryManipulation {
     enum FieldType {
@@ -18,10 +20,46 @@ namespace MemoryManipulation {
         FIELD_DOUBLE,
         FIELD_C_STRING,
         FIELD_BOOL,
-        FIELD_POINTER
+        FIELD_POINTER,
+        _FIELD_TYPE_COUNT_
     };
 
     namespace {
+        const asmjit::x86::Reg& GetRegister(FieldType fieldType, int index) {
+            using namespace asmjit;
+
+            switch (fieldType) {
+            // Integer registers
+            case FIELD_BYTE:
+            case FIELD_SHORT:
+            case FIELD_UNSIGNED_SHORT:
+            case FIELD_INT:
+            case FIELD_UNSIGNED_INT:
+            case FIELD_LONG_LONG:
+            case FIELD_POINTER:
+            case FIELD_UNSIGNED_LONG_LONG:
+            case FIELD_CHAR:
+            case FIELD_C_STRING:
+            case FIELD_BOOL:
+                switch (index) {
+                case 0: return x86::rcx;
+                case 1: return x86::rdx;
+                case 2: return x86::r8;
+                case 3: return x86::r9;
+                }
+
+            // Floating point registers
+            case FIELD_FLOAT:
+            case FIELD_DOUBLE:
+                switch (index) {
+                case 0: return x86::xmm0;
+                case 1: return x86::xmm1;
+                case 2: return x86::xmm2;
+                case 3: return x86::xmm3;
+                }
+            }
+        }
+
         bool isExecutable(void* address) {
             MEMORY_BASIC_INFORMATION mbi;
             if (VirtualQuery(address, &mbi, sizeof(mbi))) {
@@ -86,9 +124,255 @@ namespace MemoryManipulation {
                 *(char**)address = newString;
                 break;
             }
-            case FIELD_BOOL: *(bool*)address = hks::toboolean(L, index);
-            default: hks::error(L, "Invalid MemoryType parameter was passed!");
+            case FIELD_BOOL: *(bool*)address = hks::toboolean(L, index); break;
+            default: hks::error(L, "Invalid FieldType parameter was passed!");
             }
+        }
+
+        void* CreateTrampoline(const byte* source, size_t size) {
+            std::cout << "source and size: " << source << ' ' << size << '\n';
+            // Allocate executable memory
+            void* execMem = VirtualAlloc(NULL, size + 5, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+            if (!execMem) {
+                std::cout << "Failed to allocate memory\n";
+                return nullptr;
+            }
+
+            // Copy the code to the newly allocated memory
+            memcpy(execMem, source, size);
+
+            // Calculate the address to jump back to
+            byte* jumpSrc = (byte*)execMem + size;
+            intptr_t jumpTarget = (intptr_t)(source + size);
+            intptr_t relativeOffset = jumpTarget - (intptr_t)(jumpSrc + 5);
+
+            // Add a jump back to the original function after the copied bytes
+            *jumpSrc = 0xE9; // JMP opcode
+            *(DWORD*)(jumpSrc + 1) = (DWORD)relativeOffset;
+
+            // Change memory protection to execute/read
+            DWORD oldProtect;
+            if (!VirtualProtect(execMem, size + 5, PAGE_EXECUTE_READ, &oldProtect)) {
+                std::cout << "Failed to change memory protection\n";
+                VirtualFree(execMem, 0, MEM_RELEASE);
+                return nullptr;
+            }
+
+            return execMem;
+        }
+
+        void PushDynamicValue(asmjit::x86::Assembler* a, std::pair<asmjit::x86::Reg, FieldType> pair) {
+            using namespace asmjit;
+
+            if (pair.second == FIELD_FLOAT || pair.second == FIELD_DOUBLE) {
+                // Allocate space on the stack
+                a->sub(x86::rsp, 8);
+                // Move value onto the stack
+                a->movaps(x86::ptr(x86::rsp), pair.first.as<x86::Xmm>());
+
+                return;
+            }
+
+            a->push(pair.first.as<x86::Gp>());
+        }
+
+        void PopDynamicValue(asmjit::x86::Assembler* a, std::pair<asmjit::x86::Reg, FieldType> pair) {
+            using namespace asmjit;
+
+            if (pair.second == FIELD_FLOAT || pair.second == FIELD_DOUBLE) {
+                // Move value from the stack into Xmm register
+                a->movaps(pair.first.as<x86::Xmm>(), x86::ptr(x86::rsp));
+                // Reset stack pointer
+                a->add(x86::rsp, 8);
+
+                return;
+            }
+
+            a->pop(pair.first.as<x86::Gp>());
+        }
+
+        void* CreateLuaCallback(hks::lua_State* L, std::vector<std::pair<asmjit::x86::Reg, FieldType>> regs, void* trampoline, int luaCallbackIndex) {
+            using namespace asmjit;
+
+            CodeHolder code;
+            code.init(Runtime::Jit.environment(), Runtime::Jit.cpuFeatures());
+
+            x86::Assembler a(&code);
+
+            FileLogger logger(stdout);
+            code.setLogger(&logger);
+
+            // Begin constructing the function
+            // Function prologue
+            a.push(x86::rbp);
+            a.mov(x86::rbp, x86::rsp);
+
+            // Backup the registers in prologue in ascending order
+            int i;
+            for (i = 0; i < regs.size(); i++) {
+                PushDynamicValue(&a, regs[i]);
+            }
+
+            // Backup the registers to prepare for pushing arguments onto the lua stack in descending order
+            for (i = regs.size() - 1; i >= 0; i--) {
+                PushDynamicValue(&a, regs[i]);
+            }
+
+            // Put lua_State* in parameter 1
+            a.mov(x86::rcx, L);
+
+            // Get the callback function
+            a.mov(x86::rdx, hks::LUA_REGISTRYINDEX);
+            a.mov(x86::r8, luaCallbackIndex);
+            a.call(hks::rawgeti);
+
+            for (const auto& pair : regs) {
+                switch (pair.second) {
+                case FIELD_FLOAT:
+                case FIELD_DOUBLE:
+                    // Put floating point number in parameter 2
+                    a.movaps(x86::xmm1, pair.first.as<x86::Xmm>());
+                    a.call(hks::pushnumber);
+                    break;
+
+                case FIELD_BOOL:
+                    a.pop(x86::rdx);
+                    a.call(hks::pushboolean);
+                    break;
+
+                case FIELD_BYTE:
+                case FIELD_SHORT:
+                case FIELD_INT:
+                    a.pop(x86::rdx);
+                    a.call(hks::pushinteger);
+                    break;
+
+                case FIELD_LONG_LONG:
+                case FIELD_UNSIGNED_LONG_LONG:
+                case FIELD_POINTER:
+                case FIELD_C_STRING:
+                    // Put 64-bit integer into rax
+                    a.pop(x86::rax);
+                    // Move the 64-bit integer from rax into the second parameter (xmm1)
+                    a.movq(x86::xmm1, x86::rax);
+                    a.call(hks::pushnumber);
+                    break;
+
+                default: hks::error(L, "Unimplemented!!!!"); std::cout << pair.second << '\n';
+                }
+            }
+
+            // Call lua function
+            a.mov(x86::rdx, regs.size());
+            a.xor_(x86::r8, x86::r8);
+            a.xor_(x86::r9, x86::r9);
+            a.call(hks::pcall);
+
+            // Function epilogue
+            // Restore prologue backups in opposite order
+            for (i = regs.size() - 1; i >= 0; i--) {
+                PopDynamicValue(&a, regs[i]);
+            }
+
+            a.mov(x86::rsp, x86::rbp);
+            a.pop(x86::rbp);
+            a.jmp(trampoline);
+
+            void* func;
+            Error err = Runtime::Jit.add(&func, &code);
+            if (err) {
+                hks::error(L, "Failed to create the hook function!");
+                return nullptr;
+            }
+
+            return func;
+        }
+
+        /// Breakdown of what the hell this does:
+        /// 1: Disassembles target function
+        /// 2: Copies the shortest number of bytes that can hold a 12 byte absolute jump without splitting instructions
+        /// 3: Creates a trampoline function with the copied bytes
+        /// 4: Appends the trampoline function with a jump to [target function + the number of bytes that were copied]
+        /// 5: Assembles a hook function that captures the values of the target function's first 4 or less parameters and passes them to a function in the lua state
+        /// 6: Appends the hook function with a jump to the trampoline function
+        /// 7: Overwrites the first 12 bytes of the target function with a jump to the hook function
+        /// Voila!
+        void SetupLuaHook(hks::lua_State* L, void* targetFunction, std::vector<std::pair<asmjit::x86::Reg, FieldType>> regs, int luaCallbackIndex) {
+            csh handle;
+            cs_insn* insn;
+            size_t count;
+
+            // Initialize disassembler
+            cs_err errCode = cs_open(CS_ARCH_X86, CS_MODE_64, &handle);
+            if (errCode != CS_ERR_OK) {
+                std::cout << "Failed to initialize disassembler! Error code: " << errCode << std::endl;
+                return;
+            }
+
+            // Disassemble the target function
+            count = cs_disasm(handle, (uint8_t*)targetFunction, 64, (uintptr_t)targetFunction, 0, &insn);
+            if (count == 0) {
+                std::cout << "ERROR: Failed to disassemble given function.\n";
+                cs_close(&handle);
+                return;
+            }
+
+            std::cout << "count: " << count << '\n';
+            size_t size = 0;
+            int i = 0;
+
+            // Calculate the number of bytes to replace, ensuring enough space for `mov rax, address` + `jmp rax` (12 bytes)
+            while (size < 12 && i < count) {
+                size += insn[i].size;
+                i++;
+            }
+
+            void* trampoline = CreateTrampoline((byte*)targetFunction, size);
+            if (!trampoline) {
+                std::cout << "Trampoline function failed to create!\n";
+                cs_free(insn, count);
+                cs_close(&handle);
+                return;
+            }
+
+            void* hookFunction = CreateLuaCallback(L, regs, trampoline, luaCallbackIndex);
+            if (!hookFunction) {
+                std::cout << "Hook function failed to create!\n";
+                cs_free(insn, count);
+                cs_close(&handle);
+                return;
+            }
+
+            // Change protection of target function to write the jump
+            DWORD oldProtect;
+            if (!VirtualProtect(targetFunction, size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+                std::cerr << "Failed to change memory protection to write jump\n";
+                cs_free(insn, count);
+                cs_close(&handle);
+                return;
+            }
+
+            // Write a jump from the target function to the hook function
+            *(byte*)targetFunction = 0xE9;
+            DWORD relativeAddress = (DWORD)((uintptr_t)hookFunction - (uintptr_t)targetFunction - 5);
+            *(DWORD*)((uintptr_t)targetFunction + 1) = relativeAddress;
+            std::cout << "Function addresses: \n"
+                << "Target: " << targetFunction
+                << "\nTrampoline: " << trampoline
+                << "\nHook: " << hookFunction << ' ' << *(byte*)hookFunction << '\n';
+
+            // Restore original protection
+            if (!VirtualProtect(targetFunction, size, oldProtect, &oldProtect)) {
+                std::cerr << "Failed to restore original memory protection\n";
+            }
+            else {
+                std::cout << "Memory protection restored successfully.\n";
+            }
+
+            std::cout << "Hook installed successfully.\n";
+
+            cs_free(insn, count);
+            cs_close(&handle);
         }
     }
 
@@ -122,20 +406,29 @@ namespace MemoryManipulation {
         }
 
         int lRegisterCallEvent(hks::lua_State* L) {
-            hks::luaFunc callback = hks::tocfunction(L, 1);
+            hks::pushvalue(L, 1);
+            int callbackIndex = hks::ref(L, hks::LUA_REGISTRYINDEX);
+            std::cout << "Function from lua: " << callbackIndex << '\n';
             uintptr_t address = static_cast<uintptr_t>(hks::checknumber(L, 2));
 
             int parametersLength = hks::objlen(L, 3);
-            std::vector<FieldType> fieldTypes;
+            std::vector<std::pair<asmjit::x86::Reg, FieldType>> parameters;
             for (int i = 1; i <= parametersLength; i++) {
                 hks::pushinteger(L, i);
                 hks::gettable(L, 3);
-                fieldTypes.push_back((FieldType)hks::checkinteger(L, -1));
+
+                int fieldType = hks::checkinteger(L, -1);
+                std::cout << fieldType << '\n';
+                if (fieldType < FIELD_BYTE || fieldType >= _FIELD_TYPE_COUNT_) {
+                    hks::error(L, "Invalid FieldType parameter was passed!");
+                    return 0;
+                }
+
+                parameters.push_back(std::make_pair(GetRegister((FieldType)fieldType, i - 1), (FieldType)fieldType));
                 hks::pop(L, 1);
             }
 
-
-
+            SetupLuaHook(L, (void*)(Runtime::GameCoreAddress + address), parameters, callbackIndex);
             return 0;
         }
 

@@ -65,6 +65,7 @@ ProxyTypes::GetPlayersToProcess GetPlayersToProcess;
 void PushSharedGlobals(hks::lua_State* L) {
     PushLuaMethod(L, MemoryManipulation::LuaExport::lMem, "lMem", hks::LUA_GLOBAL, "Mem");
     PushLuaMethod(L, MemoryManipulation::LuaExport::lObjMem, "lObjMem", hks::LUA_GLOBAL, "ObjMem");
+    PushLuaMethod(L, MemoryManipulation::LuaExport::lRegisterCallEvent, "lRegisterCallEvent", hks::LUA_GLOBAL, "RegisterCallEvent");
 
     MemoryManipulation::LuaExport::PushFieldTypes(L);
 }

@@ -8,6 +8,7 @@
 
 namespace hks {
 	constexpr int LUA_GLOBAL = -10002;
+	constexpr int LUA_REGISTRYINDEX = -10000;
 
 	typedef struct lua_State lua_State;
 
@@ -53,6 +54,16 @@ namespace hks {
 	extern hks_lua_objlenType objlen;
 	typedef void(__cdecl* hks_lua_gettableType)(lua_State*, int);
 	extern hks_lua_gettableType gettable;
+	typedef void(__cdecl* hksi_lua_cpcallType)(lua_State*, int, luaFunc, int);
+	extern hksi_lua_cpcallType cpcall;
+	typedef int(__cdecl* RefType)(lua_State*, int);
+	extern RefType ref;
+	typedef int(__cdecl* hksi_lua_pcallType)(lua_State*, int, int, int);
+	extern hksi_lua_pcallType pcall;
+	typedef void(__cdecl* hski_lua_pushvalueType)(lua_State*, int);
+	extern hski_lua_pushvalueType pushvalue;
+	typedef void(__cdecl* hksi_lua_rawgetiType)(lua_State*, int, int);
+	extern hksi_lua_rawgetiType rawgeti;
 
 	extern int checkplayerid(lua_State*, int);
 	extern void pushboolean(lua_State* L, bool value);
