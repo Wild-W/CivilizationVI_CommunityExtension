@@ -204,8 +204,8 @@ namespace MemoryManipulation {
 
             // Begin constructing the function
             // Function prologue
-            a.push(x86::rbp);
-            a.mov(x86::rbp, x86::rsp);
+            // a.push(x86::rbp);
+            // a.mov(x86::rbp, x86::rsp);
 
             // Backup the registers in prologue in ascending order
             int i;
@@ -274,11 +274,20 @@ namespace MemoryManipulation {
                 PopDynamicValue(&a, regs[i]);
             }
 
-            a.mov(x86::rsp, x86::rbp);
-            a.pop(x86::rbp);
+            // a.mov(x86::rsp, x86::rbp);
+            // a.pop(x86::rbp);
             a.jmp(trampoline);
 
-            void* func;
+            CodeBuffer& buffer = code.sectionById(0)->buffer();
+            void* func = VirtualAlloc(NULL, buffer.size(), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+            if (func == NULL) {
+                std::cout << "Could not create executable memory!\n";
+                return nullptr;
+            }
+
+            DWORD oldProtect;
+            VirtualProtect(func, buffer.size(), PAGE_EXECUTE_READ, &oldProtect);
+
             Error err = Runtime::Jit.add(&func, &code);
             if (err) {
                 hks::error(L, "Failed to create the hook function!");
@@ -290,14 +299,14 @@ namespace MemoryManipulation {
 
         /// Breakdown of what the hell this does:
         /// 1: Disassembles target function
-        /// 2: Copies the shortest number of bytes that can hold a 12 byte absolute jump without splitting instructions
+        /// 2: Copies the shortest number of bytes that can hold a 5 byte jump without splitting instructions
         /// 3: Creates a trampoline function with the copied bytes
         /// 4: Appends the trampoline function with a jump to [target function + the number of bytes that were copied]
         /// 5: Assembles a hook function that captures the values of the target function's first 4 or less parameters and passes them to a function in the lua state
         /// 6: Appends the hook function with a jump to the trampoline function
-        /// 7: Overwrites the first 12 bytes of the target function with a jump to the hook function
+        /// 7: Overwrites the first 5 bytes of the target function with a jump to the hook function
         /// Voila!
-        void SetupLuaHook(hks::lua_State* L, void* targetFunction, std::vector<std::pair<asmjit::x86::Reg, FieldType>> regs, int luaCallbackIndex) {
+        void RegisterCallEvent(hks::lua_State* L, void* targetFunction, std::vector<std::pair<asmjit::x86::Reg, FieldType>> regs, int luaCallbackIndex) {
             csh handle;
             cs_insn* insn;
             size_t count;
@@ -321,8 +330,7 @@ namespace MemoryManipulation {
             size_t size = 0;
             int i = 0;
 
-            // Calculate the number of bytes to replace, ensuring enough space for `mov rax, address` + `jmp rax` (12 bytes)
-            while (size < 12 && i < count) {
+            while (size < 5 && i < count) {
                 size += insn[i].size;
                 i++;
             }
@@ -345,7 +353,7 @@ namespace MemoryManipulation {
 
             // Change protection of target function to write the jump
             DWORD oldProtect;
-            if (!VirtualProtect(targetFunction, size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+            if (!VirtualProtect(targetFunction, 5, PAGE_EXECUTE_READWRITE, &oldProtect)) {
                 std::cerr << "Failed to change memory protection to write jump\n";
                 cs_free(insn, count);
                 cs_close(&handle);
@@ -362,7 +370,7 @@ namespace MemoryManipulation {
                 << "\nHook: " << hookFunction << ' ' << *(byte*)hookFunction << '\n';
 
             // Restore original protection
-            if (!VirtualProtect(targetFunction, size, oldProtect, &oldProtect)) {
+            if (!VirtualProtect(targetFunction, 5, PAGE_EXECUTE_READ, &oldProtect)) {
                 std::cerr << "Failed to restore original memory protection\n";
             }
             else {
@@ -428,7 +436,7 @@ namespace MemoryManipulation {
                 hks::pop(L, 1);
             }
 
-            SetupLuaHook(L, (void*)(Runtime::GameCoreAddress + address), parameters, callbackIndex);
+            RegisterCallEvent(L, (void*)(Runtime::GameCoreAddress + address), parameters, callbackIndex);
             return 0;
         }
 
