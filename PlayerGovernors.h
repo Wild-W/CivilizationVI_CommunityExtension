@@ -1,6 +1,7 @@
 #pragma once
 #include "HavokScript.h"
 #include "Governor.h"
+#include "Player.h"
 
 namespace PlayerGovernors {
     typedef class Governors;
@@ -22,18 +23,21 @@ namespace PlayerGovernors {
         typedef class Governors;
         namespace Types {
             typedef int(__thiscall* GetTurnsToEstablish)(Cache::Governors* governors, int governorHash);
+            typedef Cache::Governors* (__cdecl* EditGovernors)(Player::Cache::Instance* cachePlayer);
         }
 
         extern Cache::Types::GetTurnsToEstablish orig_GetTurnsToEstablish;
         extern Cache::Types::GetTurnsToEstablish base_GetTurnsToEstablish;
 
         extern int GetTurnsToEstablish(Cache::Governors* governors, int governorHash);
+        extern Cache::Types::EditGovernors EditGovernors;
 
         extern void SetTurnsToEstablishDelay(Cache::Governors* governors, int governorHash, int amount);
         extern void ChangeTurnsToEstablishDelay(Cache::Governors* governors, int governorHash, int amount);
         extern int GetTurnsToEstablishDelay(Cache::Governors* governors, int governorHash);
 
         constexpr uintptr_t GET_TURNS_TO_ESTABLISH_OFFSET = 0xbab10;
+        constexpr uintptr_t EDIT_GOVERNORS_OFFSET = 0xbe290;
     }
 
     extern Types::PushMethods base_PushMethods;

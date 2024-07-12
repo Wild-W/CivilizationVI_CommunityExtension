@@ -3,14 +3,14 @@
 
 namespace Player {
 	namespace Cache {
-		Cache::Types::EditGovernors EditGovernors;
 		Cache::Types::GetPlayer GetPlayer;
+		Cache::Types::GetPlayerInstance GetPlayerInstance;
 	}
 
 	void Create() {
 		using namespace Runtime;
 
-		Cache::EditGovernors = GetGameCoreGlobalAt<Cache::Types::EditGovernors>(Cache::EDIT_GOVERNORS_OFFSET);
 		Cache::GetPlayer = GetGameCoreGlobalAt<Cache::Types::GetPlayer>(Cache::GET_PLAYER_OFFSET);
+		Cache::GetPlayerInstance = GetGameCoreGlobalAt<Cache::Types::GetPlayerInstance>(Cache::GET_PLAYER_INSTANCE_OFFSET);
 	}
 }

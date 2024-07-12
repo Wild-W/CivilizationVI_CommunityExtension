@@ -8,8 +8,11 @@ namespace GovernorManager {
         int playerId = hks::checkplayerid(L, 1);
         int governorHash = hks::checkinteger(L, 2);
         int amount = hks::checkinteger(L, 3);
+        bool updateUi = hks::toboolean(L, 4);
 
-        PlayerGovernors::Cache::ChangeTurnsToEstablishDelay(Player::Cache::EditGovernors(Player::Cache::GetPlayer(playerId)), governorHash, amount);
+        if (updateUi) {
+            PlayerGovernors::Cache::ChangeTurnsToEstablishDelay(PlayerGovernors::Cache::EditGovernors(Player::Cache::GetPlayer(playerId)), governorHash, amount);
+        }
         PlayerGovernors::ChangeTurnsToEstablishDelay(PlayerGovernors::Edit(playerId), governorHash, amount);
         return 0;
     }
@@ -18,8 +21,11 @@ namespace GovernorManager {
         int playerId = hks::checkplayerid(L, 1);
         int governorHash = hks::checkinteger(L, 2);
         int amount = hks::checkinteger(L, 3);
+        bool updateUi = hks::toboolean(L, 4);
 
-        PlayerGovernors::Cache::SetTurnsToEstablishDelay(Player::Cache::EditGovernors(Player::Cache::GetPlayer(playerId)), governorHash, amount);
+        if (updateUi) {
+            PlayerGovernors::Cache::ChangeTurnsToEstablishDelay(PlayerGovernors::Cache::EditGovernors(Player::Cache::GetPlayer(playerId)), governorHash, amount);
+        }
         PlayerGovernors::SetTurnsToEstablishDelay(PlayerGovernors::Edit(playerId), governorHash, amount);
         return 0;
     }
@@ -27,8 +33,18 @@ namespace GovernorManager {
     int lGetTurnsToEstablishDelay(hks::lua_State* L) {
         int playerId = hks::checkplayerid(L, 1);
         int governorHash = hks::checkinteger(L, 2);
+        bool ui = hks::toboolean(L, 3);
 
-        hks::pushinteger(L, PlayerGovernors::GetTurnsToEstablishDelay(PlayerGovernors::Edit(playerId), governorHash));
+        if (!ui) {
+            PlayerGovernors::Governors* governors = PlayerGovernors::Edit(playerId);
+            hks::pushinteger(L, PlayerGovernors::GetTurnsToEstablishDelay(governors, governorHash));
+        }
+        else {
+            Player::Cache::Instance* cachePlayer = Player::Cache::GetPlayer(playerId);
+            PlayerGovernors::Cache::Governors* cacheGovernors = PlayerGovernors::Cache::EditGovernors(cachePlayer);
+            hks::pushinteger(L, PlayerGovernors::Cache::GetTurnsToEstablish(cacheGovernors, governorHash));
+        }
+
         return 1;
     }
 

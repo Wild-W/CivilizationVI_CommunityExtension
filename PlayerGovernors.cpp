@@ -25,6 +25,8 @@ namespace PlayerGovernors {
         Cache::Types::GetTurnsToEstablish base_GetTurnsToEstablish;
         Cache::Types::GetTurnsToEstablish orig_GetTurnsToEstablish;
 
+        Cache::Types::EditGovernors EditGovernors;
+
         std::unordered_map<Cache::Governors*, std::unordered_map<int, int>> governorsTurnsToEstablishDelay = {};
 
         int GetTurnsToEstablishDelay(Cache::Governors* governors, int governorHash) {
@@ -168,6 +170,8 @@ namespace PlayerGovernors {
         NeutralizeGovernor = GetGameCoreGlobalAt<Types::NeutralizeGovernor>(NEUTRALIZE_GOVERNOR_OFFSET);
         UnassignGovernor = GetGameCoreGlobalAt<Types::UnassignGovernor>(UNASSIGN_GOVERNOR_OFFSET);
         ChangeNeutralizedIndefinitely = GetGameCoreGlobalAt<Types::ChangeNeutralizedIndefinitely>(CHANGE_NEUTRALIZED_INDEFINITELY_OFFSET);
+
+        Cache::EditGovernors = GetGameCoreGlobalAt<Cache::Types::EditGovernors>(Cache::EDIT_GOVERNORS_OFFSET);
 
         orig_PushMethods = GetGameCoreGlobalAt<Types::PushMethods>(PUSH_METHODS_OFFSET);
         CreateHook(orig_PushMethods, &PushMethods, &base_PushMethods);
