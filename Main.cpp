@@ -18,6 +18,8 @@
 #include "Game.h"
 #include "CityTradeManager.h"
 #include "PlayerCities.h"
+#include "GovernorManager.h"
+#include "Player.h"
 
 HANDLE mainThread;
 
@@ -63,6 +65,7 @@ ProxyTypes::GetPlayersToProcess GetPlayersToProcess;
 void PushSharedGlobals(hks::lua_State* L) {
     PushLuaMethod(L, MemoryManipulation::LuaExport::lMem, "lMem", hks::LUA_GLOBAL, "Mem");
     PushLuaMethod(L, MemoryManipulation::LuaExport::lObjMem, "lObjMem", hks::LUA_GLOBAL, "ObjMem");
+    PushLuaMethod(L, MemoryManipulation::LuaExport::lRegisterCallEvent, "lRegisterCallEvent", hks::LUA_GLOBAL, "RegisterCallEvent");
 
     MemoryManipulation::LuaExport::PushFieldTypes(L);
 }
@@ -75,6 +78,7 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     CCallWithErrorHandling(L, CultureManager::Register, NULL);
     CCallWithErrorHandling(L, EmergencyManager::Register, NULL);
     CCallWithErrorHandling(L, EconomicManager::Register, NULL);
+    CCallWithErrorHandling(L, GovernorManager::Register, NULL);
 
     base_RegisterScriptData(L);
 }
@@ -165,6 +169,7 @@ static void InitHooks() {
     Game::Create();
     CityTradeManager::Create();
     PlayerCities::Create();
+    Player::Create();
 
     std::cout << "Hooks initialized!\n";
 }

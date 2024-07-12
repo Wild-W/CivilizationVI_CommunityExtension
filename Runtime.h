@@ -1,11 +1,13 @@
 #pragma once
 #include "MinHook.h"
 #include "ProxyTypes.h"
+#include "asmjit/x86.h"
 #include <iostream>
 
 namespace Runtime {
 	extern HMODULE GameCore;
 	extern uintptr_t GameCoreAddress;
+	extern asmjit::JitRuntime Jit;
 
 	// Should only be called once
 	extern void Create();
