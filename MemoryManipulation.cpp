@@ -132,17 +132,17 @@ namespace MemoryManipulation {
         void* CreateTrampoline(const byte* source, size_t size) {
             std::cout << "source and size: " << source << ' ' << size << '\n';
             // Allocate executable memory
-            void* execMem = VirtualAlloc(NULL, size + 5, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-            if (!execMem) {
+            void* trampolineAddress = VirtualAlloc(NULL, size + 5, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+            if (!trampolineAddress) {
                 std::cout << "Failed to allocate memory\n";
                 return nullptr;
             }
 
             // Copy the code to the newly allocated memory
-            memcpy(execMem, source, size);
+            memcpy(trampolineAddress, source, size);
 
             // Calculate the address to jump back to
-            byte* jumpSrc = (byte*)execMem + size;
+            byte* jumpSrc = (byte*)trampolineAddress + size;
             intptr_t jumpTarget = (intptr_t)(source + size);
             intptr_t relativeOffset = jumpTarget - (intptr_t)(jumpSrc + 5);
 
@@ -152,13 +152,13 @@ namespace MemoryManipulation {
 
             // Change memory protection to execute/read
             DWORD oldProtect;
-            if (!VirtualProtect(execMem, size + 5, PAGE_EXECUTE_READ, &oldProtect)) {
+            if (!VirtualProtect(trampolineAddress, size + 5, PAGE_EXECUTE_READ, &oldProtect)) {
                 std::cout << "Failed to change memory protection\n";
-                VirtualFree(execMem, 0, MEM_RELEASE);
+                VirtualFree(trampolineAddress, 0, MEM_RELEASE);
                 return nullptr;
             }
 
-            return execMem;
+            return trampolineAddress;
         }
 
         void PushDynamicValue(asmjit::x86::Assembler* a, std::pair<asmjit::x86::Reg, FieldType> pair) {
@@ -204,8 +204,8 @@ namespace MemoryManipulation {
 
             // Begin constructing the function
             // Function prologue
-            // a.push(x86::rbp);
-            // a.mov(x86::rbp, x86::rsp);
+            a.push(x86::rbp);
+            a.mov(x86::rbp, x86::rsp);
 
             // Backup the registers in prologue in ascending order
             int i;
@@ -274,19 +274,20 @@ namespace MemoryManipulation {
                 PopDynamicValue(&a, regs[i]);
             }
 
-            // a.mov(x86::rsp, x86::rbp);
-            // a.pop(x86::rbp);
+            a.mov(x86::rsp, x86::rbp);
+            a.pop(x86::rbp);
             a.jmp(trampoline);
 
-            CodeBuffer& buffer = code.sectionById(0)->buffer();
-            void* func = VirtualAlloc(NULL, buffer.size(), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+            void* func;
+            /*CodeBuffer& buffer = code.sectionById(0)->buffer();
+            func = VirtualAlloc(NULL, buffer.size(), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
             if (func == NULL) {
                 std::cout << "Could not create executable memory!\n";
                 return nullptr;
             }
 
             DWORD oldProtect;
-            VirtualProtect(func, buffer.size(), PAGE_EXECUTE_READ, &oldProtect);
+            VirtualProtect(func, buffer.size(), PAGE_EXECUTE_READ, &oldProtect);*/
 
             Error err = Runtime::Jit.add(&func, &code);
             if (err) {
@@ -319,7 +320,7 @@ namespace MemoryManipulation {
             }
 
             // Disassemble the target function
-            count = cs_disasm(handle, (uint8_t*)targetFunction, 64, (uintptr_t)targetFunction, 0, &insn);
+            count = cs_disasm(handle, (byte*)targetFunction, 64, (uintptr_t)targetFunction, 0, &insn);
             if (count == 0) {
                 std::cout << "ERROR: Failed to disassemble given function.\n";
                 cs_close(&handle);
@@ -352,30 +353,40 @@ namespace MemoryManipulation {
             }
 
             // Change protection of target function to write the jump
-            DWORD oldProtect;
-            if (!VirtualProtect(targetFunction, 5, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+            /*DWORD oldProtect;
+            if (!VirtualProtect(targetFunction, size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
                 std::cerr << "Failed to change memory protection to write jump\n";
                 cs_free(insn, count);
                 cs_close(&handle);
                 return;
-            }
+            }*/
 
-            // Write a jump from the target function to the hook function
-            *(byte*)targetFunction = 0xE9;
+            byte patchBuffer[5] = { 0 };
+
+            // Write a jump to the hook function
+            /* *(byte*)targetFunction = 0xE9;
             DWORD relativeAddress = (DWORD)((uintptr_t)hookFunction - (uintptr_t)targetFunction - 5);
-            *(DWORD*)((uintptr_t)targetFunction + 1) = relativeAddress;
+            *(DWORD*)((uintptr_t)targetFunction + 1) = relativeAddress;*/
+
+            DWORD relativeAddress = (DWORD)((uintptr_t)hookFunction - (uintptr_t)targetFunction - 5);
+
+            memcpy(patchBuffer, "\xE9", 1);
+            memcpy(patchBuffer + 1, &relativeAddress, 4);
+
+            WriteProcessMemory(GetCurrentProcess(), targetFunction, patchBuffer, 5, NULL);
+
             std::cout << "Function addresses: \n"
                 << "Target: " << targetFunction
                 << "\nTrampoline: " << trampoline
                 << "\nHook: " << hookFunction << ' ' << *(byte*)hookFunction << '\n';
 
             // Restore original protection
-            if (!VirtualProtect(targetFunction, 5, PAGE_EXECUTE_READ, &oldProtect)) {
+            /*if (!VirtualProtect(targetFunction, size, PAGE_EXECUTE_READ, &oldProtect)) {
                 std::cerr << "Failed to restore original memory protection\n";
             }
             else {
                 std::cout << "Memory protection restored successfully.\n";
-            }
+            }*/
 
             std::cout << "Hook installed successfully.\n";
 
