@@ -20,6 +20,8 @@
 #include "PlayerCities.h"
 #include "GovernorManager.h"
 #include "Player.h"
+#include "UnitManager.h"
+#include "Unit.h"
 
 HANDLE mainThread;
 
@@ -170,6 +172,8 @@ static void InitHooks() {
     CityTradeManager::Create();
     PlayerCities::Create();
     Player::Create();
+    UnitManager::Create();
+    Unit::Create();
 
     std::cout << "Hooks initialized!\n";
 }

@@ -14,4 +14,5 @@ namespace ProxyTypes {
 	typedef bool(__thiscall* GlobalParameters_Get)(void* globalParameters, void* databaseQuery, const char* name, float* value, float defaultValue);
 	typedef void(__thiscall* ApplyTourism)(void* playerCulture);
 	typedef void(__cdecl* GetPlayersToProcess)(std::vector<int>*);
+	typedef void(__cdecl* RegisterMembers)(hks::lua_State*);
 }

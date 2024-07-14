@@ -6,7 +6,6 @@
 #include "../core/api-build_p.h"
 #include "../core/codeholder.h"
 #include "../core/codewriter_p.h"
-#include "../arm/armutils.h"
 
 ASMJIT_BEGIN_NAMESPACE
 
@@ -119,15 +118,6 @@ bool CodeWriterUtils::encodeOffset32(uint32_t* dst, int64_t offset64, const Offs
       uint32_t jb = ((~value >> 19) ^ (value >> 21)) & 1u;
 
       *dst = ia | ib | ic | (ja << 14) | (jb << 11);
-      return true;
-    }
-
-    case OffsetType::kAArch32_ADR: {
-      uint32_t encodedImm;
-      if (!arm::Utils::encodeAArch32Imm(value, &encodedImm))
-        return false;
-
-      *dst = (Support::bitMask(22) << u) | (encodedImm << bitShift);
       return true;
     }
 
