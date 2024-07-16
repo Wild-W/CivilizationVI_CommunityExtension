@@ -4,6 +4,8 @@
 namespace Player {
 	typedef class Cities;
 	typedef class Diplomacy;
+	typedef class Instance;
+	typedef class Manager;
 	namespace Cache {
 		typedef class Instance;
 		namespace Types {

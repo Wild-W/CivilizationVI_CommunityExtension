@@ -10,6 +10,7 @@ namespace UnitManager {
 	}
 
 	extern int lChangeOwner(hks::lua_State* L);
+	extern int lGetInstance(hks::lua_State* L);
 
 	constexpr uintptr_t CHANGE_OWNER_OFFSET = 0x64f420;
 	extern Types::ChangeOwner ChangeOwner;

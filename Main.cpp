@@ -22,6 +22,8 @@
 #include "Player.h"
 #include "UnitManager.h"
 #include "Unit.h"
+#include "AI.h"
+#include "EventSystems.h"
 
 HANDLE mainThread;
 
@@ -68,6 +70,7 @@ void PushSharedGlobals(hks::lua_State* L) {
     PushLuaMethod(L, MemoryManipulation::LuaExport::lMem, "lMem", hks::LUA_GLOBAL, "Mem");
     PushLuaMethod(L, MemoryManipulation::LuaExport::lObjMem, "lObjMem", hks::LUA_GLOBAL, "ObjMem");
     PushLuaMethod(L, MemoryManipulation::LuaExport::lRegisterCallEvent, "lRegisterCallEvent", hks::LUA_GLOBAL, "RegisterCallEvent");
+    PushLuaMethod(L, EventSystems::lRegisterProcessor, "lRegisterProcessor", hks::LUA_GLOBAL, "RegisterLogicEvent");
 
     MemoryManipulation::LuaExport::PushFieldTypes(L);
 }
@@ -113,10 +116,6 @@ static void* Query(void* dbConnection, const char* query) {
 
     return dbQuery;
 }
-
-// monopolyTourismModifier = *(int *)(*(longlong *)(economicManager + 0xb8) + 4 + playerId * 8);
-
-// float* monopolyTourismModifier;
 
 //static void __cdecl Hook_GlobalParameters_Initialize(void* globalParameters, void* databaseConnection) {
 //    std::cout << "dbConnection: " << databaseConnection << '\n';
@@ -174,6 +173,7 @@ static void InitHooks() {
     Player::Create();
     UnitManager::Create();
     Unit::Create();
+    AI::CongressSupport::Create();
 
     std::cout << "Hooks initialized!\n";
 }

@@ -64,6 +64,10 @@ namespace hks {
 	extern hski_lua_pushvalueType pushvalue;
 	typedef void(__cdecl* hksi_lua_rawgetiType)(lua_State*, int, int);
 	extern hksi_lua_rawgetiType rawgeti;
+	typedef void(__cdecl* hksi_lua_unrefType)(hks::lua_State*, int, int);
+	extern hksi_lua_unrefType unref;
+	typedef void(__cdecl* hksi_lua_settableType)(hks::lua_State*, int);
+	extern hksi_lua_settableType settable;
 
 	extern int checkplayerid(lua_State*, int);
 	extern void pushboolean(lua_State* L, bool value);

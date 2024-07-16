@@ -177,6 +177,7 @@
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -216,6 +217,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AI.cpp" />
     <ClCompile Include="asmjit\core\archtraits.cpp" />
     <ClCompile Include="asmjit\core\assembler.cpp" />
     <ClCompile Include="asmjit\core\builder.cpp" />
@@ -267,8 +269,10 @@
     <ClCompile Include="City.cpp" />
     <ClCompile Include="CityTradeManager.cpp" />
     <ClCompile Include="CultureManager.cpp" />
+    <ClCompile Include="Data.cpp" />
     <ClCompile Include="EconomicManager.cpp" />
     <ClCompile Include="EmergencyManager.cpp" />
+    <ClCompile Include="EventSystems.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameDiplomacy.cpp" />
     <ClCompile Include="GovernorManager.cpp" />
@@ -285,6 +289,7 @@
     <ClCompile Include="UnitManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AI.h" />
     <ClInclude Include="asmjit\a64.h" />
     <ClInclude Include="asmjit\arm.h" />
     <ClInclude Include="asmjit\asmjit-scope-begin.h" />
@@ -364,6 +369,7 @@
     <ClInclude Include="CultureManager.h" />
     <ClInclude Include="EconomicManager.h" />
     <ClInclude Include="EmergencyManager.h" />
+    <ClInclude Include="EventSystems.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameDiplomacy.h" />
     <ClInclude Include="Governor.h" />
@@ -379,6 +385,7 @@
     <ClInclude Include="Runtime.h" />
     <ClInclude Include="Unit.h" />
     <ClInclude Include="UnitManager.h" />
+    <ClInclude Include="Data.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

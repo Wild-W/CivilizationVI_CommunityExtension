@@ -25,10 +25,18 @@ namespace UnitManager {
 		return 1;
 	}
 
+	int lGetInstance(hks::lua_State* L) {
+		Unit::Instance* unit = (Unit::Instance*)static_cast<uintptr_t>(hks::checknumber(L, 1));
+
+		Unit::Push(L, unit);
+		return 1;
+	}
+
 	void RegisterMembers(hks::lua_State* L) {
 		std::cout << "Hooked UnitManager::PushMethods!\n";
 
 		PushLuaMethod(L, lChangeOwner, "lChangeOwner", -2, "ChangeOwner");
+		PushLuaMethod(L, lGetInstance, "lGetInstance", -2, "GetInstance");
 
 		base_RegisterMembers(L);
 	}
