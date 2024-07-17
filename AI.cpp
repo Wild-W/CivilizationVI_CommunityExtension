@@ -2,15 +2,17 @@
 #include "Runtime.h"
 #include "EventSystems.h"
 #include "Data.h"
+#include <functional>
+#include <string>
 
 namespace AI::CongressSupport {
 	static bool HandleTargetChooser(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType,
-		const char* name, const char* decisionKey, Types::TargetChooser baseChooser, void* modifierAnalysis, uintptr_t fieldOffset)
+		const std::string& name, const std::string& decisionKey, Types::TargetChooser baseChooser, void* modifierAnalysis, uintptr_t fieldOffset)
 	{
 		using namespace EventSystems;
 		using namespace Data;
 
-		if (DoesProcessorExist(name)) {
+		if (DoesProcessorExist(name.c_str())) {
 			auto variantMap = LuaVariantMap();
 			variantMap.emplace("OutcomeType", LuaVariant(outcomeType));
 			variantMap.emplace("PlayerId", LuaVariant(*(int*)((uintptr_t)player + 0xd8)));
@@ -18,7 +20,7 @@ namespace AI::CongressSupport {
 
 			std::cout << "Calling Target Chooser: " << name << "!\n";
 
-			if (CallCustomProcessor(name, variantMap)) {
+			if (CallCustomProcessor(name.c_str(), variantMap)) {
 				int decisionType = std::get<int>(variantMap.at(decisionKey));
 				if (decisionType == -1) {
 					return false;
@@ -51,6 +53,13 @@ namespace AI::CongressSupport {
 		return HandleTargetChooser(congressSupport, player, outcomeType, "UnitBuildYieldTargetChooser", "YieldIndex", base_UnitBuildYield, modifierAnalysis, 0x64);
 	}
 
+	Types::TargetChooser orig_TradingPartners;
+	Types::TargetChooser base_TradingPartners;
+	bool TradingPartners(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
+		return HandleTargetChooser(congressSupport, player, outcomeType,
+			"TradingPartnersTargetChooser", "TargetPlayerId", base_TradingPartners, modifierAnalysis, 0x40);
+	}
+
 	int RegisterOutcomeTypes(hks::lua_State* L) {
 		hks::createtable(L, 0, 2);
 
@@ -60,6 +69,7 @@ namespace AI::CongressSupport {
 		hks::setfield(L, -2, "B");
 
 		hks::setfield(L, hks::LUA_GLOBAL, "OutcomeTypes");
+		return 0;
 	}
 
 	void Create() {
@@ -70,5 +80,11 @@ namespace AI::CongressSupport {
 
 		orig_UnitPromotionClass = GetGameCoreGlobalAt<Types::TargetChooser>(UNIT_PROMOTION_CLASS_OFFSET);
 		CreateHook(orig_UnitPromotionClass, &UnitPromotionClass, &base_UnitPromotionClass);
+
+		orig_UnitBuildYield = GetGameCoreGlobalAt<Types::TargetChooser>(UNIT_BUILD_YIELD_OFFSET);
+		CreateHook(orig_UnitBuildYield, &UnitBuildYield, &base_UnitBuildYield);
+
+		orig_TradingPartners = GetGameCoreGlobalAt<Types::TargetChooser>(TRADING_PARTNERS_OFFSET);
+		CreateHook(orig_TradingPartners, &TradingPartners, &base_TradingPartners);
 	}
 }

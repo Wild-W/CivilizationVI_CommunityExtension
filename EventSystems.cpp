@@ -1,6 +1,7 @@
 #include "EventSystems.h"
 #include "Runtime.h"
 #include <vector>
+#include <string>
 
 namespace EventSystems {
 	std::unordered_map<std::string, std::vector<std::pair<hks::lua_State*, int>>> logicEvents = {};

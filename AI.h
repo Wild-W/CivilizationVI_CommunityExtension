@@ -14,6 +14,7 @@ namespace AI {
 		constexpr uintptr_t DISTRICT_OFFSET = 0x44e4f0;
 		constexpr uintptr_t UNIT_PROMOTION_CLASS_OFFSET = 0x453ca0;
 		constexpr uintptr_t UNIT_BUILD_YIELD_OFFSET = 0x4539f0;
+		constexpr uintptr_t TRADING_PARTNERS_OFFSET = 0x453850;
 
 		namespace Types {
 			typedef class Class;
@@ -22,6 +23,7 @@ namespace AI {
 		extern bool District(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis);
 		extern bool UnitPromotionClass(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis);
 		extern bool UnitBuildYield(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis);
+		extern bool TradingPartners(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis);
 		
 		extern int RegisterOutcomeTypes(hks::lua_State* L);
 
