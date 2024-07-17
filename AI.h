@@ -1,27 +1,30 @@
 #pragma once
 #include "Player.h"
+#include "HavokScript.h"
 
 namespace AI {
-	enum OutcomeType {
-		// For
-		A = 1,
-		// Against
-		B = 2
-	};
-	namespace Types {
-		namespace CongressSupport {
-			typedef class Class;
-			// TODO: ModifierAnalysis
-			typedef bool (__thiscall* District)(CongressSupport::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis);
-		}
-	}
-
-	constexpr uintptr_t DISTRICT_OFFSET = 0x44e4f0;
-
 	namespace CongressSupport {
-		extern Types::CongressSupport::District orig_District;
-		extern Types::CongressSupport::District base_District;
-		extern bool District(Types::CongressSupport::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis);
+		enum OutcomeType {
+			// For
+			A = 1,
+			// Against
+			B = 2
+		};
+
+		constexpr uintptr_t DISTRICT_OFFSET = 0x44e4f0;
+		constexpr uintptr_t UNIT_PROMOTION_CLASS_OFFSET = 0x453ca0;
+		constexpr uintptr_t UNIT_BUILD_YIELD_OFFSET = 0x4539f0;
+
+		namespace Types {
+			typedef class Class;
+			typedef bool(__thiscall* TargetChooser)(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis);
+		}
+		extern bool District(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis);
+		extern bool UnitPromotionClass(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis);
+		extern bool UnitBuildYield(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis);
+		
+		extern int RegisterOutcomeTypes(hks::lua_State* L);
+
 		extern void Create();
 	};
 }

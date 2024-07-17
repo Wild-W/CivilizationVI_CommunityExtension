@@ -3,36 +3,72 @@
 #include "EventSystems.h"
 #include "Data.h"
 
-namespace AI {
-	namespace CongressSupport {
-		Types::CongressSupport::District orig_District;
-		Types::CongressSupport::District base_District;
+namespace AI::CongressSupport {
+	static bool HandleTargetChooser(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType,
+		const char* name, const char* decisionKey, Types::TargetChooser baseChooser, void* modifierAnalysis, uintptr_t fieldOffset)
+	{
+		using namespace EventSystems;
+		using namespace Data;
 
-		bool District(Types::CongressSupport::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
-			using namespace EventSystems;
-			using namespace Data;
-
-			std::cout << "Creating variant map!\n";
+		if (DoesProcessorExist(name)) {
 			auto variantMap = LuaVariantMap();
 			variantMap.emplace("OutcomeType", LuaVariant(outcomeType));
-			variantMap.emplace("DistrictType", LuaVariant(*(int*)((uintptr_t)modifierAnalysis + 0x1c))); // District Index
-			variantMap.emplace("PlayerId", LuaVariant(*(int*)(uintptr_t)player + 0xd8)); // Player Id
+			variantMap.emplace("PlayerId", LuaVariant(*(int*)((uintptr_t)player + 0xd8)));
+			variantMap.emplace(decisionKey, LuaVariant(*(int*)((uintptr_t)modifierAnalysis + fieldOffset)));
 
-			std::cout << "Calling DistrictTargetChooser!\n";
-			CallCustomProcessor("DistrictTargetChooser", variantMap);
+			std::cout << "Calling Target Chooser: " << name << "!\n";
 
-			std::cout << std::get<int>(variantMap.at("OutcomeType")) << '\n';
-			std::cout << std::get<int>(variantMap.at("DistrictType")) << '\n';
-			std::cout << std::get<int>(variantMap.at("PlayerId")) << '\n';
+			if (CallCustomProcessor(name, variantMap)) {
+				int decisionType = std::get<int>(variantMap.at(decisionKey));
+				if (decisionType == -1) {
+					return false;
+				}
 
-			return base_District(congressSupport, player, outcomeType, modifierAnalysis);
+				*(int*)((uintptr_t)modifierAnalysis + fieldOffset) = decisionType;
+				return true;
+			}
 		}
 
-		void Create() {
-			using namespace Runtime;
+		return baseChooser(congressSupport, player, outcomeType, modifierAnalysis);
+	}
 
-			orig_District = GetGameCoreGlobalAt<Types::CongressSupport::District>(DISTRICT_OFFSET);
-			CreateHook(orig_District, &District, &base_District);
-		}
-	};
+	Types::TargetChooser orig_District;
+	Types::TargetChooser base_District;
+	bool District(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
+		return HandleTargetChooser(congressSupport, player, outcomeType, "DistrictTargetChooser", "DistrictIndex", base_District, modifierAnalysis, 0x1c);
+	}
+
+	Types::TargetChooser orig_UnitPromotionClass;
+	Types::TargetChooser base_UnitPromotionClass;
+	bool UnitPromotionClass(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
+		return HandleTargetChooser(congressSupport, player, outcomeType,
+			"UnitPromotionClassTargetChooser", "UnitPromotionClassIndex", base_UnitPromotionClass, modifierAnalysis, 0x58);
+	}
+
+	Types::TargetChooser orig_UnitBuildYield;
+	Types::TargetChooser base_UnitBuildYield;
+	bool UnitBuildYield(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
+		return HandleTargetChooser(congressSupport, player, outcomeType, "UnitBuildYieldTargetChooser", "YieldIndex", base_UnitBuildYield, modifierAnalysis, 0x64);
+	}
+
+	int RegisterOutcomeTypes(hks::lua_State* L) {
+		hks::createtable(L, 0, 2);
+
+		hks::pushinteger(L, OutcomeType::A);
+		hks::setfield(L, -2, "A");
+		hks::pushinteger(L, OutcomeType::B);
+		hks::setfield(L, -2, "B");
+
+		hks::setfield(L, hks::LUA_GLOBAL, "OutcomeTypes");
+	}
+
+	void Create() {
+		using namespace Runtime;
+
+		orig_District = GetGameCoreGlobalAt<Types::TargetChooser>(DISTRICT_OFFSET);
+		CreateHook(orig_District, &District, &base_District);
+
+		orig_UnitPromotionClass = GetGameCoreGlobalAt<Types::TargetChooser>(UNIT_PROMOTION_CLASS_OFFSET);
+		CreateHook(orig_UnitPromotionClass, &UnitPromotionClass, &base_UnitPromotionClass);
+	}
 }

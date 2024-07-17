@@ -18,11 +18,19 @@ namespace EventSystems {
         return 0;
 	}
 
-	void CallCustomProcessor(const char* name, Data::LuaVariantMap& variantMap) {
+	bool DoesProcessorExist(const char* name) {
 		auto eventIterator = logicEvents.find(name);
 		if (eventIterator == logicEvents.end()) {
 			std::cout << "Could not find logic event: " << name << '\n';
-			return;
+			return false;
+		}
+	}
+
+	bool CallCustomProcessor(const char* name, Data::LuaVariantMap& variantMap) {
+		auto eventIterator = logicEvents.find(name);
+		if (eventIterator == logicEvents.end()) {
+			std::cout << "Could not find logic event: " << name << '\n';
+			return false;
 		}
 		
 		for (const auto& luaPair : eventIterator->second) {
@@ -41,19 +49,26 @@ namespace EventSystems {
 			int tableIndex = hks::ref(L, hks::LUA_REGISTRYINDEX);
 			hks::rawgeti(L, hks::LUA_REGISTRYINDEX, tableIndex);
 
-			if (hks::pcall(L, 1, 0, 0) != 0) {
+			if (hks::pcall(L, 1, 1, 0) != 0) {
 				size_t length;
 				std::cout << "Error calling logic event: " << hks::checklstring(L, -1, &length) << '\n';
-				hks::pop(L, 1);
 				hks::unref(L, hks::LUA_REGISTRYINDEX, tableIndex); // Clean up reference in case of error
-				return;
+				continue;
 			}
+
+			bool result = hks::toboolean(L, -1);
+			std::cout << "result: " << result << '\n';
 
 			hks::rawgeti(L, hks::LUA_REGISTRYINDEX, tableIndex);
 			variantMap.rebuild(L);
 
 			hks::pop(L, 1);
 			hks::unref(L, hks::LUA_REGISTRYINDEX, tableIndex);
+
+			if (result) {
+				return true;
+			}
 		}
+		return false;
 	}
 }

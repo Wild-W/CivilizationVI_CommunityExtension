@@ -47,30 +47,11 @@ ProxyTypes::GlobalParameters_Get GlobalParameters_Get;
 ProxyTypes::ApplyTourism ApplyTourism;
 ProxyTypes::GetPlayersToProcess GetPlayersToProcess;
 
-//std::vector<void*> getAlivePlayers() {
-//    void* playerManager = PlayerManager_Edit();
-//    std::vector<void*> alivePlayers;
-//
-//    uintptr_t* start = *(uintptr_t**)(playerManager + 0x50);
-//    uintptr_t* end = *(uintptr_t**)(playerManager + 0x58);
-//
-//    while (start < end) {
-//        void* player = reinterpret_cast<void*>(*start);
-//        // Assuming some method or property to check if the player is alive
-//        if (player->isAlive()) {
-//            alivePlayers.push_back(player);
-//        }
-//        start++;
-//    }
-//
-//    return alivePlayers;
-//}
-
 void PushSharedGlobals(hks::lua_State* L) {
     PushLuaMethod(L, MemoryManipulation::LuaExport::lMem, "lMem", hks::LUA_GLOBAL, "Mem");
     PushLuaMethod(L, MemoryManipulation::LuaExport::lObjMem, "lObjMem", hks::LUA_GLOBAL, "ObjMem");
     PushLuaMethod(L, MemoryManipulation::LuaExport::lRegisterCallEvent, "lRegisterCallEvent", hks::LUA_GLOBAL, "RegisterCallEvent");
-    PushLuaMethod(L, EventSystems::lRegisterProcessor, "lRegisterProcessor", hks::LUA_GLOBAL, "RegisterLogicEvent");
+    PushLuaMethod(L, EventSystems::lRegisterProcessor, "lRegisterProcessor", hks::LUA_GLOBAL, "RegisterProcessor");
 
     MemoryManipulation::LuaExport::PushFieldTypes(L);
 }
@@ -84,6 +65,7 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     CCallWithErrorHandling(L, EmergencyManager::Register, NULL);
     CCallWithErrorHandling(L, EconomicManager::Register, NULL);
     CCallWithErrorHandling(L, GovernorManager::Register, NULL);
+    CCallWithErrorHandling(L, AI::CongressSupport::RegisterOutcomeTypes, NULL);
 
     base_RegisterScriptData(L);
 }
@@ -95,39 +77,6 @@ void __cdecl Hook_RegisterScriptDataForUI(hks::lua_State* _, hks::lua_State* L) 
 
     base_RegisterScriptDataForUI(_, L);
 }
-
-static void* Query(void* dbConnection, const char* query) {
-    // return (**(databaseQueryFunction**)(*(uintptr_t*)databaseConnection + 0x18))(databaseConnection, query, 0xffffffff);
-    typedef long long* (*DatabaseQueryFunction)(void* dbConnection, const char* query, int limit);
-
-    long long* dbQuery = nullptr;
-
-    if (dbConnection != nullptr) {
-        uintptr_t funcPtrAddress = *(uintptr_t*)((char*)dbConnection + 0x18);
-        
-        if (funcPtrAddress != 0 && funcPtrAddress != 0xFFFFFFFF) {
-            DatabaseQueryFunction queryFunc = (DatabaseQueryFunction)funcPtrAddress;
-            dbQuery = queryFunc(dbConnection, query, -1);
-        }
-        else {
-            std::cerr << "Invalid function pointer address: " << funcPtrAddress << '\n';
-        }
-    }
-
-    return dbQuery;
-}
-
-//static void __cdecl Hook_GlobalParameters_Initialize(void* globalParameters, void* databaseConnection) {
-//    std::cout << "dbConnection: " << databaseConnection << '\n';
-//    void* databaseQuery = Query(databaseConnection, "SELECT Value From GlobalParameters WHERE Name = ? LIMIT 1");
-//    std::cout << "dbQuery: " << databaseQuery << '\n';
-//    if (databaseQuery != NULL) {
-//        GlobalParameters_Get(globalParameters, databaseQuery, "MONOPOLY_TOURISM_MODIFIER", monopolyTourismModifier, 1.0);
-//        std::cout << *monopolyTourismModifier << '\n';
-//    }
-//
-//    base_GlobalParameters_Initialize(globalParameters, databaseConnection);
-//}
 
 #pragma region Offsets
 constexpr uintptr_t CURRENT_GAME_OFFSET = 0xb8aa60;
