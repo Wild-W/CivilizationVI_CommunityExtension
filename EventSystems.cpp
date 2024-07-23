@@ -1,7 +1,6 @@
 #include "EventSystems.h"
 #include "Runtime.h"
 #include <vector>
-#include <string>
 
 namespace EventSystems {
 	std::unordered_map<std::string, std::vector<std::pair<hks::lua_State*, int>>> logicEvents = {};
@@ -9,28 +8,25 @@ namespace EventSystems {
 	int lRegisterProcessor(hks::lua_State* L) {
 		size_t length;
 		const char* name = hks::checklstring(L, 1, &length);
-		std::cout << "Name of logic event: " << name << '\n';
 
 		hks::pushvalue(L, 2);
 		int callbackIndex = hks::ref(L, hks::LUA_REGISTRYINDEX);
-		std::cout << "Logic function index from lua: " << callbackIndex << '\n';
         
 		logicEvents[name].push_back(std::make_pair(L, callbackIndex));
         return 0;
 	}
 
-	bool DoesProcessorExist(const char* name) {
+	bool DoesProcessorExist(const std::string& name) {
 		auto eventIterator = logicEvents.find(name);
 		if (eventIterator == logicEvents.end()) {
-			std::cout << "Could not find logic event: " << name << '\n';
 			return false;
 		}
 	}
 
-	bool CallCustomProcessor(const char* name, Data::LuaVariantMap& variantMap) {
+	bool CallCustomProcessor(const std::string& name, Data::LuaVariantMap& variantMap) {
 		auto eventIterator = logicEvents.find(name);
 		if (eventIterator == logicEvents.end()) {
-			std::cout << "Could not find logic event: " << name << '\n';
+			std::cout << "Could not find processor: " << name << '\n';
 			return false;
 		}
 		
@@ -52,13 +48,12 @@ namespace EventSystems {
 
 			if (hks::pcall(L, 1, 1, 0) != 0) {
 				size_t length;
-				std::cout << "Error calling logic event: " << hks::checklstring(L, -1, &length) << '\n';
+				std::cout << "Error calling processor: " << hks::checklstring(L, -1, &length) << "!\n";
 				hks::unref(L, hks::LUA_REGISTRYINDEX, tableIndex); // Clean up reference in case of error
 				continue;
 			}
 
 			bool result = hks::toboolean(L, -1);
-			std::cout << "result: " << result << '\n';
 
 			hks::rawgeti(L, hks::LUA_REGISTRYINDEX, tableIndex);
 			variantMap.rebuild(L);

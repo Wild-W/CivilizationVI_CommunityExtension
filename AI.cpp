@@ -6,13 +6,16 @@
 #include <string>
 
 namespace AI::CongressSupport {
+	// TODO: Find a way to optimize target choosers. Currently they are ran for every player (even minor civs), every turn, and for both types of outcomes.
+	// This is a problem with the game's base code, and could prove problematic for performance if we hook these functions by calling lua code.
+
 	static bool HandleTargetChooser(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType,
-		const std::string& name, const std::string& decisionKey, Types::TargetChooser baseChooser, void* modifierAnalysis, uintptr_t fieldOffset)
+		const std::string& name, const std::string& decisionKey, Types::TargetChooser baseChooser, void* modifierAnalysis, unsigned int fieldOffset)
 	{
 		using namespace EventSystems;
 		using namespace Data;
 
-		if (DoesProcessorExist(name.c_str())) {
+		if (DoesProcessorExist(name)) {
 			auto variantMap = LuaVariantMap();
 			variantMap.emplace("OutcomeType", LuaVariant(outcomeType));
 			variantMap.emplace("PlayerId", LuaVariant(*(int*)((uintptr_t)player + 0xd8)));
@@ -20,8 +23,9 @@ namespace AI::CongressSupport {
 
 			std::cout << "Calling Target Chooser: " << name << "!\n";
 
-			if (CallCustomProcessor(name.c_str(), variantMap)) {
+			if (CallCustomProcessor(name, variantMap)) {
 				int decisionType = std::get<int>(variantMap.at(decisionKey));
+				std::cout << "Decision type: " << decisionType << '\n';
 				if (decisionType == -1) {
 					return false;
 				}
@@ -37,7 +41,8 @@ namespace AI::CongressSupport {
 	Types::TargetChooser orig_District;
 	Types::TargetChooser base_District;
 	bool District(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
-		return HandleTargetChooser(congressSupport, player, outcomeType, "DistrictTargetChooser", "DistrictIndex", base_District, modifierAnalysis, 0x1c);
+		return HandleTargetChooser(congressSupport, player, outcomeType,
+			"DistrictTargetChooser", "DistrictIndex", base_District, modifierAnalysis, 0x1c);
 	}
 
 	Types::TargetChooser orig_UnitPromotionClass;
@@ -50,7 +55,8 @@ namespace AI::CongressSupport {
 	Types::TargetChooser orig_UnitBuildYield;
 	Types::TargetChooser base_UnitBuildYield;
 	bool UnitBuildYield(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
-		return HandleTargetChooser(congressSupport, player, outcomeType, "UnitBuildYieldTargetChooser", "YieldIndex", base_UnitBuildYield, modifierAnalysis, 0x64);
+		return HandleTargetChooser(congressSupport, player, outcomeType,
+			"UnitBuildYieldTargetChooser", "YieldIndex", base_UnitBuildYield, modifierAnalysis, 0x64);
 	}
 
 	Types::TargetChooser orig_TradingPartners;
@@ -58,6 +64,42 @@ namespace AI::CongressSupport {
 	bool TradingPartners(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
 		return HandleTargetChooser(congressSupport, player, outcomeType,
 			"TradingPartnersTargetChooser", "TargetPlayerId", base_TradingPartners, modifierAnalysis, 0x40);
+	}
+
+	Types::TargetChooser orig_PlayerOrDiploLeader;
+	Types::TargetChooser base_PlayerOrDiploLeader;
+	bool PlayerOrDiploLeader(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
+		return HandleTargetChooser(congressSupport, player, outcomeType,
+			"PlayerOrDiploLeaderTargetChooser", "TargetPlayerId", base_PlayerOrDiploLeader, modifierAnalysis, 0x40);
+	}
+
+	// Unused normally
+	Types::TargetChooser orig_GreatPersonClass;
+	Types::TargetChooser base_GreatPersonClass;
+	bool GreatPersonClass(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
+		return HandleTargetChooser(congressSupport, player, outcomeType,
+			"GreatPersonClassTargetChooser", "GreatPersonClassIndex", base_GreatPersonClass, modifierAnalysis, 0x6c);
+	}
+
+	Types::TargetChooser orig_GreatPersonPatronage;
+	Types::TargetChooser base_GreatPersonPatronage;
+	bool GreatPersonPatronage(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
+		return HandleTargetChooser(congressSupport, player, outcomeType,
+			"GreatPersonPatronageTargetChooser", "GreatPersonClassIndex", base_GreatPersonClass, modifierAnalysis, 0x6c);
+	}
+
+	Types::TargetChooser orig_SpyOperation;
+	Types::TargetChooser base_SpyOperation;
+	bool SpyOperation(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
+		return HandleTargetChooser(congressSupport, player, outcomeType,
+			"SpyOperationTargetChooser", "UnitOperationIndex", base_SpyOperation, modifierAnalysis, 0x54);
+	}
+
+	Types::TargetChooser orig_MostCommonLuxury;
+	Types::TargetChooser base_MostCommonLuxury;
+	bool MostCommonLuxury(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
+		return HandleTargetChooser(congressSupport, player, outcomeType,
+			"MostCommonLuxuryTargetChooser", "ResourceIndex", base_MostCommonLuxury, modifierAnalysis, 0x4c);
 	}
 
 	int RegisterOutcomeTypes(hks::lua_State* L) {
@@ -86,5 +128,20 @@ namespace AI::CongressSupport {
 
 		orig_TradingPartners = GetGameCoreGlobalAt<Types::TargetChooser>(TRADING_PARTNERS_OFFSET);
 		CreateHook(orig_TradingPartners, &TradingPartners, &base_TradingPartners);
+
+		orig_PlayerOrDiploLeader = GetGameCoreGlobalAt<Types::TargetChooser>(PLAYER_OR_DIPLO_LEADER_OFFSET);
+		CreateHook(orig_PlayerOrDiploLeader, &PlayerOrDiploLeader, &base_PlayerOrDiploLeader);
+
+		orig_GreatPersonClass = GetGameCoreGlobalAt<Types::TargetChooser>(GREAT_PERSON_CLASS_OFFSET);
+		CreateHook(orig_GreatPersonClass, &GreatPersonClass, &base_GreatPersonClass);
+
+		orig_GreatPersonPatronage = GetGameCoreGlobalAt<Types::TargetChooser>(GREAT_PERSON_CLASS_OFFSET);
+		CreateHook(orig_GreatPersonPatronage, &GreatPersonPatronage, &base_GreatPersonPatronage);
+
+		orig_SpyOperation = GetGameCoreGlobalAt<Types::TargetChooser>(SPY_OPERATION_OFFSET);
+		CreateHook(orig_SpyOperation, &SpyOperation, &base_SpyOperation);
+
+		orig_MostCommonLuxury = GetGameCoreGlobalAt<Types::TargetChooser>(SPY_OPERATION_OFFSET);
+		CreateHook(orig_MostCommonLuxury, &MostCommonLuxury, &base_MostCommonLuxury);
 	}
 }
