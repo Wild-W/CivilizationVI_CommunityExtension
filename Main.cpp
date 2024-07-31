@@ -24,7 +24,7 @@
 #include "Unit.h"
 #include "AI.h"
 #include "EventSystems.h"
-#include "NationalParkManager.h"
+#include "NationalParks.h"
 
 HANDLE mainThread;
 
@@ -68,7 +68,7 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     CCallWithErrorHandling(L, GovernorManager::Register, NULL);
     CCallWithErrorHandling(L, AI::CongressSupport::RegisterOutcomeTypes, NULL);
     CCallWithErrorHandling(L, AI::Espionage::RegisterAIEspionageManager, NULL);
-    CCallWithErrorHandling(L, NationalParkManager::Register, NULL);
+    CCallWithErrorHandling(L, NationalParks::Register, NULL);
 
     base_RegisterScriptData(L);
 }
@@ -127,7 +127,7 @@ static void InitHooks() {
     Unit::Create();
     AI::CongressSupport::Create();
     AI::Espionage::Create();
-    NationalParkManager::Create();
+    NationalParks::Create();
 
     std::cout << "Hooks initialized!\n";
 }

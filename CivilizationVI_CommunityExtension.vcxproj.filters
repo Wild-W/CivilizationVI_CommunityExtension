@@ -234,7 +234,7 @@
     <ClCompile Include="Data.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NationalParkManager.cpp">
+    <ClCompile Include="NationalParks.cpp">
       <Filter>Source Files\GameCore</Filter>
     </ClCompile>
   </ItemGroup>

@@ -279,7 +279,7 @@
     <ClCompile Include="HavokScript.cpp" />
     <ClCompile Include="MemoryManipulation.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="NationalParkManager.cpp" />
+    <ClCompile Include="NationalParks.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerCities.cpp" />
     <ClCompile Include="PlayerGovernors.cpp" />
