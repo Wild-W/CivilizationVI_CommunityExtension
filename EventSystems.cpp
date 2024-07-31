@@ -61,6 +61,8 @@ namespace EventSystems {
 			hks::pop(L, 1);
 			hks::unref(L, hks::LUA_REGISTRYINDEX, tableIndex);
 
+			std::cout << "result: " << result << '\n';
+
 			if (result) {
 				return true;
 			}

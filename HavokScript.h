@@ -68,9 +68,16 @@ namespace hks {
 	extern hksi_lua_unrefType unref;
 	typedef void(__cdecl* hksi_lua_settableType)(hks::lua_State*, int);
 	extern hksi_lua_settableType settable;
+	typedef int(__cdecl* hksi_lua_isnumberType)(hks::lua_State*, int);
+	extern hksi_lua_isnumberType isnumber;
+	typedef int(__cdecl* hksi_lua_tonumberType)(hks::lua_State*, int);
+	extern hksi_lua_tonumberType tonumber;
+	typedef int(__cdecl* hksi_lua_isuserdataType)(hks::lua_State*, int);
+	extern hksi_lua_isuserdataType isuserdata;
 
 	extern int checkplayerid(lua_State*, int);
 	extern void pushboolean(lua_State* L, bool value);
+	extern void pushlightuserdata(lua_State* L, void* ptr);
 
 	// Should only ever be called once
 	extern void InitHavokScript();

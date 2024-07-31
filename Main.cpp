@@ -24,6 +24,7 @@
 #include "Unit.h"
 #include "AI.h"
 #include "EventSystems.h"
+#include "NationalParkManager.h"
 
 HANDLE mainThread;
 
@@ -66,6 +67,8 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     CCallWithErrorHandling(L, EconomicManager::Register, NULL);
     CCallWithErrorHandling(L, GovernorManager::Register, NULL);
     CCallWithErrorHandling(L, AI::CongressSupport::RegisterOutcomeTypes, NULL);
+    CCallWithErrorHandling(L, AI::Espionage::RegisterAIEspionageManager, NULL);
+    CCallWithErrorHandling(L, NationalParkManager::Register, NULL);
 
     base_RegisterScriptData(L);
 }
@@ -123,6 +126,8 @@ static void InitHooks() {
     UnitManager::Create();
     Unit::Create();
     AI::CongressSupport::Create();
+    AI::Espionage::Create();
+    NationalParkManager::Create();
 
     std::cout << "Hooks initialized!\n";
 }
@@ -134,14 +139,19 @@ DWORD WINAPI MainThread(LPVOID lpParam) {
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved) {
+    int EnableConsole = GetPrivateProfileIntA("Settings", "EnableConsole", 0, "./CommunityExtension.ini");
     switch (ul_reason_for_call) {
     case DLL_PROCESS_ATTACH:
-        Runtime::InitConsole();
+        if (EnableConsole) {
+            Runtime::InitConsole();
+        }
         mainThread = CreateThread(0, 0, &MainThread, NULL, 0, NULL);
         break;
     case DLL_PROCESS_DETACH:
         CloseHandle(mainThread);
-        Runtime::CloseConsole();
+        if (EnableConsole) {
+            Runtime::CloseConsole();
+        }
         Runtime::Destroy();
         break;
     }

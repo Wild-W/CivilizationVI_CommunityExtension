@@ -24,7 +24,7 @@ namespace Data {
             std::visit([L, &variantPair](auto&& arg) {
                 using T = std::decay_t<decltype(arg)>;
                 if constexpr (std::is_same_v<T, std::string>) {
-                    size_t length;
+                    size_t length = 0;
                     variantPair.second = LuaVariant(std::string(hks::checklstring(L, -1, &length)));
                 }
                 else if constexpr (std::is_same_v<T, double>) {

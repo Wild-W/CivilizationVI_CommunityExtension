@@ -20,5 +20,12 @@ namespace Player {
 		extern Cache::Types::GetPlayerInstance GetPlayerInstance;
 	}
 
+	namespace Types {
+		typedef Instance* (__cdecl* GetPlayerInstance)(hks::lua_State* L);
+	}
+
+	constexpr uintptr_t GET_PLAYER_INSTANCE_OFFSET = 0x6e8120;
+	extern Types::GetPlayerInstance GetPlayerInstance;
+
 	extern void Create();
 }

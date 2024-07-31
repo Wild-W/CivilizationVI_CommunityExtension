@@ -7,10 +7,14 @@ namespace Player {
 		Cache::Types::GetPlayerInstance GetPlayerInstance;
 	}
 
+	Types::GetPlayerInstance GetPlayerInstance;
+
 	void Create() {
 		using namespace Runtime;
 
 		Cache::GetPlayer = GetGameCoreGlobalAt<Cache::Types::GetPlayer>(Cache::GET_PLAYER_OFFSET);
 		Cache::GetPlayerInstance = GetGameCoreGlobalAt<Cache::Types::GetPlayerInstance>(Cache::GET_PLAYER_INSTANCE_OFFSET);
+
+		GetPlayerInstance = GetGameCoreGlobalAt<Types::GetPlayerInstance>(GET_PLAYER_INSTANCE_OFFSET);
 	}
 }

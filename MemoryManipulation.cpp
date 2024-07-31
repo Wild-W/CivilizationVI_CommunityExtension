@@ -40,13 +40,15 @@ namespace MemoryManipulation {
             case FIELD_UNSIGNED_LONG_LONG:
             case FIELD_CHAR:
             case FIELD_C_STRING:
-            case FIELD_BOOL:
+            case FIELD_BOOL: {
                 switch (index) {
                 case 0: return x86::rcx;
                 case 1: return x86::rdx;
                 case 2: return x86::r8;
                 case 3: return x86::r9;
                 }
+                break;
+            }
 
             // Floating point registers
             case FIELD_FLOAT:
@@ -79,7 +81,7 @@ namespace MemoryManipulation {
             case FIELD_INT: hks::pushinteger(L, *(int*)address); break;
             case FIELD_UNSIGNED_INT: hks::pushnumber(L, static_cast<double>(*(unsigned int*)address)); break;
             case FIELD_LONG_LONG: hks::pushnumber(L, static_cast<double>(*(long long int*)address)); break;
-            case FIELD_POINTER:
+            case FIELD_POINTER: hks::pushlightuserdata(L, *(void**)address); break;
             case FIELD_UNSIGNED_LONG_LONG: hks::pushnumber(L, static_cast<double>(*(unsigned long long int*)address)); break;
             case FIELD_CHAR: hks::pushinteger(L, *(char*)address); break;
             case FIELD_FLOAT: hks::pushnumber(L, *(float*)address); break;
@@ -107,8 +109,15 @@ namespace MemoryManipulation {
             case FIELD_INT: *(int*)address = hks::checkinteger(L, index); break;
             case FIELD_UNSIGNED_INT: *(unsigned int*)address = static_cast<unsigned int>(hks::checkinteger(L, index)); break;
             case FIELD_LONG_LONG: *(long long int*)address = static_cast<long long int>(hks::checkinteger(L, index)); break;
-            case FIELD_POINTER:
-            case FIELD_UNSIGNED_LONG_LONG: *(unsigned long long int*)address = static_cast<unsigned long long int>(hks::checkinteger(L, index)); break;
+            case FIELD_POINTER: {
+                if (!hks::isuserdata(L, index)) {
+                    hks::error(L, "Type mismatch: value is not userdata!");
+                    return;
+                }
+                *(uintptr_t*)address = reinterpret_cast<uintptr_t>(hks::touserdata(L, index));
+                break;
+            }
+            case FIELD_UNSIGNED_LONG_LONG: *(unsigned long long int*)address = static_cast<unsigned long long int>(hks::checknumber(L, index)); break;
             case FIELD_CHAR: *(char*)address = static_cast<char>(hks::checkinteger(L, index)); break;
             case FIELD_FLOAT: *(float*)address = static_cast<float>(hks::checknumber(L, index)); break;
             case FIELD_DOUBLE: *(double*)address = hks::checknumber(L, index); break;
@@ -120,7 +129,9 @@ namespace MemoryManipulation {
                     hks::error(L, "String memory allocation failed!");
                     return;
                 }
-                strcpy_s(newString, length, inputString);
+                strcpy_s(newString, length + 1, inputString);
+                newString[length] = '\0';
+
                 *(char**)address = newString;
                 break;
             }
@@ -408,13 +419,23 @@ namespace MemoryManipulation {
         }
 
         int lObjMem(hks::lua_State* L) {
-            hks::getfield(L, 1, "__instance");
-            auto objectAddress = reinterpret_cast<uintptr_t>(hks::touserdata(L, -1));
-            if (objectAddress == NULL) {
-                hks::error(L, "Failed to retrieve __instance field as userdata. Is your object NULL?");
-                return 0;
+            uintptr_t objectAddress;
+            // Unsafe
+            // if (hks::isnumber(L, 1)) {
+            //     objectAddress = static_cast<uintptr_t>(hks::tonumber(L, 1));
+            // }
+            if (hks::isuserdata(L, 1)) {
+                objectAddress = reinterpret_cast<uintptr_t>(hks::touserdata(L, 1));
             }
-            hks::pop(L, 1);
+            else {
+                hks::getfield(L, 1, "__instance");
+                objectAddress = reinterpret_cast<uintptr_t>(hks::touserdata(L, -1));
+                if (objectAddress == NULL) {
+                    hks::error(L, "Failed to retrieve __instance field as userdata. Is your object NULL?");
+                    return 0;
+                }
+                hks::pop(L, 1);
+            }
             uintptr_t offsetAddress = static_cast<uintptr_t>(hks::checkinteger(L, 2));
             auto memoryType = static_cast<FieldType>(hks::checkinteger(L, 3));
             if (hks::gettop(L) == 4) {

@@ -102,6 +102,20 @@ namespace AI::CongressSupport {
 			"MostCommonLuxuryTargetChooser", "ResourceIndex", base_MostCommonLuxury, modifierAnalysis, 0x4c);
 	}
 
+	Types::TargetChooser orig_MinorCivBonus;
+	Types::TargetChooser base_MinorCivBonus;
+	bool MinorCivBonus(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
+		return HandleTargetChooser(congressSupport, player, outcomeType,
+			"MinorCivBonusTargetChooser", "MinorCivBonusIndex", base_MinorCivBonus, modifierAnalysis, 0x3c);
+	}
+
+	Types::TargetChooser orig_GrievancesType;
+	Types::TargetChooser base_GrievancesType;
+	bool GrievancesType(Types::Class* congressSupport, Player::Instance* player, OutcomeType outcomeType, void* modifierAnalysis) {
+		return HandleTargetChooser(congressSupport, player, outcomeType,
+			"GrievancesTypeTargetChooser", "TargetPlayerId", base_GrievancesType, modifierAnalysis, 0x40);
+	}
+
 	int RegisterOutcomeTypes(hks::lua_State* L) {
 		hks::createtable(L, 0, 2);
 
@@ -135,13 +149,49 @@ namespace AI::CongressSupport {
 		orig_GreatPersonClass = GetGameCoreGlobalAt<Types::TargetChooser>(GREAT_PERSON_CLASS_OFFSET);
 		CreateHook(orig_GreatPersonClass, &GreatPersonClass, &base_GreatPersonClass);
 
-		orig_GreatPersonPatronage = GetGameCoreGlobalAt<Types::TargetChooser>(GREAT_PERSON_CLASS_OFFSET);
+		orig_GreatPersonPatronage = GetGameCoreGlobalAt<Types::TargetChooser>(GREAT_PERSON_PATRONAGE_OFFSET);
 		CreateHook(orig_GreatPersonPatronage, &GreatPersonPatronage, &base_GreatPersonPatronage);
 
 		orig_SpyOperation = GetGameCoreGlobalAt<Types::TargetChooser>(SPY_OPERATION_OFFSET);
 		CreateHook(orig_SpyOperation, &SpyOperation, &base_SpyOperation);
 
-		orig_MostCommonLuxury = GetGameCoreGlobalAt<Types::TargetChooser>(SPY_OPERATION_OFFSET);
+		orig_MostCommonLuxury = GetGameCoreGlobalAt<Types::TargetChooser>(MOST_COMMON_LUXURY_OFFSET);
 		CreateHook(orig_MostCommonLuxury, &MostCommonLuxury, &base_MostCommonLuxury);
+
+		orig_MinorCivBonus = GetGameCoreGlobalAt<Types::TargetChooser>(MINOR_CIV_BONUS_OFFSET);
+		CreateHook(orig_MinorCivBonus, &MinorCivBonus, &base_MinorCivBonus);
+
+		orig_GrievancesType = GetGameCoreGlobalAt<Types::TargetChooser>(GRIEVANCES_TYPE_OFFSET);
+		CreateHook(orig_GrievancesType, &GrievancesType, &base_GrievancesType);
+	}
+}
+
+namespace AI::Espionage {
+	Types::GetAIEspionage GetAIEspionage;
+	Types::GetMostUsedSpyMission GetMostUsedSpyMission;
+
+	static int lGetMostUsedSpyMission(hks::lua_State* L) {
+		Player::Instance* player = Player::GetPlayerInstance(L);
+
+		hks::pushinteger(L, GetMostUsedSpyMission(GetAIEspionage(player)));
+		return 1;
+	}
+
+	int RegisterAIEspionageManager(hks::lua_State* L) {
+		std::cout << "Registering AIEspionageManager!\n";
+
+		hks::createtable(L, 0, 1);
+
+		PushLuaMethod(L, lGetMostUsedSpyMission, "lGetMostUsedSpyMission", -2, "GetMostUsedSpyMission");
+
+		hks::setfield(L, hks::LUA_GLOBAL, "AIEspionageManager");
+		return 0;
+	}
+
+	void Create() {
+		using namespace Runtime;
+
+		GetAIEspionage = GetGameCoreGlobalAt<Types::GetAIEspionage>(GET_AI_ESPIONAGE_OFFSET);
+		GetMostUsedSpyMission = GetGameCoreGlobalAt<Types::GetMostUsedSpyMission>(GET_MOST_USED_SPY_MISSION_OFFSET);
 	}
 }
