@@ -4,6 +4,8 @@
 namespace Player {
 	typedef class Cities;
 	typedef class Diplomacy;
+	typedef class Instance;
+	typedef class Manager;
 	namespace Cache {
 		typedef class Instance;
 		namespace Types {
@@ -17,6 +19,13 @@ namespace Player {
 		constexpr uintptr_t GET_PLAYER_INSTANCE_OFFSET = 0x6a4090;
 		extern Cache::Types::GetPlayerInstance GetPlayerInstance;
 	}
+
+	namespace Types {
+		typedef Instance* (__cdecl* GetPlayerInstance)(hks::lua_State* L);
+	}
+
+	constexpr uintptr_t GET_PLAYER_INSTANCE_OFFSET = 0x6e8120;
+	extern Types::GetPlayerInstance GetPlayerInstance;
 
 	extern void Create();
 }

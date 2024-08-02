@@ -29,6 +29,11 @@ namespace hks {
 	RefType ref;
 	hksi_lua_pcallType pcall;
 	hksi_lua_rawgetiType rawgeti;
+	hksi_lua_unrefType unref;
+	hksi_lua_isnumberType isnumber;
+	hksi_lua_tonumberType tonumber;
+	hksi_lua_isuserdataType isuserdata;
+	hksi_lua_settableType settable;
 
 	namespace {
 		static void InitHavokScriptImports(HMODULE hksDll) {
@@ -43,7 +48,7 @@ namespace hks {
 			error = (hksi_luaL_errorType)GetProcAddress(hksDll, "?hksi_luaL_error@@YAHPEAUlua_State@@PEBDZZ");
 			checknumber = (luaL_checknumberType)GetProcAddress(hksDll, "?luaL_checknumber@@YANPEAUlua_State@@H@Z");
 			pushfstring = (hksi_lua_pushfstringType)GetProcAddress(hksDll, "?hksi_lua_pushfstring@@YAPEBDPEAUlua_State@@PEBDZZ");
-			checklstring = (CheckLStringType)GetProcAddress(hksDll, "");
+			checklstring = (CheckLStringType)GetProcAddress(hksDll, "?hksi_luaL_checklstring@@YAPEBDPEAUlua_State@@HPEA_K@Z");
 			pop = (PopType)GetProcAddress(hksDll, "?Pop@LuaState@LuaPlus@@QEAAXH@Z");
 			touserdata = (hksi_lua_touserdataType)GetProcAddress(hksDll, "?hksi_lua_touserdata@@YAPEAXPEAUlua_State@@H@Z");
 			getfield = (hksi_lua_getfieldType)GetProcAddress(hksDll, "?hksi_lua_getfield@@YAXPEAUlua_State@@HPEBD@Z");
@@ -57,6 +62,11 @@ namespace hks {
 			pcall = (hksi_lua_pcallType)GetProcAddress(hksDll, "?hksi_lua_pcall@@YAHPEAUlua_State@@HHH@Z");
 			pushvalue = (hski_lua_pushvalueType)GetProcAddress(hksDll, "?hksi_lua_pushvalue@@YAXPEAUlua_State@@H@Z");
 			rawgeti = (hksi_lua_rawgetiType)GetProcAddress(hksDll, "?hksi_lua_rawgeti@@YAXPEAUlua_State@@HH@Z");
+			unref = (hksi_lua_unrefType)GetProcAddress(hksDll, "?hksi_luaL_unref@@YAXPEAUlua_State@@HH@Z");
+			settable = (hksi_lua_settableType)GetProcAddress(hksDll, "?SetTable@LuaState@LuaPlus@@QEAAXH@Z");
+			isnumber = (hksi_lua_isnumberType)GetProcAddress(hksDll, "?hksi_lua_isnumber@@YAHPEAUlua_State@@H@Z");
+			tonumber = (hksi_lua_tonumberType)GetProcAddress(hksDll, "?hksi_lua_tonumber@@YANPEAUlua_State@@H@Z");
+			isuserdata = (hksi_lua_isuserdataType)GetProcAddress(hksDll, "?hksi_lua_isuserdata@@YAHPEAUlua_State@@H@Z");
 		}
 	}
 
@@ -81,6 +91,16 @@ namespace hks {
 
 		// Increment the stack top pointer by 4 bytes
 		*(int**)((uintptr_t)L + 0x48) = stackTop + 0x4;
+	}
+
+	// GameCore: 0x16a10
+	void pushlightuserdata(lua_State* L, void* ptr) {
+		int* luaStack = *(int**)((uintptr_t)L + 0x48);
+
+		*(void**)(luaStack + 2) = ptr;
+		*luaStack = 2;
+
+		*(int**)((uintptr_t)L + 0x48) = luaStack + 0x4;
 	}
 
 	// Should only ever be called once.

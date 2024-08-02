@@ -1,6 +1,7 @@
 #include "Runtime.h"
 #include "MinHook.h"
 #include <iostream>
+#include "HavokScript.h"
 #pragma comment(lib, "libMinHook.x64.lib")
 
 namespace Runtime {
@@ -13,6 +14,7 @@ namespace Runtime {
 		GameCore = LoadLibrary(TEXT("../../../DLC/Expansion2/Binaries/Win64/GameCore_XP2_FinalRelease.dll"));
 		if (!GameCore) {
 			std::cout << "Original GameCore failed to load!\n";
+			return;
 		}
 		GameCoreAddress = reinterpret_cast<uintptr_t>(GameCore);
 	}

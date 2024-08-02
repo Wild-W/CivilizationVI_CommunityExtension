@@ -32,7 +32,7 @@
     <ProjectGuid>{42f0ba07-c262-48e4-9df2-d3a93377e99c}</ProjectGuid>
     <RootNamespace>CivilizationVICommunityExtension</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-	<VcpkgTriplet Condition="'$(Platform)'=='x64'">x64-windows-static</VcpkgTriplet>
+    <VcpkgTriplet Condition="'$(Platform)'=='x64'">x64-windows-static</VcpkgTriplet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -173,10 +173,11 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;ASMJIT_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;ASMJIT_STATIC;ASMJIT_NO_AARCH64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>
       </AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -216,17 +217,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="asmjit\arm\a64assembler.cpp" />
-    <ClCompile Include="asmjit\arm\a64builder.cpp" />
-    <ClCompile Include="asmjit\arm\a64compiler.cpp" />
-    <ClCompile Include="asmjit\arm\a64emithelper.cpp" />
-    <ClCompile Include="asmjit\arm\a64formatter.cpp" />
-    <ClCompile Include="asmjit\arm\a64func.cpp" />
-    <ClCompile Include="asmjit\arm\a64instapi.cpp" />
-    <ClCompile Include="asmjit\arm\a64instdb.cpp" />
-    <ClCompile Include="asmjit\arm\a64operand.cpp" />
-    <ClCompile Include="asmjit\arm\a64rapass.cpp" />
-    <ClCompile Include="asmjit\arm\armformatter.cpp" />
+    <ClCompile Include="AI.cpp" />
     <ClCompile Include="asmjit\core\archtraits.cpp" />
     <ClCompile Include="asmjit\core\assembler.cpp" />
     <ClCompile Include="asmjit\core\builder.cpp" />
@@ -278,42 +269,30 @@
     <ClCompile Include="City.cpp" />
     <ClCompile Include="CityTradeManager.cpp" />
     <ClCompile Include="CultureManager.cpp" />
+    <ClCompile Include="Data.cpp" />
     <ClCompile Include="EconomicManager.cpp" />
     <ClCompile Include="EmergencyManager.cpp" />
+    <ClCompile Include="EventSystems.cpp" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameDiplomacy.cpp" />
     <ClCompile Include="GovernorManager.cpp" />
     <ClCompile Include="HavokScript.cpp" />
     <ClCompile Include="MemoryManipulation.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="NationalParks.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerCities.cpp" />
     <ClCompile Include="PlayerGovernors.cpp" />
     <ClCompile Include="PlayerInfluence.cpp" />
     <ClCompile Include="Plot.cpp" />
     <ClCompile Include="Runtime.cpp" />
+    <ClCompile Include="Unit.cpp" />
+    <ClCompile Include="UnitManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AI.h" />
     <ClInclude Include="asmjit\a64.h" />
     <ClInclude Include="asmjit\arm.h" />
-    <ClInclude Include="asmjit\arm\a64archtraits_p.h" />
-    <ClInclude Include="asmjit\arm\a64assembler.h" />
-    <ClInclude Include="asmjit\arm\a64builder.h" />
-    <ClInclude Include="asmjit\arm\a64compiler.h" />
-    <ClInclude Include="asmjit\arm\a64emithelper_p.h" />
-    <ClInclude Include="asmjit\arm\a64emitter.h" />
-    <ClInclude Include="asmjit\arm\a64formatter_p.h" />
-    <ClInclude Include="asmjit\arm\a64func_p.h" />
-    <ClInclude Include="asmjit\arm\a64globals.h" />
-    <ClInclude Include="asmjit\arm\a64instapi_p.h" />
-    <ClInclude Include="asmjit\arm\a64instdb.h" />
-    <ClInclude Include="asmjit\arm\a64instdb_p.h" />
-    <ClInclude Include="asmjit\arm\a64operand.h" />
-    <ClInclude Include="asmjit\arm\a64rapass_p.h" />
-    <ClInclude Include="asmjit\arm\armformatter_p.h" />
-    <ClInclude Include="asmjit\arm\armglobals.h" />
-    <ClInclude Include="asmjit\arm\armoperand.h" />
-    <ClInclude Include="asmjit\arm\armutils.h" />
     <ClInclude Include="asmjit\asmjit-scope-begin.h" />
     <ClInclude Include="asmjit\asmjit-scope-end.h" />
     <ClInclude Include="asmjit\asmjit.h" />
@@ -389,14 +368,17 @@
     <ClInclude Include="City.h" />
     <ClInclude Include="CityTradeManager.h" />
     <ClInclude Include="CultureManager.h" />
+    <ClInclude Include="EAVector.h" />
     <ClInclude Include="EconomicManager.h" />
     <ClInclude Include="EmergencyManager.h" />
+    <ClInclude Include="EventSystems.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameDiplomacy.h" />
     <ClInclude Include="Governor.h" />
     <ClInclude Include="GovernorManager.h" />
     <ClInclude Include="HavokScript.h" />
     <ClInclude Include="MemoryManipulation.h" />
+    <ClInclude Include="NationalParks.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="PlayerCities.h" />
     <ClInclude Include="PlayerGovernors.h" />
@@ -404,6 +386,9 @@
     <ClInclude Include="Plot.h" />
     <ClInclude Include="ProxyTypes.h" />
     <ClInclude Include="Runtime.h" />
+    <ClInclude Include="Unit.h" />
+    <ClInclude Include="UnitManager.h" />
+    <ClInclude Include="Data.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
