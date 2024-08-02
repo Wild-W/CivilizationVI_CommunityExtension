@@ -368,6 +368,7 @@
     <ClInclude Include="City.h" />
     <ClInclude Include="CityTradeManager.h" />
     <ClInclude Include="CultureManager.h" />
+    <ClInclude Include="EAVector.h" />
     <ClInclude Include="EconomicManager.h" />
     <ClInclude Include="EmergencyManager.h" />
     <ClInclude Include="EventSystems.h" />

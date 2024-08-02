@@ -533,5 +533,8 @@
     <ClInclude Include="NationalParks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="EAVector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
