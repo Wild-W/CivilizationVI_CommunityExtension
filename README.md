@@ -19,7 +19,7 @@ Probably. Open a feature request on the [issue tracker](https://github.com/Wild-
 No. It's possible to port parts of it, but it's just too far out of scope right now.
 
 ### Can you fix the asset limit bug?
-Probably not. I can *try* at some point, but if it were easy it would have been done by Firaxis already.
+Probably not.
 
 ## License
 This project is distributed under AGPL 3.0. That means that **all** derivative works of this project **must be open source** and **distributed under the same AGPL 3.0 license**. This is to protect the modding community from bad actors and encourage collaboration. The only way this community can grow is if we work together.
