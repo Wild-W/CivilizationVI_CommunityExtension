@@ -41,6 +41,8 @@ namespace Game {
 		using namespace Runtime;
 
 		FAutoVariable_edit = GetGameCoreGlobalAt<Types::FAutoVariable_edit>(F_AUTO_VARIABLE_EDIT_OFFSET);
+		GetGameplayDatabase = GetGameCoreGlobalAt<Types::GetGameplayDatabase>(GET_GAMEPLAY_DATABASE_OFFSET);
+
 		Cache::GetInstance = GetGameCoreGlobalAt<Cache::Types::GetInstance>(Cache::GET_INSTANCE_OFFSET);
 
 		Initializers::orig_InitializePlayerRandomAgendas =

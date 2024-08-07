@@ -11,6 +11,7 @@ namespace Game::Initializers {
 }
 
 namespace Game {
+	typedef class DatabaseConnection1;
 	namespace Cache {
 		typedef class Game;
 		namespace Types {
@@ -22,10 +23,14 @@ namespace Game {
 	}
 	namespace Types {
 		typedef void* (__thiscall* FAutoVariable_edit)(void* object);
+		typedef DatabaseConnection1* (__cdecl* GetGameplayDatabase)(void);
 	}
 
 	constexpr uintptr_t F_AUTO_VARIABLE_EDIT_OFFSET = 0x72a920;
 	extern Types::FAutoVariable_edit FAutoVariable_edit;
+
+	constexpr uintptr_t GET_GAMEPLAY_DATABASE_OFFSET = 0x44de0;
+	extern Types::GetGameplayDatabase GetGameplayDatabase;
 
 	extern void Create();
 }
