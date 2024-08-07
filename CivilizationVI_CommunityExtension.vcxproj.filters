@@ -225,9 +225,6 @@
     <ClCompile Include="Unit.cpp">
       <Filter>Source Files\GameCore</Filter>
     </ClCompile>
-    <ClCompile Include="AI.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="EventSystems.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -235,6 +232,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NationalParks.cpp">
+      <Filter>Source Files\GameCore</Filter>
+    </ClCompile>
+    <ClCompile Include="AI.cpp">
       <Filter>Source Files\GameCore</Filter>
     </ClCompile>
   </ItemGroup>

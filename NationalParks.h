@@ -5,6 +5,15 @@
 namespace NationalParks {
 	typedef class NationalParks;
 	typedef struct ParkData;
+	namespace Cache {
+		typedef class NationalParks;
+		namespace Types {
+			typedef void (*__thiscall Update)(Cache::NationalParks*, void* vec);
+		}
+
+		//constexpr uintptr_t UPDATE_OFFSET = 0x;
+		extern Cache::Types::Update Update;
+	}
 	namespace Types {
 		typedef NationalParks* (*__cdecl Edit)(void);
 		typedef void (*__thiscall DesignatePark)(NationalParks*, int playerId, int* coord);

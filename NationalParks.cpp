@@ -7,7 +7,9 @@ namespace NationalParks {
 	Types::FindPark FindPark;
 	Types::RestoreVisualState RestoreVisualState;
 
-	//void RemoveVisualState()
+	namespace Cache {
+		Cache::Types::Update Update;
+	}
 
 	//bool DesignateParkInPlots(NationalParks* nationalParks, int playerId, int* baseCoord, const std::vector<int>& plotIds) {
 	//	DesignatePark(nationalParks, playerId, baseCoord);
