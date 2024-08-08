@@ -8,6 +8,7 @@ namespace Runtime {
 	extern HMODULE GameCore;
 	extern uintptr_t GameCoreAddress;
 	extern asmjit::JitRuntime Jit;
+	extern HANDLE GameProcess;
 
 	// Should only be called once
 	extern void Create();
@@ -34,6 +35,8 @@ namespace Runtime {
 	}
 
 	extern void InitConsole();
-
 	extern void CloseConsole();
+
+	extern BOOL WriteCodeToGameCore(uintptr_t address, byte* bytes, size_t sizeOfBytes);
+	extern BOOL WriteCodeToProcess(uintptr_t address, byte* bytes, size_t sizeOfBytes);
 };

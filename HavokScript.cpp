@@ -34,6 +34,7 @@ namespace hks {
 	hksi_lua_tonumberType tonumber;
 	hksi_lua_isuserdataType isuserdata;
 	hksi_lua_settableType settable;
+	luaopen_debugType luaopen_debug;
 
 	namespace {
 		static void InitHavokScriptImports(HMODULE hksDll) {
@@ -67,6 +68,7 @@ namespace hks {
 			isnumber = (hksi_lua_isnumberType)GetProcAddress(hksDll, "?hksi_lua_isnumber@@YAHPEAUlua_State@@H@Z");
 			tonumber = (hksi_lua_tonumberType)GetProcAddress(hksDll, "?hksi_lua_tonumber@@YANPEAUlua_State@@H@Z");
 			isuserdata = (hksi_lua_isuserdataType)GetProcAddress(hksDll, "?hksi_lua_isuserdata@@YAHPEAUlua_State@@H@Z");
+			luaopen_debug = (luaopen_debugType)GetProcAddress(hksDll, "?luaopen_debug@@YAHPEAUlua_State@@@Z");
 		}
 	}
 

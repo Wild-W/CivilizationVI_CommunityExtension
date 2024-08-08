@@ -1,17 +1,9 @@
 #pragma once
 #include "Runtime.h"
 
-namespace Game::Initializers {
-	namespace Types {
-		typedef void(__cdecl* InitializePlayerRandomAgendas)(int somethingToDoWithEra, void* agendaDefinitions, int visibilityType, int playerId);
-	}
-
-	constexpr uintptr_t INITIALIZE_PLAYER_RANDOM_AGENDAS_OFFSET = 0x228800;
-	extern void InitializePlayerRandomAgendas(int somethingToDoWithEra, void* agendaDefinitions, int visibilityType, int playerId);
-}
-
 namespace Game {
-	typedef class DatabaseConnection1;
+	typedef class IDatabaseConnection1;
+	typedef class Instance;
 	namespace Cache {
 		typedef class Game;
 		namespace Types {
@@ -23,7 +15,7 @@ namespace Game {
 	}
 	namespace Types {
 		typedef void* (__thiscall* FAutoVariable_edit)(void* object);
-		typedef DatabaseConnection1* (__cdecl* GetGameplayDatabase)(void);
+		typedef IDatabaseConnection1* (__cdecl* GetGameplayDatabase)(void);
 	}
 
 	constexpr uintptr_t F_AUTO_VARIABLE_EDIT_OFFSET = 0x72a920;
@@ -35,3 +27,15 @@ namespace Game {
 	extern void Create();
 }
 
+namespace Game::Initializers {
+	namespace Types {
+		typedef void(__cdecl* InitializePlayerRandomAgendas)(int somethingToDoWithEra, void* agendaDefinitions, int visibilityType, int playerId);
+		typedef void(__cdecl* NewGamePlayerRandomAgendas)(Game::Instance* game);
+	}
+
+	constexpr uintptr_t INITIALIZE_PLAYER_RANDOM_AGENDAS_OFFSET = 0x228800;
+	extern void InitializePlayerRandomAgendas(int somethingToDoWithEra, void* agendaDefinitions, int visibilityType, int playerId);
+
+	constexpr uintptr_t NEW_GAME_PLAYER_RANDOM_AGENDAS_OFFSET = 0x228750;
+	extern void NewGamePlayerRandomAgendas(Game::Instance* game);
+}

@@ -5,6 +5,7 @@
 #include <sstream>
 #include "asmjit/x86.h"
 #include "capstone/capstone.h"
+#include <mutex>
 
 namespace MemoryManipulation {
     enum FieldType {
@@ -290,16 +291,6 @@ namespace MemoryManipulation {
             a.jmp(trampoline);
 
             void* func;
-            /*CodeBuffer& buffer = code.sectionById(0)->buffer();
-            func = VirtualAlloc(NULL, buffer.size(), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-            if (func == NULL) {
-                std::cout << "Could not create executable memory!\n";
-                return nullptr;
-            }
-
-            DWORD oldProtect;
-            VirtualProtect(func, buffer.size(), PAGE_EXECUTE_READ, &oldProtect);*/
-
             Error err = Runtime::Jit.add(&func, &code);
             if (err) {
                 hks::error(L, "Failed to create the hook function!");
@@ -363,41 +354,21 @@ namespace MemoryManipulation {
                 return;
             }
 
-            // Change protection of target function to write the jump
-            /*DWORD oldProtect;
-            if (!VirtualProtect(targetFunction, size, PAGE_EXECUTE_READWRITE, &oldProtect)) {
-                std::cerr << "Failed to change memory protection to write jump\n";
-                cs_free(insn, count);
-                cs_close(&handle);
-                return;
-            }*/
-
-            byte patchBuffer[5] = { 0 };
-
-            // Write a jump to the hook function
-            /* *(byte*)targetFunction = 0xE9;
             DWORD relativeAddress = (DWORD)((uintptr_t)hookFunction - (uintptr_t)targetFunction - 5);
-            *(DWORD*)((uintptr_t)targetFunction + 1) = relativeAddress;*/
+            byte jumpToHook[5] = {
+                0xe9,
+                (byte)((relativeAddress >> 0) & 0xFF),
+                (byte)((relativeAddress >> 8) & 0xFF),
+                (byte)((relativeAddress >> 16) & 0xFF),
+                (byte)((relativeAddress >> 24) & 0xFF)
+            };
 
-            DWORD relativeAddress = (DWORD)((uintptr_t)hookFunction - (uintptr_t)targetFunction - 5);
-
-            memcpy(patchBuffer, "\xE9", 1);
-            memcpy(patchBuffer + 1, &relativeAddress, 4);
-
-            WriteProcessMemory(GetCurrentProcess(), targetFunction, patchBuffer, 5, NULL);
+            Runtime::WriteCodeToProcess((uintptr_t)targetFunction, jumpToHook, sizeof(jumpToHook));
 
             std::cout << "Function addresses: \n"
                 << "Target: " << targetFunction
                 << "\nTrampoline: " << trampoline
                 << "\nHook: " << hookFunction << ' ' << *(byte*)hookFunction << '\n';
-
-            // Restore original protection
-            /*if (!VirtualProtect(targetFunction, size, PAGE_EXECUTE_READ, &oldProtect)) {
-                std::cerr << "Failed to restore original memory protection\n";
-            }
-            else {
-                std::cout << "Memory protection restored successfully.\n";
-            }*/
 
             std::cout << "Hook installed successfully.\n";
 

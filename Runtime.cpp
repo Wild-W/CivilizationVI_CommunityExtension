@@ -8,6 +8,7 @@ namespace Runtime {
 	HMODULE GameCore;
 	uintptr_t GameCoreAddress;
 	asmjit::JitRuntime Jit;
+	HANDLE GameProcess;
 
 	// Should only be called once
 	void Create() {
@@ -17,6 +18,7 @@ namespace Runtime {
 			return;
 		}
 		GameCoreAddress = reinterpret_cast<uintptr_t>(GameCore);
+		GameProcess = GetCurrentProcess();
 	}
 
 	void InitMinHook() {
@@ -69,5 +71,32 @@ namespace Runtime {
 		std::cin.clear();
 		std::cout.clear();
 		std::cerr.clear();
+	}
+
+	BOOL WriteCodeToProcess(uintptr_t address, byte* bytes, size_t sizeOfBytes) {
+		DWORD oldProtect;
+		LPVOID lpBaseAddress = reinterpret_cast<LPVOID>(address);
+
+		if (!VirtualProtectEx(GameProcess, lpBaseAddress, sizeOfBytes, PAGE_EXECUTE_READWRITE, &oldProtect)) {
+			std::cerr << "Failed to change memory protection: " << GetLastError() << std::endl;
+			return FALSE;
+		}
+
+		SIZE_T numberOfBytesWritten;
+		BOOL result = WriteProcessMemory(GameProcess, lpBaseAddress, bytes, sizeOfBytes, &numberOfBytesWritten);
+
+		if (!result || numberOfBytesWritten != sizeOfBytes) {
+			std::cerr << "Failed to write to memory: " << GetLastError() << std::endl;
+			VirtualProtectEx(GameProcess, lpBaseAddress, sizeOfBytes, oldProtect, &oldProtect);
+			return FALSE;
+		}
+
+		VirtualProtectEx(GameProcess, lpBaseAddress, sizeOfBytes, oldProtect, &oldProtect);
+
+		return TRUE;
+	}
+
+	BOOL WriteCodeToGameCore(uintptr_t address, byte* bytes, size_t sizeOfBytes) {
+		return WriteCodeToProcess(address + GameCoreAddress, bytes, sizeOfBytes);
 	}
 };

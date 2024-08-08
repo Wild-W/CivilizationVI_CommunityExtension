@@ -48,7 +48,11 @@ ProxyTypes::GlobalParameters_Get GlobalParameters_Get;
 ProxyTypes::ApplyTourism ApplyTourism;
 ProxyTypes::GetPlayersToProcess GetPlayersToProcess;
 
-void PushSharedGlobals(hks::lua_State* L) {
+static void PushSharedGlobals(hks::lua_State* L) {
+    hks::pushnamedcclosure(L, hks::luaopen_debug, 0, "luaopen_debug", 0);
+    hks::pcall(L, 0, 1, NULL);
+    hks::setfield(L, hks::LUA_GLOBAL, "debug");
+
     PushLuaMethod(L, MemoryManipulation::LuaExport::lMem, "lMem", hks::LUA_GLOBAL, "Mem");
     PushLuaMethod(L, MemoryManipulation::LuaExport::lObjMem, "lObjMem", hks::LUA_GLOBAL, "ObjMem");
     PushLuaMethod(L, MemoryManipulation::LuaExport::lRegisterCallEvent, "lRegisterCallEvent", hks::LUA_GLOBAL, "RegisterCallEvent");
@@ -57,7 +61,7 @@ void PushSharedGlobals(hks::lua_State* L) {
     MemoryManipulation::LuaExport::PushFieldTypes(L);
 }
 
-void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
+static void Hook_RegisterScriptData(hks::lua_State* L) {
     std::cout << "Registering lua globals!\n";
 
     PushSharedGlobals(L);
@@ -73,7 +77,7 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     base_RegisterScriptData(L);
 }
 
-void __cdecl Hook_RegisterScriptDataForUI(hks::lua_State* _, hks::lua_State* L) {
+static void Hook_RegisterScriptDataForUI(hks::lua_State* _, hks::lua_State* L) {
     std::cout << "Registering cache lua globals!\n";
 
     PushSharedGlobals(L);
