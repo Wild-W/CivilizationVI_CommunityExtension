@@ -7,7 +7,6 @@
 namespace Runtime {
 	HMODULE GameCore;
 	uintptr_t GameCoreAddress;
-	asmjit::JitRuntime Jit;
 	HANDLE GameProcess;
 
 	// Should only be called once
