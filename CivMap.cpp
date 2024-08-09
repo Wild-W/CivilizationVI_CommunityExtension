@@ -14,6 +14,8 @@ namespace CivMap::Improvement::Builder {
 		using namespace EventSystems;
 		using namespace Data;
 
+		if (city == nullptr) return false;
+
 		if (DoesProcessorExist("CanHaveDistrict")) {
 			auto variantMap = LuaVariantMap();
 			variantMap.emplace("DistrictIndex", LuaVariant(districtIndex));

@@ -76,6 +76,8 @@ namespace hks {
 	extern hksi_lua_isuserdataType isuserdata;
 	typedef int(__cdecl* luaopen_debugType)(hks::lua_State*);
 	extern luaopen_debugType luaopen_debug;
+	typedef int(__cdecl* hksi_lua_tointegerType)(hks::lua_State*, int);
+	extern hksi_lua_tointegerType tointeger;
 
 	extern int checkplayerid(lua_State*, int);
 	extern void pushboolean(lua_State* L, bool value);

@@ -246,6 +246,7 @@
     <ClCompile Include="plh\plh_Os.cpp" />
     <ClCompile Include="plh\plh_ThreadState.cpp" />
     <ClCompile Include="Plot.cpp" />
+    <ClCompile Include="Rules.cpp" />
     <ClCompile Include="Runtime.cpp" />
     <ClCompile Include="Unit.cpp" />
     <ClCompile Include="UnitManager.cpp" />
@@ -284,6 +285,7 @@
     <ClInclude Include="plh\plh_ThreadState.h" />
     <ClInclude Include="Plot.h" />
     <ClInclude Include="ProxyTypes.h" />
+    <ClInclude Include="Rules.h" />
     <ClInclude Include="Runtime.h" />
     <ClInclude Include="trampoline_common.h" />
     <ClInclude Include="Unit.h" />

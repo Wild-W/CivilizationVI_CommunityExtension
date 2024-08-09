@@ -26,6 +26,7 @@
 #include "EventSystems.h"
 #include "NationalParks.h"
 #include "CivMap.h"
+#include "Rules.h"
 
 HANDLE mainThread;
 HANDLE frida;
@@ -140,6 +141,7 @@ static void InitHooks() {
     AI::Espionage::Create();
     NationalParks::Create();
     CivMap::Create();
+    Rules::Players::Create();
 
     std::cout << "Hooks initialized!\n";
 }

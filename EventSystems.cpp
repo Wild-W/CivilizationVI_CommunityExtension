@@ -62,7 +62,7 @@ namespace EventSystems {
 				variantMap.reclaim(L, propertyToGet);
 			}
 	
-			hks::pop(L, 1);
+			hks::pop(L, 2);
 			hks::unref(L, hks::LUA_REGISTRYINDEX, tableIndex);
 
 			if (result) {
