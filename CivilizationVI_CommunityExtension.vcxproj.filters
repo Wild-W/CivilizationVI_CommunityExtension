@@ -117,6 +117,9 @@
     <ClCompile Include="plh\plh_ThreadState.cpp">
       <Filter>Source Files\plh</Filter>
     </ClCompile>
+    <ClCompile Include="CivMap.cpp">
+      <Filter>Source Files\GameCore</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HavokScript.h">
@@ -228,6 +231,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="hooking_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CivMap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

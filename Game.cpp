@@ -34,7 +34,7 @@ namespace Game::Initializers {
 	Types::NewGamePlayerRandomAgendas base_NewGamePlayerRandomAgendas;
 	void NewGamePlayerRandomAgendas(Game::Instance* game) {
 		std::cout << game << " the game\n";
-		//base_NewGamePlayerRandomAgendas(game);
+		base_NewGamePlayerRandomAgendas(game);
 	}
 }
 
@@ -55,7 +55,7 @@ namespace Game {
 	void Create() {
 		using namespace Runtime;
 
-		PreventHistorialAgendasFromBeingSet();
+		//PreventHistorialAgendasFromBeingSet();
 
 		FAutoVariable_edit = GetGameCoreGlobalAt<Types::FAutoVariable_edit>(F_AUTO_VARIABLE_EDIT_OFFSET);
 		GetGameplayDatabase = GetGameCoreGlobalAt<Types::GetGameplayDatabase>(GET_GAMEPLAY_DATABASE_OFFSET);

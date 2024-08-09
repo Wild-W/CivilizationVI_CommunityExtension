@@ -18,17 +18,17 @@ namespace EventSystems {
 
 	bool DoesProcessorExist(const std::string& name) {
 		auto eventIterator = logicEvents.find(name);
-		if (eventIterator == logicEvents.end()) {
-			return false;
-		}
+		return eventIterator != logicEvents.end();
 	}
 
-	bool CallCustomProcessor(const std::string& name, Data::LuaVariantMap& variantMap) {
+	bool CallCustomProcessor(const std::string& name, Data::LuaVariantMap& variantMap, const std::string& propertyToGet) {
 		auto eventIterator = logicEvents.find(name);
 		if (eventIterator == logicEvents.end()) {
 			std::cout << "Could not find processor: " << name << '\n';
 			return false;
 		}
+
+		bool getAllProperties = propertyToGet.empty();
 		
 		for (const auto& luaPair : eventIterator->second) {
 			hks::lua_State* L = luaPair.first;
@@ -54,14 +54,16 @@ namespace EventSystems {
 			}
 
 			bool result = hks::toboolean(L, -1);
-
 			hks::rawgeti(L, hks::LUA_REGISTRYINDEX, tableIndex);
-			variantMap.rebuild(L);
-
+			if (getAllProperties) {
+				variantMap.rebuild(L);
+			}
+			else {
+				variantMap.reclaim(L, propertyToGet);
+			}
+	
 			hks::pop(L, 1);
 			hks::unref(L, hks::LUA_REGISTRYINDEX, tableIndex);
-
-			std::cout << "result: " << result << '\n';
 
 			if (result) {
 				return true;

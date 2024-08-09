@@ -12,5 +12,6 @@ namespace Data {
     struct LuaVariantMap : public std::unordered_map<std::string, LuaVariant> {
         LuaVariantMap() = default;
         void rebuild(hks::lua_State* L);
+        void reclaim(hks::lua_State* L, const std::string& propertyToGet);
     };
 }

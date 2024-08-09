@@ -23,7 +23,7 @@ namespace AI::CongressSupport {
 
 			std::cout << "Calling Target Chooser: " << name << "!\n";
 
-			if (CallCustomProcessor(name, variantMap)) {
+			if (CallCustomProcessor(name, variantMap, decisionKey)) {
 				int decisionType = std::get<int>(variantMap.at(decisionKey));
 				std::cout << "Decision type: " << decisionType << '\n';
 				if (decisionType == -1) {
