@@ -16,6 +16,8 @@ namespace Game {
 	namespace Types {
 		typedef void* (__thiscall* FAutoVariable_edit)(void* object);
 		typedef IDatabaseConnection1* (__cdecl* GetGameplayDatabase)(void);
+		typedef void(__cdecl* LuaLockAccess)(void);
+		typedef void(__cdecl* LuaUnlockAccess)(void);
 	}
 
 	constexpr uintptr_t F_AUTO_VARIABLE_EDIT_OFFSET = 0x72a920;
@@ -23,6 +25,12 @@ namespace Game {
 
 	constexpr uintptr_t GET_GAMEPLAY_DATABASE_OFFSET = 0x44de0;
 	extern Types::GetGameplayDatabase GetGameplayDatabase;
+
+	constexpr uintptr_t LUA_LOCK_ACCESS_OFFSET = 0x9adf70;
+	extern Types::LuaLockAccess LuaLockAccess;
+
+	constexpr uintptr_t LUA_UNLOCK_ACCESS_OFFSET = 0x9ae060;
+	extern Types::LuaUnlockAccess LuaUnlockAccess;
 
 	extern void Create();
 }

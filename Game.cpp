@@ -44,6 +44,8 @@ namespace Game {
 	}
 	Types::FAutoVariable_edit FAutoVariable_edit;
 	Types::GetGameplayDatabase GetGameplayDatabase;
+	Types::LuaLockAccess LuaLockAccess;
+	Types::LuaUnlockAccess LuaUnlockAccess;
 
 	static void PreventHistorialAgendasFromBeingSet() {
 		using namespace Runtime;
@@ -56,6 +58,9 @@ namespace Game {
 		using namespace Runtime;
 
 		//PreventHistorialAgendasFromBeingSet();
+
+		LuaLockAccess = GetGameCoreGlobalAt<Types::LuaLockAccess>(LUA_LOCK_ACCESS_OFFSET);
+		LuaUnlockAccess = GetGameCoreGlobalAt<Types::LuaUnlockAccess>(LUA_UNLOCK_ACCESS_OFFSET);
 
 		FAutoVariable_edit = GetGameCoreGlobalAt<Types::FAutoVariable_edit>(F_AUTO_VARIABLE_EDIT_OFFSET);
 		GetGameplayDatabase = GetGameCoreGlobalAt<Types::GetGameplayDatabase>(GET_GAMEPLAY_DATABASE_OFFSET);

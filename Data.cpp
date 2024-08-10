@@ -20,13 +20,8 @@ namespace Data {
         hks::gettable(L, -2);
 
         if (std::holds_alternative<int>(variant)) {
-            if (hks::isnumber(L, -1)) {
-                auto value = hks::tointeger(L, -1);
-                std::get<int>(variant) = value;
-            }
-            else {
-                std::cout << "ERROR: not a number\n";
-            }
+            auto value = hks::checkinteger(L, -1);
+            std::get<int>(variant) = value;
         }
         else if (std::holds_alternative<std::string>(variant)) {
             size_t length = 0;
@@ -34,13 +29,8 @@ namespace Data {
             std::get<std::string>(variant) = std::string(value, length);
         }
         else if (std::holds_alternative<double>(variant)) {
-            if (hks::isnumber(L, -1)) {
-                auto value = hks::checknumber(L, -1);
-                std::get<double>(variant) = value;
-            }
-            else {
-                std::cout << "ERROR: not a number\n";
-            }
+            auto value = hks::checknumber(L, -1);
+            std::get<double>(variant) = value;
         }
 
         hks::pop(L, 1);
