@@ -30,7 +30,7 @@ namespace CivMap::Improvement::Builder {
 			
 			variantMap.emplace("Result", LuaVariant(-1));
 
-			if (CallCustomProcessor("CanHaveDistrict", variantMap, "Result")) {
+			if (CallProcessors("CanHaveDistrict", variantMap, "Result")) {
 				int result = std::get<int>(variantMap.at("Result"));
 
 				if (result == 0) return false;

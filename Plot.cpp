@@ -41,7 +41,7 @@ namespace Plot {
         return 0;
     }
 
-    void __cdecl PushMethods(hks::lua_State* L, int stackOffset) {
+    static void PushMethods(hks::lua_State* L, int stackOffset) {
         std::cout << "Hooked Plot::PushMethods!\n";
 
         PushLuaMethod(L, lSetAppeal, "lSetAppeal", stackOffset, "SetAppeal");

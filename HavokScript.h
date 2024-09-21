@@ -70,7 +70,7 @@ namespace hks {
 	extern hksi_lua_settableType settable;
 	typedef int(__cdecl* hksi_lua_isnumberType)(hks::lua_State*, int);
 	extern hksi_lua_isnumberType isnumber;
-	typedef int(__cdecl* hksi_lua_tonumberType)(hks::lua_State*, int);
+	typedef double(__cdecl* hksi_lua_tonumberType)(hks::lua_State*, int);
 	extern hksi_lua_tonumberType tonumber;
 	typedef int(__cdecl* hksi_lua_isuserdataType)(hks::lua_State*, int);
 	extern hksi_lua_isuserdataType isuserdata;
@@ -78,10 +78,25 @@ namespace hks {
 	extern luaopen_debugType luaopen_debug;
 	typedef int(__cdecl* hksi_lua_tointegerType)(hks::lua_State*, int);
 	extern hksi_lua_tointegerType tointeger;
+	typedef int(__cdecl* hksi_lua_typeType)(lua_State*, int);
+	extern hksi_lua_typeType type;
+	typedef int(__cdecl* luaL_optintegerType)(lua_State*, int, int);
+	extern luaL_optintegerType optinteger;
+	typedef int(__cdecl* hksi_lua_sethookType)(lua_State*, void*, int, int);
+	extern hksi_lua_sethookType sethook;
+	typedef void* (__cdecl* hksi_lua_gethookType)(lua_State*);
+	extern hksi_lua_gethookType gethook;
+	typedef int(__cdecl* hksi_lua_gethookmaskType)(lua_State*);
+	extern hksi_lua_gethookmaskType gethookmask;
+	typedef int(__cdecl* hksi_lua_gethookcountType)(lua_State*);
+	extern hksi_lua_gethookcountType gethookcount;
 
 	extern int checkplayerid(lua_State*, int);
 	extern void pushboolean(lua_State* L, bool value);
 	extern void pushlightuserdata(lua_State* L, void* ptr);
+
+	extern int l_sethook(lua_State* L);
+	extern int l_gethook(lua_State* L);
 
 	// Should only ever be called once
 	extern void InitHavokScript();

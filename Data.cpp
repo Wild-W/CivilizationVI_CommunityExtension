@@ -1,17 +1,18 @@
 #include "Data.h"
+#include "Game.h"
 
 namespace Data {
     void LuaVariant::push(hks::lua_State* L) const {
         auto& variant = *this;
 
-        if (std::holds_alternative<std::string>(variant)) {
-            hks::pushfstring(L, std::get<std::string>(variant).c_str());
+        if (std::holds_alternative<int>(variant)) {
+            hks::pushinteger(L, std::get<int>(variant));
         }
         else if (std::holds_alternative<double>(variant)) {
             hks::pushnumber(L, std::get<double>(variant));
         }
-        else if (std::holds_alternative<int>(variant)) {
-            hks::pushinteger(L, std::get<int>(variant));
+        else if (std::holds_alternative<std::string>(variant)) {
+            hks::pushfstring(L, std::get<std::string>(variant).c_str());
         }
     }
 
@@ -23,14 +24,14 @@ namespace Data {
             auto value = hks::checkinteger(L, -1);
             std::get<int>(variant) = value;
         }
+        else if (std::holds_alternative<double>(variant)) {
+            auto value = hks::checknumber(L, -1);
+            std::get<double>(variant) = value;
+        }
         else if (std::holds_alternative<std::string>(variant)) {
             size_t length = 0;
             auto value = hks::checklstring(L, -1, &length);
             std::get<std::string>(variant) = std::string(value, length);
-        }
-        else if (std::holds_alternative<double>(variant)) {
-            auto value = hks::checknumber(L, -1);
-            std::get<double>(variant) = value;
         }
 
         hks::pop(L, 1);

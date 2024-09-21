@@ -17,7 +17,7 @@ namespace Rules::Players {
 
 			variantMap.emplace("Result", LuaVariant(-1));
 
-			if (CallCustomProcessor("CanRaze", variantMap, "Result")) {
+			if (CallProcessors("CanRaze", variantMap, "Result")) {
 				int result = std::get<int>(variantMap.at("Result"));
 
 				if (result == 0) return false;

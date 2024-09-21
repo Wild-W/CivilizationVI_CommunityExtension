@@ -7,12 +7,23 @@ namespace NationalParks {
 	typedef struct ParkData;
 	namespace Cache {
 		typedef class NationalParks;
+		typedef struct ParkData1;
 		namespace Types {
 			typedef void (*__thiscall Update)(Cache::NationalParks*, void* vec);
+			typedef void (*__cdecl Process)(unsigned int);
+			typedef ParkData1* (*__thiscall FindPark)(Cache::NationalParks*, int*);
 		}
 
-		//constexpr uintptr_t UPDATE_OFFSET = 0x;
+		constexpr uintptr_t UPDATE_OFFSET = 0x99f60;
 		extern Cache::Types::Update Update;
+
+		constexpr uintptr_t PROCESS_OFFSET = 0x9b0c0;
+		extern Cache::Types::Process Process;
+
+		constexpr uintptr_t FIND_PARK_OFFSET = 0x9a720;
+		extern Cache::Types::FindPark FindPark;
+
+		extern int Register(hks::lua_State*);
 	}
 	namespace Types {
 		typedef NationalParks* (*__cdecl Edit)(void);

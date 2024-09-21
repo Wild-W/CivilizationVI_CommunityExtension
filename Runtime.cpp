@@ -11,6 +11,7 @@ namespace Runtime {
 	uintptr_t GameCoreAddress;
 	DWORD GameProcessId;
 	HANDLE GameProcess;
+	uintptr_t BaseAddress;
 
 	static GMainLoop* loop = NULL;
 
@@ -173,6 +174,9 @@ namespace Runtime {
 		g_main_loop_unref(loop);
 	}
 
+	_EnterLuaCriticalSection EnterLuaCriticalSection;
+	_LeaveLuaCriticalSection LeaveLuaCriticalSection;
+
 	// Should only be called once
 	void Create() {
 		GameCore = LoadLibrary(TEXT("../../../DLC/Expansion2/Binaries/Win64/GameCore_XP2_FinalRelease.dll"));
@@ -183,6 +187,11 @@ namespace Runtime {
 		GameCoreAddress = reinterpret_cast<uintptr_t>(GameCore);
 		GameProcessId = GetCurrentProcessId();
 		GameProcess = GetCurrentProcess();
+
+		BaseAddress = (uintptr_t)GetModuleHandle(NULL);
+
+		EnterLuaCriticalSection = GetGlobalAt<_EnterLuaCriticalSection>(0xdafa40);
+		LeaveLuaCriticalSection = GetGlobalAt<_LeaveLuaCriticalSection>(0xdb0660);
 	}
 
 	void InitMinHook() {

@@ -17,7 +17,7 @@ namespace Game::Initializers {
 			variantMap.emplace("PlayerType", LuaVariant(playerId));
 
 			std::cout << "Calling InitializePlayerRandomAgendas Processor!\n";
-			if (CallCustomProcessor("InitializePlayerRandomAgendas", variantMap)) {
+			if (CallProcessors("InitializePlayerRandomAgendas", variantMap)) {
 				std::cout << "InitializePlayerRandomAgendas returned true!\n";
 				return;
 			}
@@ -41,7 +41,16 @@ namespace Game::Initializers {
 namespace Game {
 	namespace Cache {
 		Cache::Types::GetInstance GetInstance;
+
+		namespace Context {
+			Types::EditInstance EditInstance;
+		}
 	}
+
+	namespace hks {
+		hks::Types::istable istable;
+	}
+
 	Types::FAutoVariable_edit FAutoVariable_edit;
 	Types::GetGameplayDatabase GetGameplayDatabase;
 	Types::LuaLockAccess LuaLockAccess;
@@ -59,6 +68,8 @@ namespace Game {
 
 		//PreventHistorialAgendasFromBeingSet();
 
+		hks::istable = GetGameCoreGlobalAt<hks::Types::istable>(hks::IS_TABLE_OFFSET);
+
 		LuaLockAccess = GetGameCoreGlobalAt<Types::LuaLockAccess>(LUA_LOCK_ACCESS_OFFSET);
 		LuaUnlockAccess = GetGameCoreGlobalAt<Types::LuaUnlockAccess>(LUA_UNLOCK_ACCESS_OFFSET);
 
@@ -66,6 +77,7 @@ namespace Game {
 		GetGameplayDatabase = GetGameCoreGlobalAt<Types::GetGameplayDatabase>(GET_GAMEPLAY_DATABASE_OFFSET);
 
 		Cache::GetInstance = GetGameCoreGlobalAt<Cache::Types::GetInstance>(Cache::GET_INSTANCE_OFFSET);
+		Cache::Context::EditInstance = GetGameCoreGlobalAt<Cache::Context::Types::EditInstance>(Cache::Context::EDIT_INSTANCE_OFFSET);
 
 		Initializers::orig_InitializePlayerRandomAgendas =
 			GetGameCoreGlobalAt<Initializers::Types::InitializePlayerRandomAgendas>(Initializers::INITIALIZE_PLAYER_RANDOM_AGENDAS_OFFSET);

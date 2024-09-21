@@ -8,6 +8,13 @@ namespace Runtime {
 	extern HMODULE GameCore;
 	extern uintptr_t GameCoreAddress;
 	extern DWORD GameProcessId;
+	extern uintptr_t BaseAddress;
+
+	using _EnterLuaCriticalSection = void(*)(void);
+	extern _EnterLuaCriticalSection EnterLuaCriticalSection;
+
+	using _LeaveLuaCriticalSection = void(*)(void);
+	extern _LeaveLuaCriticalSection LeaveLuaCriticalSection;
 
 	// Should only be called once
 	extern void Create();
@@ -22,6 +29,11 @@ namespace Runtime {
 	template <typename T>
 	T GetGameCoreGlobalAt(uintptr_t address) {
 		return reinterpret_cast<T>(GameCoreAddress + address);
+	}
+
+	template <typename T>
+	T GetGlobalAt(uintptr_t address) {
+		return reinterpret_cast<T>(BaseAddress + address);
 	}
 
 	template <typename T>

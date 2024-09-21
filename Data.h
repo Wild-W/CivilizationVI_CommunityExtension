@@ -15,3 +15,9 @@ namespace Data {
         void reclaim(hks::lua_State* L, const std::string& propertyToGet);
     };
 }
+
+// Unused
+namespace Firaxis::Data {
+    struct TypedVariantMap;
+    struct TypedVariantManager;
+}

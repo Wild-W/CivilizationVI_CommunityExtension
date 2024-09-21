@@ -1,5 +1,6 @@
 #pragma once
 #include "Runtime.h"
+#include "HavokScript.h"
 
 namespace Game {
 	typedef class IDatabaseConnection1;
@@ -10,6 +11,16 @@ namespace Game {
 			typedef Cache::Game* (__cdecl* GetInstance)(void);
 		}
 
+		namespace Context {
+			typedef class Instance;
+			namespace Types {
+				typedef Cache::Context::Instance* (__cdecl* EditInstance)(void);
+			}
+
+			constexpr uintptr_t EDIT_INSTANCE_OFFSET = 0xa200;
+			extern Types::EditInstance EditInstance;
+		}
+
 		constexpr uintptr_t GET_INSTANCE_OFFSET = 0x7aeb0;
 		extern Cache::Types::GetInstance GetInstance;
 	}
@@ -18,6 +29,14 @@ namespace Game {
 		typedef IDatabaseConnection1* (__cdecl* GetGameplayDatabase)(void);
 		typedef void(__cdecl* LuaLockAccess)(void);
 		typedef void(__cdecl* LuaUnlockAccess)(void);
+	}
+	namespace hks {
+		namespace Types {
+			typedef int (__cdecl* istable)(::hks::lua_State* L, int pos);
+		}
+
+		constexpr uintptr_t IS_TABLE_OFFSET = 0x221c0;
+		extern Types::istable istable;
 	}
 
 	constexpr uintptr_t F_AUTO_VARIABLE_EDIT_OFFSET = 0x72a920;

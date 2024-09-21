@@ -51,10 +51,29 @@ ProxyTypes::GlobalParameters_Get GlobalParameters_Get;
 ProxyTypes::ApplyTourism ApplyTourism;
 ProxyTypes::GetPlayersToProcess GetPlayersToProcess;
 
-static void PushSharedGlobals(hks::lua_State* L) {
+static int lGetCurrentThreadId(hks::lua_State* L) {
+    hks::pushinteger(L, GetCurrentThreadId());
+    return 1;
+}
+
+static void PushDebugLibrary(hks::lua_State* L) {
     hks::pushnamedcclosure(L, hks::luaopen_debug, 0, "luaopen_debug", 0);
     hks::pcall(L, 0, 1, NULL);
+
+    // From PUC Lua 5.1
+    // Supposedly deprecated in havokscript and removed in favor of using their in-house debugger
+    // debug.c_breakpoint() exists which is equivalent to the `int3` opcode.
+    PushLuaMethod(L, hks::l_gethook, "l_gethook", -2, "gethook");
+    PushLuaMethod(L, hks::l_sethook, "l_sethook", -2, "sethook");
+
+    // Custom
+    PushLuaMethod(L, lGetCurrentThreadId, "lGetCurrentThreadId", -2, "GetCurrentThreadId");
+
     hks::setfield(L, hks::LUA_GLOBAL, "debug");
+}
+
+static void PushSharedGlobals(hks::lua_State* L) {
+    PushDebugLibrary(L);
 
     PushLuaMethod(L, MemoryManipulation::LuaExport::lMem, "lMem", hks::LUA_GLOBAL, "Mem");
     PushLuaMethod(L, MemoryManipulation::LuaExport::lObjMem, "lObjMem", hks::LUA_GLOBAL, "ObjMem");
@@ -84,6 +103,7 @@ static void Hook_RegisterScriptDataForUI(hks::lua_State* _, hks::lua_State* L) {
     std::cout << "Registering cache lua globals!\n";
 
     PushSharedGlobals(L);
+    CCallWithErrorHandling(L, NationalParks::Cache::Register, NULL);
 
     base_RegisterScriptDataForUI(_, L);
 }
