@@ -11,7 +11,7 @@ namespace EconomicManager {
     double globalMonopolyTourismMultiplier = 1.0;
     double playerMonopolyTourismMultipliers[64] = {};
 
-    int __cdecl GetTourismFromMonopolies(Manager* economicManager, int playerId) {
+    int GetTourismFromMonopolies(Manager* economicManager, int playerId) {
         int result = base_GetTourismFromMonopolies(economicManager, playerId);
         return std::round(result * globalMonopolyTourismMultiplier * playerMonopolyTourismMultipliers[playerId]);
     }

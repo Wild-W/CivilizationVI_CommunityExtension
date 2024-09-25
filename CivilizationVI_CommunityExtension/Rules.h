@@ -11,5 +11,7 @@ namespace Rules::Players {
 	constexpr uintptr_t CAN_RAZE_OFFSET = 0x37b5a0;
 	extern bool CanRaze(Instance* rulesPlayers, City::Instance* city, int playerId);
 
+	extern int Register(hks::lua_State* L);
+
 	extern void Create();
 }
