@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Mod id="3351473b-0746-417a-a618-2b66a04d8f3d"
+     version="1.3">
+    <Properties>
+        <Name>LOC_WILDW_COMMUNITY_EXTENSION_MOD_NAME</Name>
+        <Description>LOC_WILDW_COMMUNITY_EXTENSION_MOD_DESCRIPTION</Description>
+        <Created>1720065114</Created>
+        <Teaser>LOC_WILDW_COMMUNITY_EXTENSION_MOD_TEASER</Teaser>
+        <Authors>WildW</Authors>
+        <CompatibleVersions>1.2,2.0</CompatibleVersions>
+        <AffectsSavedGames>0</AffectsSavedGames>
+    </Properties>
+    <Dependencies>
+        <Mod id="4873eb62-8ccc-4574-b784-dda455e74e68"
+             title="Expansion: Gathering Storm" />
+    </Dependencies>
+    <FrontEndActions>
+        <UpdateDatabase id="Config">
+            <Properties>
+                <LoadOrder>10</LoadOrder>
+            </Properties>
+            <File>Data/Config.sql</File>
+        </UpdateDatabase>
+    </FrontEndActions>
+    <InGameActions>
+        <AddGameplayScripts>
+            <File>luatest.lua</File>
+        </AddGameplayScripts>
+        <ImportFiles id="ImportWatermark">
+            <File>UI/CEWatermark.xml</File>
+            <File>UI/CEWatermark.lua</File>
+        </ImportFiles>
+        <AddUserInterfaces id="Watermark">
+            <Properties>
+                <Context>InGame</Context>
+            </Properties>
+            <File>UI/CEWatermark.xml</File>
+        </AddUserInterfaces>
+        <UpdateDatabase id="Dummy">
+            <Properties>
+                <LoadOrder>10</LoadOrder>
+            </Properties>
+            <File>Data/Dummy.sql</File>
+        </UpdateDatabase>
+    </InGameActions>
+    <LocalizedText>
+        <Text id="LOC_WILDW_COMMUNITY_EXTENSION_MOD_NAME">
+            <en_US>Community Extension</en_US>
+        </Text>
+        <Text id="LOC_WILDW_COMMUNITY_EXTENSION_MOD_TEASER">
+            <en_US>Extends modding APIs</en_US>
+        </Text>
+        <Text id="LOC_WILDW_COMMUNITY_EXTENSION_MOD_DESCRIPTION">
+            <en_US>Version 1.3[NEWLINE]Only compatible with Windows, incompatible with other GameCore mods.[NEWLINE]This mod extends the lua capabilites of other mods.[NEWLINE]There are plans for so much more.</en_US>
+        </Text>
+    </LocalizedText>
+    <Files>
+        <File>Binaries/Win64/GameCore_XP2_CE_FinalRelease.dll</File>
+        <File>Data/Config.sql</File>
+        <File>Data/Dummy.sql</File>
+        <File>UI/CEWatermark.lua</File>
+        <File>UI/CEWatermark.xml</File>
+        <File>luatest.lua</File>
+    </Files>
+</Mod>

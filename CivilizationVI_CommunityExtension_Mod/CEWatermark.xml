@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Context Name="CEContext">
+	<Instance Name="CEWatermark">
+		<GridButton ID="CEWatermarkButton" Style="RoundedButton" String="CE v1.3" Size="70,27"/>
+	</Instance>
+</Context>
