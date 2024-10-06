@@ -13,7 +13,7 @@ namespace Plot {
     
     Types::GetInstance GetInstance;
 
-    void __cdecl SetAppeal(Instance* plot, int appeal) {
+    void SetAppeal(Instance* plot, int appeal) {
         std::cout << "Hooked SetAppeal!\n";
         if (lockedAppeals.find((short*)((uintptr_t)plot + 0x4a)) == lockedAppeals.end()) {
             base_SetAppeal(plot, appeal);

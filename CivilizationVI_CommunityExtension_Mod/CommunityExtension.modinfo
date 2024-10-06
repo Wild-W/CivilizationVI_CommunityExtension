@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Mod id="3351473b-0746-417a-a618-2b66a04d8f3d"
-     version="1.3">
+     version="1.4">
     <Properties>
         <Name>LOC_WILDW_COMMUNITY_EXTENSION_MOD_NAME</Name>
         <Description>LOC_WILDW_COMMUNITY_EXTENSION_MOD_DESCRIPTION</Description>
@@ -23,9 +23,6 @@
         </UpdateDatabase>
     </FrontEndActions>
     <InGameActions>
-        <AddGameplayScripts>
-            <File>luatest.lua</File>
-        </AddGameplayScripts>
         <ImportFiles id="ImportWatermark">
             <File>UI/CEWatermark.xml</File>
             <File>UI/CEWatermark.lua</File>
@@ -60,6 +57,5 @@
         <File>Data/Dummy.sql</File>
         <File>UI/CEWatermark.lua</File>
         <File>UI/CEWatermark.xml</File>
-        <File>luatest.lua</File>
     </Files>
 </Mod>
