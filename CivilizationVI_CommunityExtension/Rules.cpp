@@ -22,7 +22,7 @@ namespace Rules::Players {
 
 			variantMap.emplace("Result", LuaVariant(-1));
 
-			if (CallProcessors("CanRaze", variantMap, "Result")) {
+			if (CallProcessorsAsync("CanRaze", variantMap, "Result").get()) {
 				int result = std::get<int>(variantMap.at("Result"));
 
 				if (result == 0) return false;

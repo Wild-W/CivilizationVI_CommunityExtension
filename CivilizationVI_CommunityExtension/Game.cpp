@@ -17,7 +17,7 @@ namespace Game::Initializers {
 			variantMap.emplace("PlayerType", LuaVariant(playerId));
 
 			std::cout << "Calling InitializePlayerRandomAgendas Processor!\n";
-			if (CallProcessors("InitializePlayerRandomAgendas", variantMap)) {
+			if (CallProcessorsAsync("InitializePlayerRandomAgendas", variantMap).get()) {
 				std::cout << "InitializePlayerRandomAgendas returned true!\n";
 				return;
 			}

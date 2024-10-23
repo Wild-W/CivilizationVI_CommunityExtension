@@ -2,11 +2,21 @@
 #include "Data.h"
 #include "HavokScript.h"
 #include <string>
+#include <future>
 
 namespace EventSystems {
+	namespace Types {
+		typedef void* (* PublishEvents)(void*);
+	}
+
+	constexpr uintptr_t PUBLISH_EVENTS_OFFSET = 0x6e260;
+
 	extern bool DoesProcessorExist(const std::string& name);
-	extern bool CallProcessors(const std::string& name, Data::LuaVariantMap& variantMap, const std::string& propertyToGet = "");
+	extern std::future<bool> CallProcessorsAsync(const std::string& name, Data::LuaVariantMap& variantMap, const std::string& propertyToGet = "");
 	extern int lRegisterProcessor(hks::lua_State* L);
+	extern void PublishEvents(void* _);
+
+	extern void Create();
 }
 
 // Unused
@@ -30,6 +40,4 @@ namespace Firaxis::EventSystems {
 
 	constexpr uintptr_t CALL_PROCESSOR_OFFSET = 0;
 	extern Types::CallProcessor CallProcessor;
-
-	extern void Create();
 }

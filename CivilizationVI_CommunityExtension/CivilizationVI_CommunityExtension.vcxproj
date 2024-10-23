@@ -104,6 +104,8 @@
     <ClCompile Include="EconomicManager.cpp" />
     <ClCompile Include="EmergencyManager.cpp" />
     <ClCompile Include="EventSystems.cpp" />
+    <ClCompile Include="ForgeUI.cpp" />
+    <ClCompile Include="ForgeUI.h" />
     <ClCompile Include="Game.cpp" />
     <ClCompile Include="GameDiplomacy.cpp" />
     <ClCompile Include="GovernorManager.cpp" />

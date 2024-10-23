@@ -123,6 +123,12 @@
     <ClCompile Include="Rules.cpp">
       <Filter>Source Files\GameCore</Filter>
     </ClCompile>
+    <ClCompile Include="ForgeUI.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ForgeUI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HavokScript.h">

@@ -107,6 +107,27 @@ namespace hks {
 		return 3;
 	}
 
+	static void print_stack(hks::lua_State* L) {
+		int top = hks::gettop(L);
+		for (int i = 1; i <= top; i++) {
+			int type = hks::type(L, i);
+			switch (type) {
+			case 4:
+				size_t _;
+				printf(" String: '%s'\n", hks::checklstring(L, i, &_));
+				break;
+			case 2:
+				printf(" Boolean: %s\n", hks::toboolean(L, i) ? "true" : "false");
+				break;
+			case 3:
+				printf(" Number: %g\n", hks::tonumber(L, i));
+				break;
+			default:
+				printf(" Other %d\n", type);
+			}
+		}
+	}
+
 	int checkplayerid(lua_State* L, int position) {
 		int playerId = hks::checkinteger(L, position);
 		if (0 <= playerId && playerId < 64) {

@@ -27,6 +27,7 @@
 #include "NationalParks.h"
 #include "CivMap.h"
 #include "Rules.h"
+#include "ForgeUI.h"
 
 HANDLE mainThread;
 HANDLE frida;
@@ -63,6 +64,8 @@ static void PushDebugLibrary(hks::lua_State* L) {
     // From PUC Lua 5.1
     // Supposedly deprecated in havokscript and removed in favor of using their in-house debugger
     // debug.c_breakpoint() exists which is equivalent to the `int3` opcode.
+    //
+    // They don't actually work though. Would appreciate contributions to fix that.
     PushLuaMethod(L, hks::l_gethook, "l_gethook", -2, "gethook");
     PushLuaMethod(L, hks::l_sethook, "l_sethook", -2, "sethook");
 
@@ -130,6 +133,9 @@ constexpr uintptr_t GET_PLAYERS_TO_PROCESS_OFFSET = 0x49d40;
 static void InitHooks() {
     std::cout << "Initializing hooks ...\n";
     using namespace Runtime;
+
+    ForgeUI::Create();
+    EventSystems::Create();
 
     CCallWithErrorHandling = GetGameCoreGlobalAt<ProxyTypes::CCallWithErrorHandling>(C_CALL_WITH_ERROR_HANDLING_OFFSET);
 
