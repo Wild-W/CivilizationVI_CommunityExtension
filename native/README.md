@@ -6,13 +6,20 @@ AI still evaluates alternatives, selects work and manages production. The API
 contains no Quarter rules, adjacency formula, scripted construction or subsidies.
 Those decisions belong in the consuming mod's Lua/SQL.
 
-**Status:** experimental fork, not a released CE API. A complete portable CE DLL
-has linked and preserved the original export contract. An initial native run
-loaded the fork and reached turn 3, then stopped after JSON reporting failed;
-the native process exited normally. The corrected long-string path has 36
-isolated native checks, including the original 31 hook/publication checks. Its
-actual HKS long-string runtime qualification is pending. None of these results
-establish AI quality, full save/load behavior, multiplayer or release readiness.
+**Status:** experimental fork, not a released CE API. The complete portable CE
+build preserves all157 original exports/ordinals and155 forwarders. After fixing
+a long-string reporting failure exposed by the first run, the corrected build
+completed a bounded Online100 test:73 positive and14,584 negative score changes,
+all29,479 trace records reconstructed, and zero native faults. The consuming mod
+computed policy in packaged Lua; Python only controlled/audited the test.
+
+A second observation-only world1–2 in the same process reset policy to zero;
+the exact saved6 reloaded with identical captured scanner facts. Native exit0,
+exact preferences and unchanged package contents were verified. The corrected
+string helper also passes36 isolated native checks. These results do not
+establish AI quality, arbitrary save/unload behavior, general CE compatibility,
+multiplayer, MSVC qualification or release readiness. See the
+[qualification report](https://hennogous.github.io/Henno-Mods/ai/sources/project/docs/research/mods/csc-ce-policy-parity-20261104).
 
 ## Supported target and build
 
@@ -176,5 +183,8 @@ incrementally with the verified public `hksi_lua_concat(lua_State*, int)` export
 It uses `luaL_checkstack(lua_State*, int, const char*)` and never treats JSON as a
 format string. Only two temporary stack values are needed. The isolated mock
 reproduces the formatter's 511-byte payload limit; long Status and 64-record
-TraceRead serialization pass. Actual HKS runtime proof for this corrected path
-is still pending at this checkpoint.
+TraceRead serialization pass. The corrected full-game test also reconstructed
+native status strings longer than1KB and complete trace pages of up to64records
+through the actual HKS runtime. The consuming Lua logger frames large receipts
+into bounded lines because the game's disk Lua.log independently truncates prints
+at2047bytes; a full Tuner reply alone is not durable-log proof.
