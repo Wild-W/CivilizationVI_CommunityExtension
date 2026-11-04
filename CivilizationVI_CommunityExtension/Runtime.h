@@ -19,8 +19,6 @@ namespace Runtime {
 	// Should only be called once
 	extern void Create();
 
-	extern void CreateFrida();
-
 	// Call on dll exit
 	extern void Destroy();
 

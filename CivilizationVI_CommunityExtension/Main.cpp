@@ -30,7 +30,6 @@
 #include "ForgeUI.h"
 
 HANDLE mainThread;
-HANDLE frida;
 
 ProxyTypes::DllCreateGameContext base_DllCreateGameContext;
 
@@ -112,11 +111,6 @@ static void Hook_RegisterScriptDataForUI(hks::lua_State* _, hks::lua_State* L) {
     base_RegisterScriptDataForUI(_, L);
 }
 
-DWORD WINAPI FridaThread(LPVOID lpParam) {
-    Runtime::CreateFrida();
-    return FALSE;
-}
-
 #pragma region Offsets
 constexpr uintptr_t CURRENT_GAME_OFFSET = 0xb8aa60;
 
@@ -187,7 +181,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
             Runtime::InitConsole();
         }
         mainThread = CreateThread(0, 0, &MainThread, NULL, 0, NULL);
-        //frida = CreateThread(0, 0, &FridaThread, NULL, 0, NULL);
         break;
     case DLL_PROCESS_DETACH:
         CloseHandle(mainThread);

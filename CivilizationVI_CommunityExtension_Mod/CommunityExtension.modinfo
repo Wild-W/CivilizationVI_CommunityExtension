@@ -48,7 +48,7 @@
             <en_US>Extends modding APIs</en_US>
         </Text>
         <Text id="LOC_WILDW_COMMUNITY_EXTENSION_MOD_DESCRIPTION">
-            <en_US>Version 1.3[NEWLINE]Only compatible with Windows, incompatible with other GameCore mods.[NEWLINE]This mod extends the lua capabilites of other mods.[NEWLINE]There are plans for so much more.</en_US>
+            <en_US>Version 1.3[NEWLINE]Only compatible with Windows, incompatible with other GameCore mods.[NEWLINE]This mod extends the lua capabilites of other mods.</en_US>
         </Text>
     </LocalizedText>
     <Files>

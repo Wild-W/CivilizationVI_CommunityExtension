@@ -112,6 +112,12 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>if exist "$(ProjectDir)*.sql" xcopy /Y /I "$(ProjectDir)*.sql" "$(CE_OUTPUT_DIR)\Data"
+if exist "$(ProjectDir)*.xml" xcopy /Y /I "$(ProjectDir)*.xml" "$(CE_OUTPUT_DIR)\UI"
+if exist "$(ProjectDir)*.lua" xcopy /Y /I "$(ProjectDir)*.lua" "$(CE_OUTPUT_DIR)\UI"
+if exist "$(ProjectDir)*.modinfo" xcopy /Y /I "$(ProjectDir)*.modinfo" "$(CE_OUTPUT_DIR)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -129,10 +135,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /Y /I "$(ProjectDir)*.sql" "$(CE_OUTPUT_DIR)\Data"
-xcopy /Y /I "$(ProjectDir)*.xml" "$(CE_OUTPUT_DIR)\UI"
-xcopy /Y /I "$(ProjectDir)*.lua" "$(CE_OUTPUT_DIR)\UI"
-xcopy /Y /I "$(ProjectDir)*.modinfo" "$(CE_OUTPUT_DIR)"</Command>
+      <Command>if exist "$(ProjectDir)*.sql" xcopy /Y /I "$(ProjectDir)*.sql" "$(CE_OUTPUT_DIR)\Data"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

@@ -19,9 +19,18 @@ namespace EventSystems {
 
     struct QueuedEvent {
         ProcessorEvent processorEvent;
-        Data::LuaVariantMap variantMap;
+        std::shared_ptr<Data::LuaVariantMap> variantMapPtr;
+        Data::LuaVariantMap& variantMap;
         std::string propertyToGet;
         std::promise<bool> promise;
+
+        QueuedEvent(const ProcessorEvent& pe, Data::LuaVariantMap& vm, const std::string& prop, std::promise<bool>&& prom)
+            : processorEvent(pe)
+            , variantMapPtr(std::make_shared<Data::LuaVariantMap>(vm))
+            , variantMap(*variantMapPtr)
+            , propertyToGet(prop)
+            , promise(std::move(prom))
+        {}
     };
 
     std::mutex eventsMutex;
@@ -59,9 +68,10 @@ namespace EventSystems {
             hks::settable(L, -3);
         }
 
-        if (hks::pcall(L, 1, 1, 0) != 0) {
+        if (hks::pcall(L, 1, 1, 0) != hks::LUA_OK) {
             size_t length;
             std::cout << "Error calling processor: " << hks::checklstring(L, -1, &length) << "!\n";
+			hks::pop(L, 1); // Remove error message from Lua stack
             return false;
         }
 
@@ -81,51 +91,76 @@ namespace EventSystems {
     }
 
     std::future<bool> CallProcessorsAsync(const std::string& name, Data::LuaVariantMap& variantMap, const std::string& propertyToGet) {
+        std::cout << "Sending event signal from thread " << GetCurrentThreadId() << '\n';
         std::lock_guard<std::mutex> lock(eventsMutex);
+
+        auto resultPromise = std::make_shared<std::promise<bool>>();
+        std::future<bool> resultFuture = resultPromise->get_future();
+
         auto eventIterator = processorEvents.find(name);
         if (eventIterator == processorEvents.end()) {
-            throw std::runtime_error("Processor not found");
+            std::cout << "Could not find processor: " << name << '\n';
+			resultPromise->set_value(false);
+            return resultFuture;
         }
 
-        std::promise<bool> promise;
-        std::future<bool> future = promise.get_future();
+        std::vector<std::future<bool>> futures;
+        auto sharedMap = std::make_shared<Data::LuaVariantMap>(variantMap);
 
         {
             std::lock_guard<std::mutex> queueLock(eventQueueMutex);
             for (const auto& processor : eventIterator->second) {
-                eventQueue.push(QueuedEvent{ processor, variantMap, propertyToGet, std::move(promise) });
+                std::promise<bool> eventPromise;
+                futures.push_back(eventPromise.get_future());
+
+                eventQueue.push(QueuedEvent(
+                    processor,
+                    *sharedMap,
+                    propertyToGet,
+                    std::move(eventPromise)
+                ));
             }
         }
         eventQueueCV.notify_one();
 
-        return future;
+        // Launch a thread to wait for all futures and aggregate the results
+        std::thread([futures = std::move(futures), resultPromise, sharedMap]() mutable {
+            bool allSucceeded = true;
+            for (auto& future : futures) {
+                if (!future.get()) {
+                    allSucceeded = false;
+                    break;
+                }
+            }
+            resultPromise->set_value(allSucceeded);
+            }).detach();
+
+        return resultFuture;
     }
 
     static void processQueuedProcessorEvents() {
         std::unique_lock<std::mutex> lock(eventQueueMutex);
 
-        // Process each queued event
         while (!eventQueue.empty()) {
             auto& queuedEvent = eventQueue.front();
-            
+            lock.unlock();
+
             {
-                if (ForgeUI::manager != NULL) ForgeUI::GetLock(ForgeUI::manager);
+                auto lpCritSec = (LPCRITICAL_SECTION)(Runtime::BaseAddress + 0x3552fa0);
+                EnterCriticalSection(lpCritSec);
 
-                {
-                    auto lpCritSec = (LPCRITICAL_SECTION)(Runtime::BaseAddress + 0x3552fa0);
-                    EnterCriticalSection(lpCritSec);
+                bool result = callProcessorInState(
+                    queuedEvent.processorEvent.L,
+                    queuedEvent.processorEvent.callbackIndex,
+                    queuedEvent.variantMap,
+                    queuedEvent.propertyToGet
+                );
+                queuedEvent.promise.set_value(result);
 
-                    bool result = callProcessorInState(
-                        queuedEvent.processorEvent.L, queuedEvent.processorEvent.callbackIndex,
-                        queuedEvent.variantMap, queuedEvent.propertyToGet);
-                    queuedEvent.promise.set_value(result);
-
-                    LeaveCriticalSection(lpCritSec);
-                }
-
-                if (ForgeUI::manager != NULL) ForgeUI::ReleaseLock(ForgeUI::manager);
+                LeaveCriticalSection(lpCritSec);
             }
 
+            lock.lock();
             eventQueue.pop();
         }
     }
