@@ -29,24 +29,29 @@ namespace Runtime {
 
 	// Should only be called once
 	void Create() {
-		// Create base runtime references
-		Base::Create();
-
-		// Set up logging
-		std::wstring buffer(MAX_PATH, L'\0');
-		size_t charsWritten = Base::EXP_GetLogPath(buffer.data(), L"CE/");
-		buffer.resize(charsWritten);
-
-		// Create the LogRouter singleton
-		Log::LogRouter::Create(std::filesystem::path(buffer));
-
-		// Default main logger. Specialized Loggers can be created elsewhere.
-		MainLogger = new Log::Logger("CE", "Community_Extension.log");
-
 		// Prologue; gather all program data
 		GameProcessId = GetCurrentProcessId();
 		GameProcess = GetCurrentProcess();
 		CivVIModHandle = GetModuleHandle(NULL);
+
+		// Create base runtime references
+		Base::Create();
+
+		// Get the log directory
+		std::wstring buffer(MAX_PATH, L'\0');
+		size_t charsWritten = Base::EXP_GetLogPath(buffer.data(), L"CE/");
+		buffer.resize(charsWritten);
+		std::filesystem::path logPath(buffer);
+
+		// Create a CE/ subdirectory if it doesn't exist
+		std::error_code ec;
+		std::filesystem::create_directories(logPath, ec);
+
+		// Initialize the logger library
+		Log::Init(logPath);
+
+		// Default main logger. Specialized Loggers can be created elsewhere.
+		MainLogger = new Log::Logger("CE", "Community_Extension.log");
 
 		// Load GameCore
 		GameCore = LoadLibrary(TEXT("../../../DLC/Expansion2/Binaries/Win64/GameCore_XP2_FinalRelease.dll"));

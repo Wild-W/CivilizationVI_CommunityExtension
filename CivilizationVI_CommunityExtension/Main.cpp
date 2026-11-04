@@ -104,13 +104,15 @@ static void Hook_RegisterScriptData(hks::lua_State* L) {
     base_RegisterScriptData(L);
 }
 
-static void Hook_RegisterScriptDataForUI(hks::lua_State* _, hks::lua_State* L) {
+// `mainState` is the state representing the entire UI lua VM
+// `L` is a 'thread' created by `lua_newthread` and defined by https://www.lua.org/manual/5.1/manual.html#2.9
+static void Hook_RegisterScriptDataForUI(hks::lua_State* mainState, hks::lua_State* L) {
     Runtime::MainLogger->Info("Registering cache lua globals!");
 
     PushSharedGlobals(L);
     CCallWithErrorHandling(L, NationalParks::Cache::Register, NULL);
 
-    base_RegisterScriptDataForUI(_, L);
+    base_RegisterScriptDataForUI(mainState, L);
 }
 
 #pragma region Offsets
