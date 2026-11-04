@@ -9,26 +9,52 @@ namespace Runtime {
 	uintptr_t GameCoreAddress;
 	DWORD GameProcessId;
 	HANDLE GameProcess;
-	uintptr_t BaseAddress;
+	HMODULE CivVIModHandle;
 
-	_EnterLuaCriticalSection EnterLuaCriticalSection;
-	_LeaveLuaCriticalSection LeaveLuaCriticalSection;
+	Log::Logger* MainLogger;
+
+	namespace Base {
+		EXP_GetLogPath_t EXP_GetLogPath;
+
+		EnterLuaCriticalSection_t EnterLuaCriticalSection;
+		LeaveLuaCriticalSection_t LeaveLuaCriticalSection;
+
+		void Create() {
+			EXP_GetLogPath = (EXP_GetLogPath_t)GetProcAddress(CivVIModHandle, "EXP_GetLogPath");
+
+			EnterLuaCriticalSection = GetGlobalAt<EnterLuaCriticalSection_t>(0xdafa40);
+			LeaveLuaCriticalSection = GetGlobalAt<LeaveLuaCriticalSection_t>(0xdb0660);
+		}
+	}
 
 	// Should only be called once
 	void Create() {
+		// Set up logging
+		std::wstring buffer(MAX_PATH, L'\0');
+		size_t charsWritten = Base::EXP_GetLogPath(buffer.data(), L"CE/");
+		buffer.resize(charsWritten);
+
+		// Create the LogRouter singleton
+		Log::LogRouter::Create(std::filesystem::path(buffer));
+
+		// Default main logger. Specialized Loggers can be created elsewhere.
+		MainLogger = new Log::Logger("CE", "Community_Extension.log");
+
+		// Prologue; gather all program data
+		GameCoreAddress = reinterpret_cast<uintptr_t>(GameCore);
+		GameProcessId = GetCurrentProcessId();
+		GameProcess = GetCurrentProcess();
+		CivVIModHandle = GetModuleHandle(NULL);
+
+		// Create runtime references
+		Base::Create();
+
+		// Load GameCore
 		GameCore = LoadLibrary(TEXT("../../../DLC/Expansion2/Binaries/Win64/GameCore_XP2_FinalRelease.dll"));
 		if (!GameCore) {
 			std::cout << "Original GameCore failed to load!\n";
 			return;
 		}
-		GameCoreAddress = reinterpret_cast<uintptr_t>(GameCore);
-		GameProcessId = GetCurrentProcessId();
-		GameProcess = GetCurrentProcess();
-
-		BaseAddress = (uintptr_t)GetModuleHandle(NULL);
-
-		EnterLuaCriticalSection = GetGlobalAt<_EnterLuaCriticalSection>(0xdafa40);
-		LeaveLuaCriticalSection = GetGlobalAt<_LeaveLuaCriticalSection>(0xdb0660);
 	}
 
 	void InitMinHook() {

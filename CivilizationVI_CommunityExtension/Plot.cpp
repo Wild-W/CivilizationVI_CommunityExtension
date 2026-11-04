@@ -3,7 +3,7 @@
 #include "Runtime.h"
 
 namespace Plot {
-    std::set<short*> lockedAppeals;
+    std::set<int> lockedPlots; // plot ids of plots with locked appeal
 
     ProxyTypes::PushMethods base_PushMethods;
     ProxyTypes::PushMethods orig_PushMethods;
@@ -12,10 +12,11 @@ namespace Plot {
     Types::SetAppeal orig_SetAppeal;
     
     Types::GetInstance GetInstance;
+    Types::GetIndex GetIndex;
 
     void SetAppeal(Instance* plot, int appeal) {
-        std::cout << "Hooked SetAppeal!\n";
-        if (lockedAppeals.find((short*)((uintptr_t)plot + 0x4a)) == lockedAppeals.end()) {
+        int id = GetIndex(plot);
+        if (lockedPlots.find(id) == lockedPlots.end()) {
             base_SetAppeal(plot, appeal);
         }
     }
@@ -31,18 +32,20 @@ namespace Plot {
     int lLockAppeal(hks::lua_State* L) {
         Instance* plot = GetInstance(L, 1, true);
         bool setToLock = hks::toboolean(L, 2);
-        short* appealAddress = (short*)((uintptr_t)plot + 0x4a);
+
+        int plotId = GetIndex(plot);
+
         if (setToLock) {
-            lockedAppeals.insert(appealAddress);
+            lockedPlots.insert(plotId);
         }
         else {
-            lockedAppeals.erase(appealAddress);
+            lockedPlots.erase(plotId);
         }
         return 0;
     }
 
     static void PushMethods(hks::lua_State* L, int stackOffset) {
-        std::cout << "Hooked Plot::PushMethods!\n";
+        Runtime::MainLogger->Info("Hooked Plot::PushMethods!\n");
 
         PushLuaMethod(L, lSetAppeal, "lSetAppeal", stackOffset, "SetAppeal");
         PushLuaMethod(L, lLockAppeal, "lLockAppeal", stackOffset, "LockAppeal");
@@ -54,8 +57,9 @@ namespace Plot {
         using namespace Runtime;
 
         GetInstance = GetGameCoreGlobalAt<Types::GetInstance>(GET_INSTANCE_OFFSET);
+        GetIndex = GetGameCoreGlobalAt<Types::GetIndex>(GET_INDEX_OFFSET);
 
-        lockedAppeals = {};
+        lockedPlots = {};
         orig_SetAppeal = GetGameCoreGlobalAt<Types::SetAppeal>(SET_APPEAL_OFFSET);
         CreateHook(orig_SetAppeal, &SetAppeal, &base_SetAppeal);
 

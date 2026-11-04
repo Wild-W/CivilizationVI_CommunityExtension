@@ -146,7 +146,7 @@ namespace EventSystems {
             lock.unlock();
 
             {
-                auto lpCritSec = (LPCRITICAL_SECTION)(Runtime::BaseAddress + 0x3552fa0);
+                auto lpCritSec = Runtime::GetGlobalAt<LPCRITICAL_SECTION>(0x3552fa0);
                 EnterCriticalSection(lpCritSec);
 
                 bool result = callProcessorInState(

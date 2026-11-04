@@ -3,18 +3,29 @@
 #include "ProxyTypes.h"
 #include <iostream>
 #include "capstone/capstone.h"
+#include "Log.h"
 
 namespace Runtime {
 	extern HMODULE GameCore;
 	extern uintptr_t GameCoreAddress;
 	extern DWORD GameProcessId;
-	extern uintptr_t BaseAddress;
+	extern HANDLE GameProcess;
+	extern HMODULE CivVIModHandle;
 
-	using _EnterLuaCriticalSection = void(*)(void);
-	extern _EnterLuaCriticalSection EnterLuaCriticalSection;
+	extern Log::Logger* MainLogger;
 
-	using _LeaveLuaCriticalSection = void(*)(void);
-	extern _LeaveLuaCriticalSection LeaveLuaCriticalSection;
+	namespace Base {
+		using EXP_GetLogPath_t = size_t(__fastcall*)(wchar_t* pszOutBuffer, const wchar_t* pszSubPath);
+		extern EXP_GetLogPath_t EXP_GetLogPath;
+
+		using EnterLuaCriticalSection_t = void(*)(void);
+		extern EnterLuaCriticalSection_t EnterLuaCriticalSection;
+
+		using LeaveLuaCriticalSection_t = void(*)(void);
+		extern LeaveLuaCriticalSection_t LeaveLuaCriticalSection;
+
+		extern void Create();
+	}
 
 	// Should only be called once
 	extern void Create();
@@ -22,7 +33,7 @@ namespace Runtime {
 	// Call on dll exit
 	extern void Destroy();
 
-	void InitMinHook();
+	extern void InitMinHook();
 
 	template <typename T>
 	T GetGameCoreGlobalAt(uintptr_t address) {
@@ -31,7 +42,7 @@ namespace Runtime {
 
 	template <typename T>
 	T GetGlobalAt(uintptr_t address) {
-		return reinterpret_cast<T>(BaseAddress + address);
+		return reinterpret_cast<T>((uintptr_t)CivVIModHandle + address);
 	}
 
 	template <typename T>

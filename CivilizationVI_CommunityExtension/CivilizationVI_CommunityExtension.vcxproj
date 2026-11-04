@@ -142,12 +142,14 @@
     <ClInclude Include="EconomicManager.h" />
     <ClInclude Include="EmergencyManager.h" />
     <ClInclude Include="EventSystems.h" />
+    <ClInclude Include="Exports.h" />
     <ClInclude Include="Game.h" />
     <ClInclude Include="GameDiplomacy.h" />
     <ClInclude Include="Governor.h" />
     <ClInclude Include="GovernorManager.h" />
     <ClInclude Include="HavokScript.h" />
     <ClInclude Include="hooking_common.h" />
+    <ClInclude Include="Log.h" />
     <ClInclude Include="MemoryManipulation.h" />
     <ClInclude Include="messagequeue.h" />
     <ClInclude Include="NationalParks.h" />
