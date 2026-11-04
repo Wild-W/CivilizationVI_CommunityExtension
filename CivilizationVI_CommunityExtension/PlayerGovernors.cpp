@@ -27,6 +27,9 @@ namespace PlayerGovernors {
 
         Cache::Types::EditGovernors EditGovernors;
 
+        // WildW, 11-3-2026
+        //
+        // This needs to be serialized somewhere and restored on game start if we are to keep it
         std::unordered_map<Cache::Governors*, std::unordered_map<int, int>> governorsTurnsToEstablishDelay = {};
 
         int GetTurnsToEstablishDelay(Cache::Governors* governors, int governorHash) {
@@ -52,7 +55,9 @@ namespace PlayerGovernors {
 
         // Hook
         int GetTurnsToEstablish(Cache::Governors* governors, int governorHash) {
-            std::cout << "Hooked CacheGovernors::GetTurnsToEstablish!\n" << governorHash << ' ' << Cache::GetTurnsToEstablishDelay(governors, governorHash) << '\n';
+            Runtime::MainLogger->Info("Hooked Governors::GetTurnsToEstablish()!");
+            Runtime::MainLogger->Info("GetTurnsToEstablish(): governorHash: {}, turns to establish delay: {}",
+                governorHash, Cache::GetTurnsToEstablishDelay(governors, governorHash));
             return Cache::base_GetTurnsToEstablish(governors, governorHash) + Cache::GetTurnsToEstablishDelay(governors, governorHash);
         }
     }
@@ -72,7 +77,9 @@ namespace PlayerGovernors {
 
     // Hook
     int GetTurnsToEstablish(Governors* governors, int governorHash) {
-        std::cout << "Hooked Governors::GetTurnsToEstablish!\n" << governorHash << ' ' << GetTurnsToEstablishDelay(governors, governorHash) << '\n';
+        Runtime::MainLogger->Info("Hooked Governors::GetTurnsToEstablish()!");
+        Runtime::MainLogger->Info("GetTurnsToEstablish(): governorHash: {}, turns to establish delay: {}",
+            governorHash, GetTurnsToEstablishDelay(governors, governorHash));
         return base_GetTurnsToEstablish(governors, governorHash) + GetTurnsToEstablishDelay(governors, governorHash);
     }
 
@@ -148,7 +155,7 @@ namespace PlayerGovernors {
     }
 
     void __cdecl PushMethods(IPlayerGovernors* playerGovernors, hks::lua_State* L, int stackOffset) {
-        std::cout << "Hooked PlayerGovernors::PushMethods!\n";
+        Runtime::MainLogger->Info("Hooked PlayerGovernors::PushMethods!");
 
         PushLuaMethod(L, lPromoteGovernor, "lPromoteGovernor", stackOffset, "PromoteGovernor");
         PushLuaMethod(L, lNeutralizeGovernor, "lNeutralizeGovernor", stackOffset, "NeutralizeGovernor");

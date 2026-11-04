@@ -7,6 +7,7 @@ namespace ProxyTypes {
 	typedef void(__cdecl* RegisterScriptDataForUI)(hks::lua_State* _, hks::lua_State* L);
 	typedef void(__cdecl* RegisterScriptData)(hks::lua_State*);
 	typedef void* (__cdecl* DllCreateGameContext)(void);
+	typedef void (__cdecl* DllDestroyGameContext)(void*);
 	typedef void(__cdecl* PushMethods)(hks::lua_State*, int);
 	typedef bool(__cdecl* CCallWithErrorHandling)(hks::lua_State* L, hks::luaFunc, void*);
 	typedef void(__thiscall* Buildings_AddGreatWorkSlots)(void* buildings, unsigned int buildingType);

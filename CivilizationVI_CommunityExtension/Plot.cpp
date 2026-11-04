@@ -24,7 +24,8 @@ namespace Plot {
     int lSetAppeal(hks::lua_State* L) {
         Instance* plot = GetInstance(L, 1, true);
         int appeal = hks::checkinteger(L, 2);
-        std::cout << plot << ' ' << appeal << '\n';
+        Runtime::MainLogger->Info("Plot with instance addr {}'s appeal is being set to {}",
+            reinterpret_cast<uintptr_t>(plot), appeal);
         SetAppeal(plot, appeal);
         return 0;
     }
@@ -45,7 +46,7 @@ namespace Plot {
     }
 
     static void PushMethods(hks::lua_State* L, int stackOffset) {
-        Runtime::MainLogger->Info("Hooked Plot::PushMethods!\n");
+        Runtime::MainLogger->Info("Hooked Plot::PushMethods!");
 
         PushLuaMethod(L, lSetAppeal, "lSetAppeal", stackOffset, "SetAppeal");
         PushLuaMethod(L, lLockAppeal, "lLockAppeal", stackOffset, "LockAppeal");

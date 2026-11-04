@@ -158,18 +158,18 @@ namespace MemoryManipulation {
         int lRegisterCallEvent(hks::lua_State* L) {
             hks::pushvalue(L, 1);
             int callbackIndex = hks::ref(L, hks::LUA_REGISTRYINDEX);
-            std::cout << "Function from lua: " << callbackIndex << '\n';
+            Runtime::MainLogger->Info("Registering call event with lua registry index {}", callbackIndex);
             uintptr_t address = static_cast<uintptr_t>(hks::checknumber(L, 2));
 
             int parametersLength = hks::objlen(L, 3);
-            std::cout << "parameter count: " << parametersLength << '\n';
+            Runtime::MainLogger->Info("parameter count: {}", parametersLength);
             std::vector<FieldType> parameters;
             for (int i = 1; i <= parametersLength; i++) {
                 hks::pushinteger(L, i);
                 hks::gettable(L, 3);
 
                 int fieldType = hks::checkinteger(L, -1);
-                std::cout << fieldType << '\n';
+                Runtime::MainLogger->Info("field type: {}", fieldType);
                 if (fieldType < FIELD_BYTE || fieldType >= _FIELD_TYPE_COUNT_) {
                     hks::error(L, "Invalid FieldType parameter was passed!");
                     return 0;
@@ -184,7 +184,7 @@ namespace MemoryManipulation {
         }
 
         void PushFieldTypes(hks::lua_State* L) {
-            std::cout << "Pushing Field Types!\n";
+            Runtime::MainLogger->Info("Pushing Field Types!");
 
             hks::pushinteger(L, FIELD_BYTE);
             hks::setfield(L, hks::LUA_GLOBAL, "FIELD_BYTE");

@@ -17,14 +17,15 @@ namespace CityTradeManager {
         void* cityTrade = Game::FAutoVariable_edit((void*)((uintptr_t)city + 0xe78));
         int playerId = hks::checkinteger(L, 2);
         bool didConstruct = hks::toboolean(L, 3);
-        std::cout << cityTrade << ' ' << playerId << ' ' << didConstruct << '\n';
+        Runtime::MainLogger->Info("Setting hasConstructedTradingPost with args cityTrade = {}, playerId = {}, didConstruct = {}",
+            cityTrade, playerId, didConstruct);
 
         SetHasConstructedTradingPost((City::Trade*)cityTrade, playerId, didConstruct);
         return 0;
     }
 
     int Register(hks::lua_State* L) {
-        std::cout << "Registering CityTradeManager!\n";
+        Runtime::MainLogger->Info("Registering CityTradeManager!");
 
         hks::createtable(L, 0, 1);
 

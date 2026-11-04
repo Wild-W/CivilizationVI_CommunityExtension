@@ -49,7 +49,7 @@ namespace GovernorManager {
     }
 
     int Register(hks::lua_State* L) {
-        std::cout << "Registering GovernorManager!\n";
+        Runtime::MainLogger->Info("Registering GovernorManager!");
 
         hks::createtable(L, 0, 3);
 

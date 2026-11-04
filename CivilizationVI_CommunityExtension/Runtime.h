@@ -49,10 +49,10 @@ namespace Runtime {
 	void CreateHook(LPVOID pTarget, LPVOID pDetour, T** ppOriginal) {
 		MH_STATUS status;
 		if ((status = MH_CreateHook(pTarget, pDetour, reinterpret_cast<LPVOID*>(ppOriginal))) != MH_OK) {
-			std::cout << "Failed to load hook! " << MH_StatusToString(status) << "\n";
+			Runtime::MainLogger->Error("Failed to load hook! {}", MH_StatusToString(status));
 		}
 		if ((status = MH_EnableHook(pTarget)) != MH_OK) {
-			std::cout << "Failed to enable hook! " << MH_StatusToString(status) << "\n";
+			Runtime::MainLogger->Info("Failed to enable hook! {}", MH_StatusToString(status));
 		}
 	}
 

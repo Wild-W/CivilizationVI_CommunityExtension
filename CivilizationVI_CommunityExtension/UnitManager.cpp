@@ -33,7 +33,7 @@ namespace UnitManager {
 	}
 
 	void RegisterMembers(hks::lua_State* L) {
-		std::cout << "Hooked UnitManager::PushMethods!\n";
+		Runtime::MainLogger->Info("Hooked UnitManager::PushMethods!");
 
 		PushLuaMethod(L, lChangeOwner, "lChangeOwner", -2, "ChangeOwner");
 		PushLuaMethod(L, lGetInstance, "lGetInstance", -2, "GetInstance");

@@ -154,5 +154,5 @@
 #pragma comment(linker,"/export:?setGlobalMemoization@HksCompilerSettings@@QEAAXH@Z=GameCore_XP2_FinalRelease.?setGlobalMemoization@HksCompilerSettings@@QEAAXH@Z,@153")
 #pragma comment(linker,"/export:?setIntLiteralsEnabled@HksCompilerSettings@@QEAAXW4IntLiteralOptions@1@@Z=GameCore_XP2_FinalRelease.?setIntLiteralsEnabled@HksCompilerSettings@@QEAAXW4IntLiteralOptions@1@@Z,@154")
 // #pragma comment(linker,"/export:DllCreateGameContext=GameCore_XP2_FinalRelease.DllCreateGameContext,@155")
-#pragma comment(linker,"/export:DllDestroyGameContext=GameCore_XP2_FinalRelease.DllDestroyGameContext,@156")
+// #pragma comment(linker,"/export:DllDestroyGameContext=GameCore_XP2_FinalRelease.DllDestroyGameContext,@156")
 #pragma comment(linker,"/export:EXP_GetTelemetrySessionHash=GameCore_XP2_FinalRelease.EXP_GetTelemetrySessionHash,@157")

@@ -31,7 +31,7 @@ namespace EmergencyManager {
     }
 
     int Register(hks::lua_State* L) {
-        std::cout << "Registering EmergencyManager!\n";
+        Runtime::MainLogger->Info("Registering EmergencyManager!");
 
         hks::createtable(L, 0, 1);
 

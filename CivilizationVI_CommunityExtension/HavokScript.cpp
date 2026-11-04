@@ -165,7 +165,7 @@ namespace hks {
     void InitHavokScript() {
         HMODULE hksDll = GetModuleHandle(TEXT("HavokScript_FinalRelease.dll"));
         if (hksDll == NULL) {
-            std::cout << "Failed to load HavokScript! " << GetLastError() << '\n';
+            std::cerr << "Failed to load HavokScript! " << GetLastError() << '\n';
             return;
         }
         InitHavokScriptImports(hksDll);

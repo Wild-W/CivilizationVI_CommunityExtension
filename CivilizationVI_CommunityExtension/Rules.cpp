@@ -44,7 +44,7 @@ namespace Rules::Players {
 	}
 
 	int Register(hks::lua_State* L) {
-		std::cout << "Registering Rules!\n";
+		Runtime::MainLogger->Info("Registering Rules!");
 
 		hks::createtable(L, 0, 2);
 

@@ -22,7 +22,7 @@ namespace Player {
 	Types::PushMethods base_PushMethods;
 	Types::PushMethods orig_PushMethods;
 	void PushMethods(Instance* player, hks::lua_State* L, int stackOffset) {
-		std::cout << "Hooked Player::PushMethods!\n";
+		Runtime::MainLogger->Info("Hooked Player::PushMethods!");
 
 		PushLuaMethod(L, lAddAgenda, "lAddAgenda", stackOffset, "AddAgenda");
 

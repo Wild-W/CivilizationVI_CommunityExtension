@@ -29,6 +29,9 @@ namespace Runtime {
 
 	// Should only be called once
 	void Create() {
+		// Create base runtime references
+		Base::Create();
+
 		// Set up logging
 		std::wstring buffer(MAX_PATH, L'\0');
 		size_t charsWritten = Base::EXP_GetLogPath(buffer.data(), L"CE/");
@@ -41,27 +44,24 @@ namespace Runtime {
 		MainLogger = new Log::Logger("CE", "Community_Extension.log");
 
 		// Prologue; gather all program data
-		GameCoreAddress = reinterpret_cast<uintptr_t>(GameCore);
 		GameProcessId = GetCurrentProcessId();
 		GameProcess = GetCurrentProcess();
 		CivVIModHandle = GetModuleHandle(NULL);
 
-		// Create runtime references
-		Base::Create();
-
 		// Load GameCore
 		GameCore = LoadLibrary(TEXT("../../../DLC/Expansion2/Binaries/Win64/GameCore_XP2_FinalRelease.dll"));
 		if (!GameCore) {
-			std::cout << "Original GameCore failed to load!\n";
+			Runtime::MainLogger->Error("DLC/Expansion2/Binaries/Win64/GameCore_XP2_FinalRelease.dll failed to load!");
 			return;
 		}
+		GameCoreAddress = reinterpret_cast<uintptr_t>(GameCore);
 	}
 
 	void InitMinHook() {
 		if (MH_Initialize() != MH_OK) {
-			std::cout << "MH failed to init\n";
+			Runtime::MainLogger->Info("MH failed to init");
 		}
-		std::cout << "MH initialized successfully.\n";
+		Runtime::MainLogger->Info("MH initialized successfully.");
 	}
 
 	// Call on dll exit
@@ -81,13 +81,20 @@ namespace Runtime {
 			return;
 		}
 
+		// Enable ANSI color escape sequence processing
+		HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+		DWORD dwMode = 0;
+		if (GetConsoleMode(hOut, &dwMode)) {
+			SetConsoleMode(hOut, dwMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+		}
+
 		// Redirect standard input/output streams to the console
 		FILE* fDummy;
 		freopen_s(&fDummy, "CONIN$", "r", stdin);
 		freopen_s(&fDummy, "CONOUT$", "w", stderr);
 		freopen_s(&fDummy, "CONOUT$", "w", stdout);
 
-		std::cout << "Console initialized successfully." << std::endl;
+		MainLogger->Info("Console initialized!");
 	}
 
 	void CloseConsole() {
@@ -114,7 +121,7 @@ namespace Runtime {
 		LPVOID lpBaseAddress = reinterpret_cast<LPVOID>(address);
 
 		if (!VirtualProtectEx(GameProcess, lpBaseAddress, sizeOfBytes, PAGE_EXECUTE_READWRITE, &oldProtect)) {
-			std::cerr << "Failed to change memory protection: " << GetLastError() << std::endl;
+			MainLogger->Error("Failed to change memory protection: {}", GetLastError());
 			return FALSE;
 		}
 
@@ -122,7 +129,7 @@ namespace Runtime {
 		BOOL result = WriteProcessMemory(GameProcess, lpBaseAddress, bytes, sizeOfBytes, &numberOfBytesWritten);
 
 		if (!result || numberOfBytesWritten != sizeOfBytes) {
-			std::cerr << "Failed to write to memory: " << GetLastError() << std::endl;
+			MainLogger->Error("Failed to write to memory: {}", GetLastError());
 			VirtualProtectEx(GameProcess, lpBaseAddress, sizeOfBytes, oldProtect, &oldProtect);
 			return FALSE;
 		}

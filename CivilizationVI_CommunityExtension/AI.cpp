@@ -21,11 +21,11 @@ namespace AI::CongressSupport {
 			variantMap.emplace("PlayerId", LuaVariant(*(int*)((uintptr_t)player + 0xd8)));
 			variantMap.emplace(decisionKey, LuaVariant(*(int*)((uintptr_t)modifierAnalysis + fieldOffset)));
 
-			std::cout << "Calling Target Chooser: " << name << "!\n";
+			Runtime::MainLogger->Info("Running target chooser with name {}!", name);
 
 			if (CallProcessorsAsync(name, variantMap, decisionKey).get()) {
 				int decisionType = std::get<int>(variantMap.at(decisionKey));
-				std::cout << "Decision type: " << decisionType << '\n';
+				Runtime::MainLogger->Info("Decision type: {}", decisionType);
 				if (decisionType == -1) {
 					return false;
 				}
@@ -178,7 +178,7 @@ namespace AI::Espionage {
 	}
 
 	int RegisterAIEspionageManager(hks::lua_State* L) {
-		std::cout << "Registering AIEspionageManager!\n";
+		Runtime::MainLogger->Info("Registering AIEspionageManager!");
 
 		hks::createtable(L, 0, 1);
 

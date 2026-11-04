@@ -33,7 +33,7 @@ namespace NationalParks {
 		}
 
 		int Register(hks::lua_State* L) {
-			std::cout << "Registering CacheNationalParks!\n";
+			Runtime::MainLogger->Info("Registering CacheNationalParks!");
 			hks::createtable(L, 0, 3);
 
 			PushLuaMethod(L, lProcess, "lProcess", -2, "Process");
@@ -115,7 +115,7 @@ namespace NationalParks {
 
 	static int lRestoreVisualState(hks::lua_State* L) {
 		if (!hks::isuserdata(L, 1)) {
-			hks::error(L, "Type mismatch: Expected userdata pointer to ParkData object!\n");
+			hks::error(L, "Type mismatch: Expected userdata pointer to ParkData object!");
 			return 0;
 		}
 		auto park = (ParkData*)hks::touserdata(L, 1);
@@ -125,7 +125,7 @@ namespace NationalParks {
 	}
 
 	int Register(hks::lua_State* L) {
-		std::cout << "Registering NationalParks!\n";
+		Runtime::MainLogger->Info("Registering NationalParks!");
 		hks::createtable(L, 0, 3);
 
 		PushLuaMethod(L, lDesignatePark, "lDesignatePark", -2, "DesignatePark");

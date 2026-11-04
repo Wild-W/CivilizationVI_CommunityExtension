@@ -25,7 +25,7 @@ namespace CultureManager {
     }
 
     int Register(hks::lua_State* L) {
-        std::cout << "Registering CultureManager!\n";
+        Runtime::MainLogger->Info("Registering CultureManager!");
 
         hks::createtable(L, 0, 2);
 

@@ -16,15 +16,15 @@ namespace Game::Initializers {
 			variantMap.emplace("DiplomaticVisibilityType", LuaVariant(visibilityType));
 			variantMap.emplace("PlayerType", LuaVariant(playerId));
 
-			std::cout << "Calling InitializePlayerRandomAgendas Processor!\n";
+			Runtime::MainLogger->Info("Calling InitializePlayerRandomAgendas Processor!");
 			if (CallProcessorsAsync("InitializePlayerRandomAgendas", variantMap).get()) {
-				std::cout << "InitializePlayerRandomAgendas returned true!\n";
+				Runtime::MainLogger->Info("InitializePlayerRandomAgendas returned true!");
 				return;
 			}
-			std::cout << "InitializePlayerRandomAgendas returned false!\n";
+			Runtime::MainLogger->Info("InitializePlayerRandomAgendas returned false!");
 		}
 		else {
-			std::cout << "InitializePlayerRandomAgendas Processor not found!\n";
+			Runtime::MainLogger->Info("InitializePlayerRandomAgendas Processor not found!");
 		}
 
 		return base_InitializePlayerRandomAgendas(eraIndex, agendaDefinitions, visibilityType, playerId);
@@ -33,7 +33,8 @@ namespace Game::Initializers {
 	Types::NewGamePlayerRandomAgendas orig_NewGamePlayerRandomAgendas;
 	Types::NewGamePlayerRandomAgendas base_NewGamePlayerRandomAgendas;
 	void NewGamePlayerRandomAgendas(Game::Instance* game) {
-		std::cout << game << " the game\n";
+		Runtime::MainLogger->Info("NewGamePlayerRandomAgendas Hooked!");
+		Runtime::MainLogger->Info("Game instance addr: {}", reinterpret_cast<uintptr_t>(game));
 		base_NewGamePlayerRandomAgendas(game);
 	}
 }

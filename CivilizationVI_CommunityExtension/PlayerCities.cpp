@@ -11,14 +11,15 @@ namespace PlayerCities {
 	int lAddGreatWork(hks::lua_State* L) {
 		Player::Cities* cities = GetInstance(L, 1, true);
 		int greatWorkListIndex = hks::checkinteger(L, 2);
-		std::cout << cities << ' ' << greatWorkListIndex << '\n';
+		Runtime::MainLogger->Info("Cities instance addr: {}, great work list index: {}",
+			reinterpret_cast<uintptr_t>(cities), greatWorkListIndex);
 
 		AddGreatWork(cities, greatWorkListIndex);
 		return 0;
 	}
 
 	void __cdecl PushMethods(hks::lua_State* L, int stackOffset) {
-		std::cout << "Hooked Cities::PushMethods!\n";
+		Runtime::MainLogger->Info("Hooked Cities::PushMethods!");
 
 		PushLuaMethod(L, lAddGreatWork, "lAddGreatWork", stackOffset, "AddGreatWork");
 

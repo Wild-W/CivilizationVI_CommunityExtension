@@ -73,7 +73,7 @@ namespace EconomicManager {
     }
 
     int Register(hks::lua_State* L) {
-        std::cout << "Registering EconomicManager!\n";
+        Runtime::MainLogger->Info("Registering EconomicManager!");
 
         hks::createtable(L, 0, 4);
 

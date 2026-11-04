@@ -19,7 +19,7 @@ namespace GameDiplomacy {
     }
 
     void __cdecl PushMethods(IGameDiplomacy* gameDiplomacy, hks::lua_State* L, int stackOffset) {
-        std::cout << "Hooked GameDiplomacy::PushMethods!\n";
+        Runtime::MainLogger->Info("Hooked GameDiplomacy::PushMethods!");
 
         PushLuaMethod(L, lChangeGrievanceScore, "lChangeGrievanceScore", stackOffset, "ChangeGrievanceScore");
 

@@ -33,7 +33,7 @@ namespace PlayerInfluence {
     }
 
     void __cdecl PushMethods(hks::lua_State* L, int stackOffset) {
-        std::cout << "Hooked Influence::PushMethods!\n";
+        Runtime::MainLogger->Info("Hooked Influence::PushMethods!");
 
         PushLuaMethod(L, lSetTokensToGive, "lSetTokensToGive", stackOffset, "SetTokensToGive");
         PushLuaMethod(L, lSetPoints, "lSetPoints", stackOffset, "SetPoints");

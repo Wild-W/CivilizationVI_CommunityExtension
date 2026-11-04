@@ -70,7 +70,7 @@ namespace EventSystems {
 
         if (hks::pcall(L, 1, 1, 0) != hks::LUA_OK) {
             size_t length;
-            std::cout << "Error calling processor: " << hks::checklstring(L, -1, &length) << "!\n";
+            Runtime::MainLogger->Error("Error calling processor: {}", hks::checklstring(L, -1, &length));
 			hks::pop(L, 1); // Remove error message from Lua stack
             return false;
         }
@@ -91,7 +91,7 @@ namespace EventSystems {
     }
 
     std::future<bool> CallProcessorsAsync(const std::string& name, Data::LuaVariantMap& variantMap, const std::string& propertyToGet) {
-        std::cout << "Sending event signal from thread " << GetCurrentThreadId() << '\n';
+        Runtime::MainLogger->Info("Sending event signal from thread id {}", GetCurrentThreadId());
         std::lock_guard<std::mutex> lock(eventsMutex);
 
         auto resultPromise = std::make_shared<std::promise<bool>>();
@@ -99,7 +99,7 @@ namespace EventSystems {
 
         auto eventIterator = processorEvents.find(name);
         if (eventIterator == processorEvents.end()) {
-            std::cout << "Could not find processor: " << name << '\n';
+            Runtime::MainLogger->Error("Could not find processor with name \"{}\"", name);
 			resultPromise->set_value(false);
             return resultFuture;
         }
@@ -173,7 +173,7 @@ namespace EventSystems {
     }
 
     void Create() {
-        std::cout << "Establishing event hooks!\n";
+        Runtime::MainLogger->Info("Establishing event hooks!");
         using namespace Runtime;
 
         orig_PublishEvents = GetGlobalAt<Types::PublishEvents>(PUBLISH_EVENTS_OFFSET);

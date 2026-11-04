@@ -33,6 +33,7 @@ static std::once_flag g_initFlag;
 static bool g_consoleAllocated = false;
 
 ProxyTypes::DllCreateGameContext base_DllCreateGameContext;
+ProxyTypes::DllDestroyGameContext base_DllDestroyGameContext;
 
 ProxyTypes::SetMaxTurns SetMaxTurns;
 
@@ -87,7 +88,7 @@ static void PushSharedGlobals(hks::lua_State* L) {
 }
 
 static void Hook_RegisterScriptData(hks::lua_State* L) {
-    std::cout << "Registering lua globals!\n";
+    Runtime::MainLogger->Info("Registering lua globals!");
 
     PushSharedGlobals(L);
     CCallWithErrorHandling(L, CityTradeManager::Register, NULL);
@@ -104,7 +105,7 @@ static void Hook_RegisterScriptData(hks::lua_State* L) {
 }
 
 static void Hook_RegisterScriptDataForUI(hks::lua_State* _, hks::lua_State* L) {
-    std::cout << "Registering cache lua globals!\n";
+    Runtime::MainLogger->Info("Registering cache lua globals!");
 
     PushSharedGlobals(L);
     CCallWithErrorHandling(L, NationalParks::Cache::Register, NULL);
@@ -169,12 +170,6 @@ static void InitHooks() {
     MainLogger->Info("Hooks initialized!");
 }
 
-DWORD WINAPI MainThread(LPVOID lpParam) {
-    Runtime::Create();
-    base_DllCreateGameContext = (ProxyTypes::DllCreateGameContext)GetProcAddress(Runtime::GameCore, "DllCreateGameContext");
-    return TRUE;
-}
-
 static void InitializeCommunityExtension() {
     // 1. Initialize Runtime (including logging settings) first
     Runtime::Create();
@@ -186,13 +181,17 @@ static void InitializeCommunityExtension() {
         g_consoleAllocated = true;
     }
 
-    // 3. Get base GameCore entry function
+    // 3. Get base GameCore create and destroy functions
     base_DllCreateGameContext = reinterpret_cast<ProxyTypes::DllCreateGameContext>(
         GetProcAddress(Runtime::GameCore, "DllCreateGameContext"));
+    base_DllDestroyGameContext = reinterpret_cast<ProxyTypes::DllDestroyGameContext>(
+        GetProcAddress(Runtime::GameCore, "DllDestroyGameContext"));
     
     if (!base_DllCreateGameContext) {
-        Runtime::MainLogger->Fatal("Could not find function: GameCore_XP2::DllCreateGameContext!");
-        return;
+        throw std::runtime_error("Could not find function: GameCore_XP2::DllCreateGameContext!");
+    }
+    if (!base_DllDestroyGameContext) {
+        throw std::runtime_error("Could not find function: GameCore_XP2::DllDestroyGameContext!");
     }
 
     // Do stuff to the game
@@ -224,12 +223,22 @@ extern "C" {
     __declspec(dllexport) void* __cdecl DllCreateGameContext(void) {
         std::call_once(g_initFlag, InitializeCommunityExtension);
 
-        if (!base_DllCreateGameContext) {
-            return nullptr;
-        }
-
         // Normal game stuff happens
         return base_DllCreateGameContext();
+    }
+
+    // WildW, 11-3-2026
+    //
+    // The address for this function has to exist before any GameCore initialization is done.
+    // This is because export forwarding (see Exports.h) is resolved dynamically. (at the moment the address is polled)
+    // So, if we haven't yet called LoadLibrary on the original GameCore, then the call to GetProcAddress at Base+0xf85c3
+    // will result in error code 127 (not found).
+    //
+    // Originally, this problem was solved when I brute forced initialization with a bunch of different techniques,
+    // eventually landing on creating a new WINAPI thread which immediately started loading the original GameCore
+    // into memory. The old solution is a race condition.
+    __declspec(dllexport) void __cdecl DllDestroyGameContext(void* _) {
+        base_DllDestroyGameContext(_);
     }
 }
 
