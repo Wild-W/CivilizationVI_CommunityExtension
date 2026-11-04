@@ -7,6 +7,8 @@
 #include "capstone/capstone.h"
 
 namespace MemoryManipulation {
+    // Explicit byte type; do not rely on an incidental Windows SDK typedef.
+    using byte = unsigned char;
     enum FieldType {
         FIELD_BYTE,
         FIELD_SHORT,

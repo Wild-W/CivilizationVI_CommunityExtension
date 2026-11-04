@@ -77,6 +77,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
   </ImportGroup>
   <ImportGroup Label="Shared">
   </ImportGroup>
@@ -188,7 +189,7 @@
       </ModuleDefinitionFile>
       <AddModuleNamesToAssembly>
       </AddModuleNamesToAssembly>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -212,11 +213,17 @@
       </ModuleDefinitionFile>
       <AddModuleNamesToAssembly>
       </AddModuleNamesToAssembly>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Bcrypt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="native\AIDistrictScores.c">
+      <CompileAs>CompileAsC</CompileAs>
+      <LanguageStandard_C>stdc11</LanguageStandard_C>
+      <PreprocessorDefinitions>CSC_CE_INTEGRATION;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <MASM Include="native\hook_entry.asm" />
     <ClCompile Include="AI.cpp" />
     <ClCompile Include="asmjit\core\archtraits.cpp" />
     <ClCompile Include="asmjit\core\assembler.cpp" />
@@ -392,5 +399,6 @@
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
   </ImportGroup>
 </Project>

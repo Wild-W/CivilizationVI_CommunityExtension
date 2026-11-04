@@ -22,13 +22,13 @@ namespace Runtime {
 		return reinterpret_cast<T>(GameCoreAddress + address);
 	}
 
-	template <typename T>
-	void CreateHook(LPVOID pTarget, LPVOID pDetour, T** ppOriginal) {
+	template <typename Target, typename Detour, typename T>
+	void CreateHook(Target pTarget, Detour pDetour, T** ppOriginal) {
 		MH_STATUS status;
-		if ((status = MH_CreateHook(pTarget, pDetour, reinterpret_cast<LPVOID*>(ppOriginal))) != MH_OK) {
+		if ((status = MH_CreateHook(reinterpret_cast<LPVOID>(pTarget), reinterpret_cast<LPVOID>(pDetour), reinterpret_cast<LPVOID*>(ppOriginal))) != MH_OK) {
 			std::cout << "Failed to load hook! " << MH_StatusToString(status) << "\n";
 		}
-		if ((status = MH_EnableHook(pTarget)) != MH_OK) {
+		if ((status = MH_EnableHook(reinterpret_cast<LPVOID>(pTarget))) != MH_OK) {
 			std::cout << "Failed to enable hook! " << MH_StatusToString(status) << "\n";
 		}
 	}

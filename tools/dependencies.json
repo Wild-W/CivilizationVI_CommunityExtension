@@ -1,0 +1,28 @@
+{
+  "asmjit": {
+    "commit": "e7239626b8d5db1624faa08293fd470fe019cd88",
+    "url": "https://github.com/asmjit/asmjit/archive/e7239626b8d5db1624faa08293fd470fe019cd88.zip",
+    "archive_sha256": "790d1d7cd7daa35cd27b178d0feb515925c685882e71b73604202f3c5e0fb6c7",
+    "license": "Zlib",
+    "use": "Restore only files omitted from CE checkout; retain all tracked CE core files."
+  },
+  "capstone": {
+    "version": "5.0.3",
+    "url": "https://github.com/capstone-engine/capstone/archive/refs/tags/5.0.3.zip",
+    "archive_sha256": "d2b96a8d9606ba0169609a82ac4580940f55887f11f82dd509759f8b5d57b6f8",
+    "license": "BSD-style; see LICENSE.TXT and LICENSE_LLVM.TXT",
+    "use": "Compile x86 only; stage its matching public headers."
+  },
+  "minhook": {
+    "version": "1.3.4",
+    "url": "https://github.com/TsudaKageyu/minhook/archive/refs/tags/v1.3.4.zip",
+    "archive_sha256": "172708123daa0c98d20d3a980b16a50be14af243dc95dee6f79c24193ad010e4",
+    "license": "BSD-2-Clause"
+  },
+  "zig": {
+    "version": "0.15.2",
+    "url": "https://ziglang.org/download/0.15.2/zig-x86_64-windows-0.15.2.zip",
+    "archive_sha256": "3a0ed1e8799a2f8ce2a6e6290a9ff22e6906f8227865911fb7ddedc3cc14cb0c",
+    "use": "Developer-only portable compiler. Not a player dependency."
+  }
+}

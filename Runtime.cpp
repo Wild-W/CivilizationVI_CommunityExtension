@@ -2,7 +2,9 @@
 #include "MinHook.h"
 #include <iostream>
 #include "HavokScript.h"
+#ifdef _MSC_VER
 #pragma comment(lib, "libMinHook.x64.lib")
+#endif
 
 namespace Runtime {
 	HMODULE GameCore;

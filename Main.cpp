@@ -25,6 +25,7 @@
 #include "AI.h"
 #include "EventSystems.h"
 #include "NationalParks.h"
+#include "native/AIDistrictScores.h"
 
 HANDLE mainThread;
 
@@ -61,6 +62,7 @@ void __cdecl Hook_RegisterScriptData(hks::lua_State* L) {
     std::cout << "Registering lua globals!\n";
 
     PushSharedGlobals(L);
+    CE_AIDistrictScoresRegisterLua(L);
     CCallWithErrorHandling(L, CityTradeManager::Register, NULL);
     CCallWithErrorHandling(L, CultureManager::Register, NULL);
     CCallWithErrorHandling(L, EmergencyManager::Register, NULL);
@@ -168,13 +170,32 @@ extern "C" {
         else {
             std::cerr << "WaitForSingleObject failed: " << GetLastError() << '\n';
         }
-        Runtime::InitMinHook();
-        hks::InitHavokScript();
-        InitHooks();
+        // Native hooks belong to the process, while policy belongs to a context.
+        // Recreating hooks would replace valid trampoline pointers on a second game.
+        static INIT_ONCE hooksOnce = INIT_ONCE_STATIC_INIT;
+        InitOnceExecuteOnce(&hooksOnce, [](PINIT_ONCE, PVOID, PVOID*) -> BOOL {
+            Runtime::InitMinHook();
+            hks::InitHavokScript();
+            if (!CE_AIDistrictScoresInitialize(Runtime::GameCore)) {
+                std::cout << "CE district-score capability unavailable; policy disabled.\n";
+            }
+            InitHooks();
+            return TRUE;
+        }, nullptr, nullptr);
+        CE_AIDistrictScoresReset();
         return base_DllCreateGameContext();
+    }
+
+    __declspec(dllexport) void __cdecl DllDestroyGameContext(void* context) {
+        CE_AIDistrictScoresReset();
+        using DestroyContext = void (__cdecl *)(void*);
+        auto destroy = reinterpret_cast<DestroyContext>(
+            GetProcAddress(Runtime::GameCore, "DllDestroyGameContext"));
+        if (destroy) destroy(context);
     }
 }
 
+#ifdef _MSC_VER
 #pragma region ExportRedirectors
 #pragma comment(linker,"/export:??4HksCompilerSettings@@QEAAAEAU0@$$QEAU0@@Z=GameCore_XP2_FinalRelease.??4HksCompilerSettings@@QEAAAEAU0@$$QEAU0@@Z,@1")
 #pragma comment(linker,"/export:??4HksCompilerSettings@@QEAAAEAU0@AEBU0@@Z=GameCore_XP2_FinalRelease.??4HksCompilerSettings@@QEAAAEAU0@AEBU0@@Z,@2")
@@ -331,6 +352,8 @@ extern "C" {
 #pragma comment(linker,"/export:?setGlobalMemoization@HksCompilerSettings@@QEAAXH@Z=GameCore_XP2_FinalRelease.?setGlobalMemoization@HksCompilerSettings@@QEAAXH@Z,@153")
 #pragma comment(linker,"/export:?setIntLiteralsEnabled@HksCompilerSettings@@QEAAXW4IntLiteralOptions@1@@Z=GameCore_XP2_FinalRelease.?setIntLiteralsEnabled@HksCompilerSettings@@QEAAXW4IntLiteralOptions@1@@Z,@154")
 // #pragma comment(linker,"/export:DllCreateGameContext=GameCore_XP2_FinalRelease.DllCreateGameContext,@155")
-#pragma comment(linker,"/export:DllDestroyGameContext=GameCore_XP2_FinalRelease.DllDestroyGameContext,@156")
+#pragma comment(linker,"/export:DllDestroyGameContext,@156")
 #pragma comment(linker,"/export:EXP_GetTelemetrySessionHash=GameCore_XP2_FinalRelease.EXP_GetTelemetrySessionHash,@157")
 #pragma endregion
+
+#endif // _MSC_VER: portable builds use the verified exports.def instead.
